@@ -1,0 +1,765 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Debug information</h1>
+
+            <div class="alert alert-success">
+                <p>
+                    You would be redirected to: <a href="{{ env.optimal.url }}" target="_blank">{{ env.optimal.url }}</a>
+                    ({{ env.optimal.env }})
+                </p>
+                <p><strong>Optimized for:</strong> {{ env.optimal.device }}</p>
+                <p><strong>Language:</strong> {{ env.optimal.lang }}</p>
+                <p>
+                    <strong>Because:</strong>
+                    <ol>
+                    {{# reasons }}
+                        <li>
+                            {{ . }}
+                        </li>
+                    {{/ reasons }}
+                    </ol>
+                </p>
+                <p>
+                    The visitors <strong>SmartLink is:</strong> <a href="{{ smartLinkUrl }}" target="_blank">{{ smartLinkUrl }}</a>
+                </p>
+            </div>
+
+            <h2>Possible <code>$_REQUEST</code> input parameter (GET, POST or COOKIE)</h2>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th width="30%">Key</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        FB Multi-Friend-Selector Invitation<br>
+                        <code>$_GET['request_ids']</code>
+                    </td>
+                    <td>
+                        {{ app.fb.request_ids }}
+                        {{^ app.fb.request_ids }}
+                            <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                        {{/ app.fb.request_ids }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Referrers app environment<br>
+                        <code>$_GET['ref_app_env']</code>
+                    </td>
+                    <td>
+                        {{ referrer.app.env }}
+                        {{^ referrer.app.env }}
+                            <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                        {{/ referrer.app.env }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Referrers app language<br>
+                        <code>$_GET['ref_app_lang']</code>
+                    </td>
+                    <td>
+                        {{ referrer.app.lang }}
+                        {{^ referrer.app.lang }}
+                            <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                        {{/ referrer.app.lang }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Referrers User ID<br>
+                        <code>$_GET['ref_info_uid']</code>
+                    </td>
+                    <td>
+                        {{ referrer.info.auth_uid }}
+                        {{^ referrer.info.auth_uid }}
+                            <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                        {{/ referrer.info.auth_uid }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Website redirect url<br>
+                        <code>$_GET['env_website_url']</code>
+                    </td>
+                    <td>
+                        {{ env.website.url }}
+                        {{^ env.website.url }}
+                            <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                        {{/ env.website.url }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Language parameter<br>
+                        <code>$_GET['locale']</code>
+                    </td>
+                    <td>
+                        {{ visitor.browser.request.lang }}
+                        {{^ visitor.browser.request.lang }}
+                            <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                        {{/ visitor.browser.request.lang }}
+                    </td>
+                </tr>
+
+
+                </tbody>
+            </table>
+
+            <h2>Meta data</h2>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th width="30%">Key</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Title
+                    </td>
+                    <td>{{meta.title}}</td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Description
+                    </td>
+                    <td>{{meta.desc}}</td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Image
+                    </td>
+                    <td><img class="thumbnail" src="{{meta.image}}" style="max-width: 200px;" /></td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Open Graph Type
+                    </td>
+                    <td>{{meta.og_type}}</td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Schema.org Type
+                    </td>
+                    <td>{{meta.schema_type}}</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <h2>App data</h2>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th width="30%">Key</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Instance ID
+                    </td>
+                    <td>{{app.aa.info.i_id}}</td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Model ID
+                    </td>
+                    <td>{{app.aa.info.m_id}}</td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Languages
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">Available</td>
+                                <td>
+                                    {{# app.lang.available }}
+                                        <li>
+                                            {{ text }} [{{ value }}]
+                                        </li>
+                                    {{/ app.lang.available }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Default</td>
+                                <td>{{app.lang.default}}</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <!--<tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Browser
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">Minimal compatible browser</td>
+                                <td>
+                                    {{# app.browser.compatible }}
+                                        <li>
+                                            {{ name }} {{ version }}
+                                        </li>
+                                    {{/ app.browser.compatible }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>-->
+
+                </tbody>
+
+            </table>
+
+            <h2>Visitor data</h2>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th width="30%">Key</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Instance ID (mod_auth_user table)
+                    </td>
+                    <td>
+                        {{ visitor.i_id }}
+                        {{^ visitor.i_id }}
+                            <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                        {{/ visitor.i_id }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Facebook User Info
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">Gender</td>
+                                <td>
+                                    {{visitor.info.gender}}
+                                    {{^ visitor.info.gender }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.info.gender }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>First name</td>
+                                <td>
+                                    {{visitor.info.first_name}}
+                                    {{^ visitor.info.first_name }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.info.first_name }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Last name</td>
+                                <td>
+                                    {{visitor.info.last_name}}
+                                    {{^ visitor.info.last_name }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.info.last_name }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Email</td>
+                                <td>
+                                    {{visitor.info.email}}
+                                    {{^ visitor.info.email }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.info.email }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>FB User ID</td>
+                                <td>
+                                    {{visitor.info.fb_user_id}}
+                                    {{^ visitor.info.fb_user_id }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.info.fb_user_id }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Languages
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">
+                                    Preferred language order<br><br>
+                                    <ol>
+                                        <li>Cookie/GET/POST</li>
+                                        <li>Facebook settings</li>
+                                        <li>Browser Settings</li>
+                                    </ol>
+                                </td>
+                                <td>
+                                    {{# visitor.lang }}
+                                        <li>
+                                            {{ . }}
+                                        </li>
+                                    {{/ visitor.lang }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Cookie/GET/POST parameter
+                                </td>
+                                <td>
+                                    {{ visitor.browser.request.lang }}
+                                    {{^ visitor.browser.request.lang }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.browser.request.lang }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Facebook language
+                                </td>
+                                <td>
+                                    {{ visitor.fb.user.locale }}
+                                    {{^ visitor.fb.user.locale }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.fb.user.locale }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Browser Languages
+                                </td>
+                                <td>
+                                    {{# visitor.browser.lang }}
+                                        <li>
+                                            {{ . }}
+                                        </li>
+                                    {{/ visitor.browser.lang }}
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Browser
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">User Agent</td>
+                                <td>
+                                    {{ visitor.browser.ua }}
+                                    {{^ visitor.browser.ua }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.browser.ua }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Name</td>
+                                <td>
+                                    {{ visitor.browser.name }}
+                                    {{^ visitor.browser.name }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.browser.name }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Version</td>
+                                <td>
+                                    {{visitor.browser.version}}
+                                    {{^ visitor.browser.version }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.browser.version }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Device
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">Operating system</td>
+                                <td>
+                                    {{ visitor.device.os }}
+                                    {{^ visitor.device.os }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.device.os }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Type</td>
+                                <td>
+                                    {{ visitor.device.type }}
+                                    {{^ visitor.device.type }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ visitor.device.type }}
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <h2>Referral data</h2>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th width="30%">Key</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Instance ID
+                    </td>
+                    <td>
+                        {{ referrer.i_id }}
+                        {{^ referrer.i_id }}
+                            <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                        {{/ referrer.i_id }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Referral app info
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">
+                                    Language <br>
+                                    <code>$_REQUEST['ref_app_lang']</code>
+                                </td>
+                                <td>
+                                    {{ referrer.app.lang }}
+                                    {{^ referrer.app.lang }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ referrer.app.lang }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="30%">
+                                    Environment (Website, Fanpage, Direct/Mobile) <br>
+                                    <code>$_REQUEST['ref_app_env']</code>
+                                </td>
+                                <td>
+                                    {{ referrer.app.env }}
+                                    {{^ referrer.app.env }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ referrer.app.env }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        User-Info
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">
+                                    App User ID
+                                </td>
+                                <td>
+                                    {{ referrer.info.auth_uid }}
+                                    {{^ referrer.info.auth_uid }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ referrer.info.auth_uid }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>First name</td>
+                                <td>
+                                    {{ referrer.info.first_name }}
+                                    {{^ referrer.info.first_name }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ referrer.info.first_name }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Last name</td>
+                                <td>
+                                    {{ referrer.info.last_name }}
+                                    {{^ referrer.info.last_name }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ referrer.info.last_name }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Email</td>
+                                <td>
+                                    {{ referrer.info.email }}
+                                    {{^ referrer.info.email }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ referrer.info.email }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>FB User ID</td>
+                                <td>
+                                    {{ referrer.info.fb_user_id }}
+                                    {{^ referrer.info.fb_user_id }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ referrer.info.fb_user_id }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Twitter ID</td>
+                                <td>
+                                    {{ referrer.info.tw_user_id }}
+                                    {{^ referrer.info.tw_user_id }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ referrer.info.tw_user_id }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Google+ ID</td>
+                                <td>
+                                    {{ referrer.info.gp_user_id }}
+                                    {{^ referrer.info.gp_user_id }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ referrer.info.gp_user_id }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <h2>Environment data</h2>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th width="30%">Key</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Optimal Environment
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">Device</td>
+                                <td>
+                                    {{ env.optimal.device }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Environment</td>
+                                <td>
+                                    {{ env.optimal.env }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Url</td>
+                                <td>
+                                    {{ env.optimal.url }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Preferred environment
+                    </td>
+                    <td>
+                        {{ env.preferred }}
+                        {{^ env.preferred }}
+                            <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                        {{/ env.preferred }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Environment Facebook
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">Referral Source <code>$_GET['fb_source']</code></td>
+                                <td>
+                                    {{ app.fb.fb_source }}
+                                    {{^ app.fb.fb_source }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ app.fb.fb_source }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Facebook Request IDs <code>$_GET['request_ids']</code></td>
+                                <td>
+                                    {{ app.fb.request_ids }}
+                                    {{^ app.fb.request_ids }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ app.fb.request_ids }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Page ID</td>
+                                <td>
+                                    {{ env.fb.page_id }}
+                                    {{^ env.fb.page_id }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ env.fb.page_id }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Page Tab Url</td>
+                                <td>
+                                    {{ env.fb.page_url }}
+                                    {{^ env.fb.page_url }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ env.fb.page_url }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Canvas Url</td>
+                                <td>
+                                    {{ env.fb.canvas_url }}
+                                    {{^ env.fb.canvas_url }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ env.fb.canvas_url }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Environment Website
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">
+                                    Url <br>
+                                    <code>$_GET['env_website_url']</code>
+                                </td>
+                                <td>
+                                    {{ env.website.url }}
+                                    {{^ env.website.url }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ env.website.url }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="30%">
+                                    Where does the Url come from? <br>
+                                </td>
+                                <td>
+                                    {{ env.website.url_src }}
+                                    {{^ env.website.url_src }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ env.website.url_src }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
+                        Environment Direct & Mobile
+                    </td>
+                    <td>
+                        <table class="table table-striped">
+                            <tr>
+                                <td width="30%">Url</td>
+                                <td>
+                                    {{ env.direct.url }}
+                                    {{^ env.direct.url }}
+                                        <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+                                    {{/ env.direct.url }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Data structure</h1>
+            <h2>Environment</h2>
+            <pre>
+$env
+    ['direct']
+        ['url']
+    ['fb']
+        ['url']
+        ['page_id']
+        ['page_url']
+        ['canvas_url']
+    ['optimal']
+        ['env']
+        ['url']
+        ['device']
+        ['lang']
+    ['website']
+        ['url']
+            </pre>
+            <h2>Referrer</h2>
+            <pre>
+$referrer
+    ['app']
+        ['env']
+        ['lang']
+            </pre>
+        </div>
+    </div>
+</div>
+
