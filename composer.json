@@ -1,5 +1,5 @@
 {
-    "name": "aa/appmanager",
+    "name": "app-arena/php-sdk",
     "type": "library",
     "description": "App-Arena.com App-Manager PHP SDK",
     "keywords": ["app-arena", "app-manager", "api", "php", "sdk"],
