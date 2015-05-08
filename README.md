@@ -1,4 +1,5 @@
 # php-sdk
 App-Manager PHP SDK
 
-www.app-arena.com
+Read the documentation on http://app-arena.readthedocs.org/
+
