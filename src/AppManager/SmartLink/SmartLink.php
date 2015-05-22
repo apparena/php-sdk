@@ -485,6 +485,12 @@ class SmartLink
             $i_id = $_COOKIE['aa_i_id'];
         }
 
+        // Try to get the instance ID from a cookie
+        if (isset($_SERVER['i_id']))
+        {
+            $i_id = $_SERVER['i_id'];
+        }
+
         // Check if an instance ID has been passed during initialization
         if (isset($this->data['app']['i_id']))
         {
