@@ -17,8 +17,8 @@ use AppManager\API\Api;
 class Instance
 {
 
-    protected $id = 8555; // Default instance ID (Demo), which should be overwritten...
-    protected $m_id; // ID of this instances app model
+    protected $id = false; // Default instance ID (Demo), which should be overwritten...
+    protected $m_id = false; // ID of this instances app model
     protected $template_id; // ID of this instances template
     protected $config = array();
     protected $translation = array();
@@ -36,23 +36,19 @@ class Instance
         $this->api = $api;
 
         // Initialize Instance ID
+        if (isset($params['m_id']) && $params['m_id'])
+        {
+            $this->m_id = $params['m_id'];
+        }
+
+        // Initialize Instance ID
         if (isset($params['i_id']) && $params['i_id'])
         {
             $this->id = $params['i_id'];
         }
         else
         {
-            // Try to get model_id and fb_page_id
-            $params2 = array();
-            if (isset($params['fb_page_id']))
-            {
-                $params2['fb_page_id'] = $params['fb_page_id'];
-            }
-            if (isset($params['m_id']))
-            {
-                $params2['m_id'] = $params['m_id'];
-            }
-            $this->recoverId($params2);
+            $this->recoverId();
         }
 
         // Initialize Language
@@ -148,7 +144,7 @@ class Instance
      * Tries to get the instance ID from the current environment (e.g. Cookies, Facebook, Request-Parameters)
      * @params array $params Additional information helping to descover the instance ID
      */
-    private function recoverId($params)
+    private function recoverId()
     {
         $id = false;
 
@@ -178,19 +174,7 @@ class Instance
                         $id = $_SESSION["current_i_id"];
                     } else {
                         // Try to get the ID from the facebook fanpage tab and m_id (app model)
-                        if (isset($params['fb_page_id']) && isset($params['m_id']))
-                        {
-                            $request_url = "https://manager.app-arena.com/api/v1/env/fb/pages/" . $params['fb_page_id'] .
-                                "/instances.json?m_id=" . $params['m_id'] . "&active=true";
-                            $instances   = json_decode(file_get_contents($request_url), true);
-                            foreach ($instances['data'] as $instance)
-                            {
-                                if ($instance['activate'] == 1)
-                                {
-                                    $id = $instance['i_id'];
-                                }
-                            }
-                        }
+                        $id = $this->getIdFromFBRequest();
                     }
                 }
             }
@@ -250,8 +234,12 @@ class Instance
     /**
      * Returns and sets the instance_id by requesting the API for data
      */
-    private function getIdFromFBRequest($m_id, $fb_page_id)
+    private function getIdFromFBRequest()
     {
+        $app_data = array();
+        $fb_page_id = false;
+        $i_id = false;
+
         if (isset($_REQUEST['signed_request']))
         {
             list($encoded_sig, $payload) = explode('.', $_REQUEST['signed_request'], 2);
@@ -260,21 +248,26 @@ class Instance
             {
                 $app_data = json_decode($signed_request['app_data'], true);
             }
-            // fix for facebook-tab | missing instance ID
-            if (!$params['aa_inst_id'] && isset($params['fb_page_id']) && isset($params['aa_app_id']))
+
+            if ( isset($signed_request['page']['id']) && $signed_request['page']['id'] ) {
+                $fb_page_id = $signed_request['page']['id'];
+            }
+
+            if ( $fb_page_id && $this->m_id )
             {
-                $request_url = "https://manager.app-arena.com/api/v1/env/fb/pages/" . $params['fb_page_id'] .
-                    "/instances.json?m_id=" . $params['aa_app_id'] . "&active=true";
+                $request_url = "https://manager.app-arena.com/api/v1/env/fb/pages/" . $fb_page_id .
+                    "/instances.json?m_id=" . $this->m_id . "&active=true";
                 $instances   = json_decode(file_get_contents($request_url), true);
                 foreach ($instances['data'] as $instance)
                 {
                     if ($instance['activate'] == 1)
                     {
-                        $params['aa_inst_id'] = $instance['i_id'];
+                        $i_id = $instance['i_id'];
                     }
                 }
             }
         }
+        return $i_id;
     }
 
     /**
