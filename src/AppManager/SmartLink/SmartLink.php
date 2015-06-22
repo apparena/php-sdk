@@ -391,7 +391,11 @@ class SmartLink
         // If no optimal url is defined yet, then use direct source
         $this->reasons[] = "DEVICE: No website or facebook defined. Choose environment direct";
         $this->setTarget("direct");
-        $this->setUrl($this->instance->getInfo('base_url'));
+        if ($this->getBaseUrl()) {
+            $this->setUrl($this->getBaseUrl());
+        } else {
+            $this->setUrl($this->instance->getInfo('base_url'));
+        }
         return;
 
     }
