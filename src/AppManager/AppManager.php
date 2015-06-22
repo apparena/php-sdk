@@ -263,5 +263,16 @@ class AppManager
         return $this->smart_link->getBrowser();
     }
 
+    /**
+     * Returns if the app currently running on a 'website', 'facebook' or 'direct'
+     * 'website' means the app is embedded via iframe to a website
+     * 'facebook' means the app is embedded in a facebook page tab
+     * 'direct' means the app is being accessed directly without iframe embed
+     */
+    public function getEnvironment()
+    {
+        return $this->smart_link->getTarget();
+    }
+
 
 }
