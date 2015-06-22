@@ -35,6 +35,8 @@ class AppManager
         {
             $this->cache_dir = $params['cache_dir'];
         }
+
+        $this->init();
     }
 
     /**
