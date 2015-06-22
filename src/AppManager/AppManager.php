@@ -9,6 +9,8 @@ class AppManager
 
     protected $api; // API object
     protected $cache_dir = false; // E.g. ROOTPATH . /var/cache, When no path is set, then caching will be deactivated
+    private $browser;
+    private $device;
     private $i_id;
     private $m_id;
     private $lang = "de_DE"; // Language: e.g. de_DE, en_US, en_UK, ...
@@ -237,6 +239,29 @@ class AppManager
         $this->smart_link->setParams($params);
     }
 
+    /**
+     * Returns user device information
+     */
+    public function getDevice()
+    {
+        return $this->smart_link->getDevice();
+    }
+
+    /**
+     * Returns the device type of the current device 'mobile', 'tablet', 'desktop'
+     */
+    public function getDeviceType()
+    {
+        return $this->smart_link->getDeviceType();
+    }
+
+    /**
+     * Returns user browser information
+     */
+    public function getBrowser()
+    {
+        return $this->smart_link->getBrowser();
+    }
 
 
 }
