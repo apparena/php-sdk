@@ -57,14 +57,7 @@ class SmartLink
     public function __construct($instance)
     {
         // Initialize the base url
-        $base_url  = 'http';
-        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on")
-        {
-            $base_url .= "s";
-        }
-        $base_url .= "://";
-        $base_url .= $_SERVER["SERVER_NAME"];
-        $this->setBaseUrl($base_url);
+        $this->initBaseUrl();
 
         // Initialize the instance information
         $this->instance = $instance;
@@ -189,6 +182,26 @@ class SmartLink
     public function getMeta()
     {
         return $this->meta;
+    }
+
+    /**
+     * Initializes the baseUrl of the current app
+     */
+    private function initBaseUrl()
+    {
+        $base_url  = 'http';
+        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on")
+        {
+            $base_url .= "s";
+        }
+        $base_url .= "://";
+        $base_url .= $_SERVER["SERVER_NAME"];
+
+        if (substr($base_url, -1) != "/") {
+            $base_url .= "/";
+        }
+
+        $this->base_url = $base_url;
     }
 
     /**
