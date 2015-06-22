@@ -52,9 +52,9 @@ class Instance
         }
 
         // Initialize Language
-        if (isset($params['lang_tag']))
+        if (isset($params['lang']))
         {
-            $this->lang_tag = $params['lang_tag'];
+            $this->lang_tag = $params['lang'];
         }
         else
         {
@@ -66,8 +66,13 @@ class Instance
     /**
      * @return array
      */
-    public function getInfo()
+    public function getInfos()
     {
+        if ($this->info)
+        {
+            return $this->info;
+        }
+
         $response = $this->api->get("instances/" . $this->id);
         if ($response == false)
         {
@@ -78,21 +83,13 @@ class Instance
         return $this->info;
     }
 
-    /**
-     * @param array $info
-     */
-    public function setInfo($info)
-    {
-        $this->info = $info;
-    }
-
-    function setConfigs($config)
-    {
-        $this->config = $config;
-    }
-
     function getConfigs()
     {
+        if ($this->config)
+        {
+            return $this->config;
+        }
+
         $response = $this->api->get("instances/$this->id/configs", array('page_size' => 10000));
 
         if ($response == false)
@@ -113,6 +110,11 @@ class Instance
 
     function getTranslations()
     {
+        if ($this->translation)
+        {
+            return $this->translation;
+        }
+
         $lang_tag = $this->getLangTag();
         $response = $this->api->get(
             "instances/$this->id/languages/$lang_tag/translations",
@@ -133,11 +135,6 @@ class Instance
         $this->translation = $translation;
 
         return $this->translation;
-    }
-
-    function setTranslations($translation)
-    {
-        $this->translation = $translation;
     }
 
     /**
@@ -172,7 +169,9 @@ class Instance
                     if (!empty($_SESSION['current_i_id']))
                     {
                         $id = $_SESSION["current_i_id"];
-                    } else {
+                    }
+                    else
+                    {
                         // Try to get the ID from the facebook fanpage tab and m_id (app model)
                         $id = $this->getIdFromFBRequest();
                     }
@@ -181,9 +180,10 @@ class Instance
         }
 
         // Set ID to the object and the users session and cookie
-        if ($id) {
+        if ($id)
+        {
             $_SESSION['current_i_id'] = $id;
-            $this->id = $id;
+            $this->id                 = $id;
         }
 
         return $this->id;
@@ -236,9 +236,9 @@ class Instance
      */
     private function getIdFromFBRequest()
     {
-        $app_data = array();
+        $app_data   = array();
         $fb_page_id = false;
-        $i_id = false;
+        $i_id       = false;
 
         if (isset($_REQUEST['signed_request']))
         {
@@ -249,11 +249,12 @@ class Instance
                 $app_data = json_decode($signed_request['app_data'], true);
             }
 
-            if ( isset($signed_request['page']['id']) && $signed_request['page']['id'] ) {
+            if (isset($signed_request['page']['id']) && $signed_request['page']['id'])
+            {
                 $fb_page_id = $signed_request['page']['id'];
             }
 
-            if ( $fb_page_id && $this->m_id )
+            if ($fb_page_id && $this->m_id)
             {
                 $request_url = "https://manager.app-arena.com/api/v1/env/fb/pages/" . $fb_page_id .
                     "/instances.json?m_id=" . $this->m_id . "&active=true";
@@ -267,6 +268,7 @@ class Instance
                 }
             }
         }
+
         return $i_id;
     }
 
@@ -286,5 +288,134 @@ class Instance
         $this->lang_tag = $lang_tag;
     }
 
+    /**
+     * @return boolean
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+
+    /**
+     * Returns the value of a config value
+     * @param String       $config_id Config identifier to get the data for
+     * @param String|array $attr      Attribute or Attributes which should be returned
+     * @return mixed Requested config value
+     */
+    function getConfig($config_id, $attr = null)
+    {
+        $config = $this->getConfigs();
+        $args   = func_get_args();
+        $num    = func_num_args();
+
+        if ($num == 0)
+        {
+            return '';
+        }
+
+        $config_id = $args[0];
+        if ($num == 1)
+        {
+            if (isset($config[$config_id]['value']))
+            {
+                return $config[$config_id]['value'];
+            }
+        }
+
+        // Return certain attributes of a config value
+        if ($num == 2)
+        {
+            $attributes = $args[1];
+            if (isset($config[$config_id]) && is_array($attributes))
+            {
+                $result = array($attributes);
+                foreach ($config[$config_id] as $attribute => $value)
+                {
+                    if (isset($result[$attribute]))
+                    {
+                        $result[$attribute] = $value;
+                    }
+                    else
+                    {
+                        $result[$attribute] = null;
+                    }
+
+                    return $result;
+                }
+            }
+
+            if (isset($config[$config_id][$attributes]))
+            {
+                return $config[$config_id][$attributes];
+            }
+
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Returns one translation
+     * @return mixed
+     */
+    function getTranslation()
+    {
+        $translate = $this->getTranslations();
+
+        $args = func_get_args();
+        $num  = func_num_args();
+
+        if ($num == 0)
+        {
+            return '';
+        }
+
+        $str = $args[0];
+        if ($num == 1)
+        {
+            return $translate->_($str);
+        }
+
+        unset($args[0]);
+        $args  = str_replace('"', '\"', $args);
+        $param = '"' . implode('","', $args) . '"';
+
+        $str = '$ret=sprintf("' . $translate->_($str) . '",' . $param . ');';
+        eval($str);
+
+        return $ret;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getMId()
+    {
+        if ($this->m_id)
+        {
+            return $this->m_id;
+        }
+
+        $this->m_id = $this->getInfo("m_id");
+
+        return $this->m_id;
+    }
+
+    /**
+     * Returns only the requested info attribute
+     * @param $key Key of the attribute
+     * @return String Value of the requested attribute
+     */
+    public function getInfo($key) {
+        $infos = $this->getInfos();
+
+        if (isset($infos[$key])) {
+            return $infos[$key];
+        }
+
+        return false;
+    }
 
 }

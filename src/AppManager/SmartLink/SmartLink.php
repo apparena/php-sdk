@@ -4,6 +4,8 @@ namespace AppManager\SmartLink;
 
 use AppManager\API\Api;
 use AppManager\Entity\Instance;
+use Browser;
+use Detection\MobileDetect;
 
 /**
  * SmartLink class which handles user redirects for the app
@@ -12,169 +14,87 @@ use AppManager\Entity\Instance;
  */
 class SmartLink
 {
-    private $m; // Mustache engine
     protected $api; // API object
     protected $instance; // Instance object
-    protected $instanceInfo; // Instance info array
-    protected $instanceConfig; // Instance config array
 
+    private $browser = array(); // Browser information
+    private $cookie_key; // SmartCookie key
+    private $device = array(); // Device information
+    private $facebook = array(); // All available information about the facebook page the instance is embedded in
     private $i_id;
-    private $visitor = null; // SmartVisitor object for the current user
-    private $referrer = null; // SmartReferrer object for the referring user
-    private $db;
-    private $env = array(); // Environment information
-    private $meta = array(); // Meta data information
-    private $app = array(); //Available information about the app itself
+    private $lang; // Currently selected language
+    private $meta = array(); // Meta data which should be rendered to the share HTML document
     private $params = array(); // Additional parameters which will be passed through
     private $paramsExpired = array(); // These expired params will not be set to the cookie any more
-    private $paramsPassthrough = false; // Should all GET parameters of the current request be past through to the next page?
     private $reasons = array(); // Array of reasons, why the SmartLink refers to a certain environment
-    private $request = array(); // Array of all request parameters
+    private $target; // Target environment
+    private $url; // SmartLink Url
+    private $website; // All available information about the website the instance is embedded in
+
+    // Library objects
+    private $mustache; // Mustache engine
+    private $browser_php; // Browser.php object
+    private $mobile_detect; // MobileDetect object
+
+    //private $visitor = null; // SmartVisitor object for the current user
+    //private $referrer = null; // SmartReferrer object for the referring user
+    //private $db;
+    /*private $env = array(); // Environment information
+
+    private $app = array(); //Available information about the app itself
+
     private $fb = array(); // All facebook related information like signed_request or parsed app requests
-    private $server = array(); // Array of server information
     public $smartLinkUrl; // Smart Link
-    private $smartLink; // Smart Link object containing most relevant and visitor optimized information
+    private $smartLink; // Smart Link object containing most relevant and visitor optimized information*/
 
     /**
      * Initializes the SmartLink class with visitor, referrer and environment information
      *
-     * @param array       $data (see above)
-     * @param PDODBObject $db   App PDO database object
+     * @param Instance $instance Instance object
      * @throws \Exception When no instance ID is passed
      */
-    public function __construct($data = array(), $db = null)
+    public function __construct($instance)
     {
-        $this->db = $db;
-        $this->data = $data;
-
-        if (!defined("SMART_LIB_PATH"))
-        {
-            define("SMART_LIB_PATH", realpath(dirname(__FILE__)));
-        }
-
-        $this->api = new Api(
-            array(
-                "cache_dir" => ROOT_PATH . "/var/cache"
-            )
-        );
-
-        // Initialize mustache
-        $loader   = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views');
-        $partials = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views/partials');
-        $this->m  = new \Mustache_Engine(
-            array(
-                'loader' => $loader,
-                'partials_loader' => $partials,
-            )
-        );
-        $this->visitor = new SmartVisitor($this->db);
-        $this->referrer = new SmartReferrer($this->db);
-
-        // Check if a fb friend request is available
-        $this->fb['app_request'] = $this->parseFBAppRequests();
-
-        // Check if a canvas redirect is necessary
-        $this->fb['canvas_request'] = $this->getFBCanvasInformation();
-
-        // Check if parameter passthrough is activated
-        if (isset($data['paramsPassthrough']) && $data['paramsPassthrough'] == true)
-        {
-            $this->paramsPassthrough = true;
-        }
-
-        // Try to get the instance ID
-        $this->i_id  = $this->getInstanceId();
-        // Stop if no instance id is available
+        // Initialize the instance information
+        $this->instance = $instance;
+        $this->i_id     = $this->instance->getId();
         if (!$this->i_id)
         {
             throw(new \Exception("No instance id available"));
         }
+        $this->cookie_key = "aa_" . $this->i_id . "_smartLink";
 
-        // Check if an language has been submitted via data array.
-        if (isset($data['app']['lang']['param']))
-        {
-            $app['lang']['param'] = $data['app']['lang']['param'];
-        }
-
-        // Collect server and request information
-        $this->request = $_REQUEST;
-        $this->server  = $_SERVER;
-
-        // Initialize instance object
-        $this->instance       = new Instance(
-            $this->api, array(
-                "i_id" => $this->i_id
+        // Initialize Meta data using default values
+        $this->setMeta(
+            array(
+                "title" => "",
+                "desc" => "",
+                "image" => "",
+                "og_type" => "website",
+                "schema_type" => "WebApplication",
             )
         );
-        $this->instanceInfo   = $this->instance->getInfo();
-        $this->instanceConfig = $this->instance->getConfigs();
-        $app['aa']['info']   = $this->instanceInfo;
-        $app['aa']['config'] = $this->instanceConfig;
 
-        if (isset($data['app']['lang']['available']) &&
-            isset($app['aa']['config'][$data['app']['lang']['available']]['value'])
-        )
-        {
-            $lang_str = $app['aa']['config'][$data['app']['lang']['available']]['value'];
-            if ($lang_str == "")
-            {
-                $languanges = array("value" => $app['aa']['info']['lang_tag']);
-            }
-            else
-            {
-                $lang_array = explode(",", $lang_str);
-                $languanges = array();
-                foreach ($lang_array as $lang)
-                {
-                    $languanges[] = array("value" => $lang);
-                }
-            }
-            $app['lang']['available'] = $languanges;
-        }
+        // Initializes all language related information
+        $this->initLanguage();
 
-        $app['lang']['default'] = $this->instanceInfo['lang_tag'];
-        if (isset($_REQUEST['request_ids']))
-        {
-            $app['fb']['request_ids'] = $_REQUEST['request_ids'];
-        }
-        if (isset($_REQUEST['fb_source']))
-        {
-            $app['fb']['fb_source'] = $_REQUEST['fb_source'];
-        }
-        if (isset($data['env']))
-        {
-            $app['env'] = $data['env'];
-        }
-        $this->app = $app;
+        // Initialize the environment information
+        $this->initFacebook();
+        $this->initWebsite();
 
-        // Initialize Meta data
-        $meta = array();
-        if (isset($data['meta']))
-        {
-            $meta = $data['meta'];
-        }
-        $this->getMeta($meta);
+        // Collect and prepare the Browser and device information of the current user
+        $this->initBrowser();
+        $this->initDevice();
 
-        // Initialize parameters
-        $params = array();
-        if (isset($data['params']))
-        {
-            $params = $data['params'];
-        }
-        $this->params = $params;
+        // Initializes the SmartCookie
+        $this->initCookies();
 
-        // Initialize Environments
-        $this->getEnv();
-
-        // Set information in user cookie
-        $this->setCookie();
-
-        // Set SmartLink
-        $this->smartLinkUrl = $this->getSmartLinkUrl();
+        // Initialize the SmartLink Url
+        $this->initUrl();
     }
 
     /**
-     * Gets meta information from the app instance config values
+     * Sets the meta information from the app instance config values
      *
      * meta array
      *      ['title']           String Config text identifier for the sharing title
@@ -187,64 +107,46 @@ class SmartLink
      *
      * @return array Returns meta data for the page
      */
-    private function getMeta($meta)
+    public function setMeta($meta)
     {
+        $title       = $desc = $image = "";
+        $og_type     = "website";
+        $schema_type = "WebApplication";
+
         // Initialize default values, in case values are missing
-        if (!isset($meta['title']))
-        {
-            $title = "";
-        }
-        else
+        if (isset($meta['title']))
         {
             $title = $meta['title'];
         }
-        if (!isset($meta['desc']))
-        {
-            $desc = "";
-        }
-        else
+        if (isset($meta['desc']))
         {
             $desc = $meta['desc'];
         }
-        if (!isset($meta['image']))
-        {
-            $image = "";
-        }
-        else
+        if (isset($meta['image']))
         {
             $image = $meta['image'];
         }
-        if (!isset($meta['og_type']))
-        {
-            $og_type = "website";
-        }
-        else
+        if (isset($meta['og_type']))
         {
             $og_type = $meta['og_type'];
         }
-        if (!isset($meta['schema_type']))
-        {
-            $schema_type = "WebApplication";
-        }
-        else
+        if (isset($meta['schema_type']))
         {
             $schema_type = $meta['schema_type'];
         }
 
-        // Get title from config value
-        if (isset($meta['title']) && isset($this->app['aa']['config'][$meta['title']]['value']))
+        // Get values from the instance config values
+        if (isset($meta['title']) && $this->instance->getConfig($meta['title']))
         {
-            $title = $this->app['aa']['config'][$meta['title']]['value'];
+            $title = $this->instance->getConfig($meta['title']);
         }
-
-        if (isset($meta['desc']) && isset($this->app['aa']['config'][$meta['desc']]['value']))
+        if (isset($meta['desc']) && $this->instance->getConfig($meta['desc']))
         {
-            $desc = $this->app['aa']['config'][$meta['desc']]['value'];
+            $desc = $this->instance->getConfig($meta['desc']);
         }
-
-        if (isset($meta['image']) && isset($this->app['aa']['config'][$meta['image']]['src']))
+        if (isset($meta['image']) && $this->instance->getConfig($meta['image'], 'src'))
         {
-            $image = $this->app['aa']['config'][$meta['image']]['src'];
+            $image = $this->instance->getConfig($meta['image'], 'src');
         }
 
         $this->meta = array(
@@ -271,56 +173,42 @@ class SmartLink
     }
 
     /**
-     * Collects all available information about the environments
-     *
-     * @return array All available information about the environments
+     * @return array
      */
-    public function getEnv()
+    public function getMeta()
     {
-        // Get preferred environment
-        if (isset($this->app['env']['preferred']))
+        return $this->meta;
+    }
+
+    /**
+     * Initializes all available information about Facebook available for the current user and environment
+     */
+    private function initFacebook()
+    {
+        // Initialize Facebook Page Tab information
+        if ($this->instance->getInfo('fb_page_url') && $this->instance->getInfo('fb_app_id'))
         {
-            $this->env['preferred'] = $this->app['env']['preferred'];
+            $fb_page_url = $this->instance->getInfo('fb_page_url') . "?sk=app_" . $this->instance->getInfo('fb_app_id');
+
+            $this->facebook["app_id"]   = $this->instance->getInfo('fb_app_id');
+            $this->facebook["page_id"]  = $this->instance->getInfo('fb_page_id');
+            $this->facebook["page_url"] = $this->instance->getInfo('fb_page_url');
+            $this->facebook["page_tab"] = $fb_page_url;
         }
 
-        // Get facebook fanpage information
-        if ($this->instanceInfo['fb_page_url'] && $this->instanceInfo['fb_app_id'])
+        // Initializes Facebook canvas information
+        if ($this->instance->getInfo('fb_app_id') && $this->instance->getInfo('fb_app_namespace'))
         {
-            $fb_page_url = $this->instanceInfo['fb_page_url'] . "?sk=app_" . $this->instanceInfo['fb_app_id'];
-
-            $this->env['fb'] = array(
-                "app_id" => $this->instanceInfo['fb_app_id'],
-                "page_id" => $this->instanceInfo['fb_page_id'],
-                "page_url" => $fb_page_url,
-                "url" => $fb_page_url
-            );
-        }
-
-        // Get custom request parameters from Cookie to set them for websites (as they can't be passed into the iframe else)
-        $cookie_key = 'aa_' . $this->i_id . '_referral';
-        if (isset($_COOKIE[$cookie_key]))
-        {
-            $cookie_params = json_decode($_COOKIE[$cookie_key], true);
-            if (is_array($cookie_params) && isset($cookie_params['params']))
-            {
-                $params = $cookie_params['params'];
-                foreach ($params as $key => $value)
-                {
-                    if (!isset($_GET[$key]))
-                    {
-                        $_GET[$key] = $value;
-                        unset($params[$key]);
-                        // Add the param to paramsExpired so that it will not be written to the cookie any more
-                        $this->paramsExpired[$key] = $value;
-                    }
-                }
-            }
+            $this->facebook["app_namespace"] = $this->instance->getInfo('fb_app_namespace');
+            $this->facebook["app_id"]        = $this->instance->getInfo('fb_app_id');
+            $canvas_url                      = "https://apps.facebook.com/" . $this->facebook["app_namespace"] . "/?i_id=" . $this->i_id;
+            $this->facebook["canvas_url"]    = $canvas_url;
         }
 
         // Get Facebook page tab parameters and write them to GET parameters
-        if (isset($this->request["signed_request"]))
+        if (isset($_REQUEST["signed_request"]))
         {
-            $fb_signed_request = $this->parse_signed_request($this->request["signed_request"]);
+            $fb_signed_request = $this->parse_signed_request($_REQUEST["signed_request"]);
             if (isset($fb_signed_request['app_data']))
             {
                 $params = json_decode(urldecode($fb_signed_request['app_data']), true);
@@ -333,412 +221,226 @@ class SmartLink
                 }
             }
         }
+    }
 
-        // Get facebook canvas information
-        if ($this->instanceInfo['fb_app_id'] && $this->instanceInfo['fb_app_namespace'])
-        {
-            $base_url                      = "https://apps.facebook.com/" . $this->instanceInfo['fb_app_namespace'] . "/?i_id=" . $this->i_id;
-            $this->env['fb']["canvas_url"] = $base_url;
-        }
+    /**
+     * Initializes all available information about the website the app is embedded in
+     */
+    private function initWebsite()
+    {
+        $website = false;
 
-        // Get website information
-        if (isset($this->app['env']['website']['url']))
+        // Try to get the website Url from the URL
+        if (isset($_GET['website']))
         {
-            $url     = "";
-            $url_src = "none";
-            // Check if website Url is format url
-            if (substr($this->app['env']['website']['url'], 0, 4) == "http")
-            {
-                $url     = $this->app['env']['website']['url'];
-                $url_src = "param";
-            }
-            // Check if config value exists for the website url
-            else
-            {
-                if (isset($app['env']['website']['url']) && isset($app['aa']['config'][$app['env']['website']['url']]['value']))
-                {
-                    $url     = $app['aa']['config'][$app['env']['website']['url']]['value'];
-                    $url_src = "config value";
-                }
-            }
-
-            $this->env['website'] = array(
-                "url" => $url,
-                "url_src" => $url_src
-            );
-        }
-        if (isset($this->request['env_website_url']))
-        {
-            $this->env['website'] = array(
-                "url" => urldecode($this->request['env_website_url']),
-                "url_src" => "REQUEST parameter"
-            );
-        }
-        else
-        {
-            if (!isset($this->app['env']['website']['url']) && isset($this->server['HTTP_REFERER']))
-            {
-                // If no data is available about website integration, but a HTTP REFERRER parameter
-                $this->env['website'] = array(
-                    "url" => urldecode($this->server['HTTP_REFERER']),
-                    "url_src" => "HTTP_REFERER"
-                );
-            }
-        }
-        if (isset($_COOKIE['aa_' . $this->i_id . '_env']) && $_COOKIE['aa_' . $this->i_id . '_env'] == "website"
-            && isset($_COOKIE['aa_' . $this->i_id . '_env_url'])
-        )
-        {
-            $this->env['website'] = array(
-                "url" => $_COOKIE['aa_' . $this->i_id . '_env_url'],
-                "url_src" => "cookie"
-            );
+            $website = $_GET['website'];
         }
 
-        // Get direct/mobile information
-        $this->env['direct'] = array(
-            "url" => $this->instanceInfo['base_url'] . "?i_id=" . $this->i_id
+        // Try to get the website from the cookie
+        if (!$website && $this->getCookieValue("website"))
+        {
+            $website = $this->getCookieValue("website");
+        }
+
+        $this->setWebsite($website);
+    }
+
+    /**
+     * Initializes all available information about the users Browser
+     */
+    private function initBrowser()
+    {
+        if (!$this->browser_php)
+        {
+            $this->browser_php = new Browser();
+        }
+
+        $this->browser = array(
+            "ua" => $this->browser_php->getUserAgent(),
+            "platform" => $this->browser_php->getPlatform(),
+            "browser" => $this->browser_php->getBrowser(),
+            "version" => $this->browser_php->getVersion()
         );
-
-        $this->env['optimal'] = $this->getOptimalEnv();
-
-        return $this->env;
-    }
-
-
-    public function getOptimalLanguage()
-    {
-
-        $locale = false;
-
-        // Check if locale GET-parameter is available
-        if (!$locale && isset($_GET['locale']))
-        {
-            $this->reasons[] = "LANGUAGE: GET['locale']-Parameter available: " . $_GET['locale'];
-            $locale          = $_GET['locale'];
-        }
-
-        // Check if language cookie is available
-        if (!$locale && isset($_COOKIE['aa_' . $this->i_id . '_locale']))
-        {
-            $this->reasons[] = "LANGUAGE: COOKIE['aa_" . $this->i_id . "_locale']-Parameter available: " . $_COOKIE['aa_' . $this->i_id . '_locale'];
-            $locale          = $_COOKIE['aa_' . $this->i_id . '_locale'];
-        }
-
-        // Check if referrer language is available
-        if (!$locale && isset($this->referrer->app['lang']))
-        {
-            $this->reasons[] = "LANGUAGE: Referrers language is: " . $this->referrer->app['lang'];
-            $locale          = $this->referrer->app['lang'];
-        }
-
-        if (!$locale && isset($this->visitor->lang) && isset($this->app['lang']['available']))
-        {
-            $lang_accepted = false;
-            foreach ($this->visitor->lang as $lang)
-            {
-                foreach ($this->app['lang']['available'] as $lang_available)
-                {
-                    if (strpos($lang_available['value'], $lang) !== false)
-                    {
-                        $lang_accepted   = true;
-                        $this->reasons[] = "LANGUAGE: Users language \"" . $lang . "\" is available in the app as well.";
-                        $locale          = $lang_available['value'];
-                        break;
-                    }
-                }
-                if ($lang_accepted)
-                {
-                    break;
-                }
-            }
-        }
-
-        // If no language selected yet, then use the apps default language
-        if (!$locale)
-        {
-            $this->reasons[] = "LANGUAGE: No language preference defined or applicable. Use the default app language.";
-            $locale          = $this->app['lang']['default'];
-        }
-
-        return $locale;
     }
 
     /**
-     * Tries to initialize the instance ID from several sources
+     * Initializes all available information about the users device
      */
-    private function getInstanceId(){
-        $i_id = false;
-
-        // Try to get the instance ID from the visitors object
-        $i_id    = $this->visitor->getInstanceId();
-
-        // Try to get the instance ID from the referrer object
-        if ($this->referrer->getInstanceId())
-        {
-            $i_id = $this->referrer->getInstanceId();
-        }
-
-        // Try to get the instance ID from a cookie
-        if (isset($_COOKIE['aa_i_id']))
-        {
-            $i_id = $_COOKIE['aa_i_id'];
-        }
-
-        // Try to get the instance ID from a cookie
-        if (isset($_SERVER['i_id']))
-        {
-            $i_id = $_SERVER['i_id'];
-        }
-
-        // Check if an instance ID has been passed during initialization
-        if (isset($this->data['app']['i_id']))
-        {
-            $i_id = $this->data['app']['i_id'];
-        }
-
-        return $i_id;
-    }
-
-    /**
-     * Returns an Array of the optimal env
-     */
-    public function getOptimalEnv()
+    private function initDevice()
     {
+        $device = array();
 
-        // Get optimal language
-        $optimal['lang'] = $this->getOptimalLanguage();
-
-        // Initialize website environment parameters
-        $env_website_valid = false;
-        $env_website_url   = false;
-        if (isset($this->env['website']['url']) && $this->env['website']['url'] != "")
+        if (!$this->mobile_detect)
         {
-            if (isset($this->env['website']['url_src']) && $this->env['website']['url_src'] == "cookie")
-            {
-                $this->reasons[]   = "ENV: Website is set in cookie";
-                $env_website_valid = true;
-            }
-            else
-            {
-                if (isset($this->referrer->app['env']) && $this->referrer->app['env'] == "website")
-                {
-                    $this->reasons[]   = "ENV: Website is the referrers app environment";
-                    $env_website_valid = true;
-                }
-                else
-                {
-                    if (isset($this->app['env']['preferred']) && $this->app['env']['preferred'] == "website")
-                    {
-                        $this->reasons[]   = "ENV: Website is the preferred app environment";
-                        $env_website_valid = true;
-                    }
-                }
-            }
-            // Set website Url
-            if (strpos($this->env['website']['url'], "?") === false)
-            {
-                $env_website_url = $this->env['website']['url'];
-            }
-            else
-            {
-                $env_website_url = $this->env['website']['url'];
-            }
-            if (strpos($env_website_url, "www.facebook.com/") !== false)
-            {
-                $this->reasons[] = "ENV: Website target is facebook, which cannot be used as target.";
-                $optimal['env']  = "direct";
-                $optimal['url']  = $this->env['direct']['url'];
-            }
-        }
-        else
-        {
-            $this->reasons[] = "ENV: Website Environment not valid";
+            $this->mobile_detect = new MobileDetect();
         }
 
         // Get device type
-        switch ($this->visitor->device['type'])
+        $device['type'] = "desktop";
+        if ($this->mobile_detect->isMobile())
         {
-            case "tablet":
-                // TABLET device
-                $this->reasons[]   = "DEVICE: User is using a tablet device.";
-                $optimal['device'] = "tablet";
-
-                // FACEBOOK environment
-                if (isset($this->referrer->app['env']) && $this->referrer->app['env'] == "fb")
-                {
-                    $this->reasons[] = "ENV: Facebook is not valid for tablets, so do not use it...";
-                }
-
-                // WEBSITE environment
-                if ($env_website_valid)
-                {
-                    $optimal['env']  = "website";
-                    $optimal['url']  = $env_website_url;
-                    $this->reasons[] = "ENV: Website is valid for tablets, so use it...";
-                }
-                break;
-
-            case "mobile":
-                // MOBILE device
-                $this->reasons[]   = "DEVICE: User is using a mobile device.";
-                $optimal['device'] = "mobile";
-
-                // FACEBOOK environment
-                if (isset($this->referrer->app['env']) && $this->referrer->app['env'] == "fb")
-                {
-                    $this->reasons[] = "ENV: Facebook is not valid for mobile, so do not use it...";
-                }
-
-                // WEBSITE environment
-                if ($env_website_valid)
-                {
-                    $optimal['env']  = "website";
-                    $optimal['url']  = $env_website_url;
-                    $this->reasons[] = "ENV: Website is valid for mobile, so use it...";
-                }
-                break;
-
-            case "desktop":
-                // DESKTOP device
-                $this->reasons[]   = "DEVICE: User is using a desktop device.";
-                $optimal['device'] = "desktop";
-
-                // WEBSITE environment
-                if ($env_website_valid)
-                {
-                    $optimal['env']  = "website";
-                    $optimal['url']  = $env_website_url;
-                    $this->reasons[] = "ENV: Website is valid for mobile, so use it...";
-                }
-
-                // FACEBOOK environment
-                if (isset($this->env['fb']['url']) && $this->env['fb']['url'] != "")
-                {
-                    if (isset($this->referrer->app['env']) && $this->referrer->app['env'] == "fb")
-                    {
-                        $this->reasons[] = "ENV: Facebook is the referrers app environment";
-                        $optimal['url']  = $this->env['fb']['url'];
-                        $optimal['env']  = "fb";
-                    }
-                    else
-                    {
-                        // Check if the user is currently on facebook
-                        if (isset($this->request['signed_request']))
-                        {
-                            $this->reasons[] = "ENV: Facebook environment data available, use this as optimal env";
-                            $optimal['url']  = $this->env['fb']['url'];
-                            $optimal['env']  = "fb";
-                        }
-                    }
-                }
-                if (isset($this->app['env']['preferred']) && $this->app['env']['preferred'] == "fb")
-                {
-                    $this->reasons[] = "ENV: Facebook is the preferred app environment";
-                    if (isset($this->env['fb']['url']) && $this->env['fb']['url'])
-                    {
-                        $optimal['url'] = $this->env['fb']['url'];
-                        $optimal['env'] = "fb";
-                    }
-                }
-                break;
+            $device['type'] = "mobile";
+        }
+        if ($this->mobile_detect->isTablet())
+        {
+            $device['type'] = "tablet";
         }
 
-        // If no optimal url is defined, then use direct source
-        if (!isset($optimal['url']) || $optimal['url'] == "")
+        // Get operating system
+        $device['os'] = "other";
+        if ($device['type'] == "desktop")
         {
-            // DIRECT source
-            $this->reasons[] = "DEVICE: No preferred or referrer app environment is defined. Choose environment \"direct\"";
-
-            $optimal['url'] = $this->env['direct']['url'];
-            $optimal['env'] = "direct";
+            $device['os'] = $this->getDesktopOs();
         }
-
-        // Add parameters to the optimal url, if not website
-        if ($optimal['env'] != "website")
+        else
         {
-            $params = "";
-            if (count($this->params) > 0)
+            if ($this->mobile_detect->isiOS())
             {
-                foreach ($this->params as $key => $value)
-                {
-                    $params .= "&" . $key . "=" . urlencode($value);
-                }
+                $device['os'] = "ios";
             }
-            if (isset($optimal['lang']))
+            if ($this->mobile_detect->isAndroidOS())
             {
-                $params .= "&locale=" . $optimal['lang'];
-                $this->params['locale'] = $optimal['lang'];
+                $device['os'] = "android";
             }
-            // If ENV is Facebook, then encode parameters in app_data, else just add the params
-            if ($optimal['env'] == "fb")
+            if ($this->mobile_detect->isWindowsMobileOS())
             {
-                $optimal['url'] .= '&app_data=' . urlencode(json_encode($this->params));
-            }
-            else
-            {
-                $optimal['url'] .= $params;
+                $device['os'] = "windows";
             }
         }
 
-        // Check if environment is already is in the cookie. Then use this as optimal environment
-        if (isset($_COOKIE["aa_" . $this->i_id . "_env"]))
-        {
-            $optimal['env'] = $_COOKIE["aa_" . $this->i_id . "_env"];
-        }
-
-        return $optimal;
+        $this->device = $device;
     }
 
+
     /**
-     * Returns available browser compatibility information
+     * Analyzes all available data and sets the best suited target environment for the user
+     *
+     * @return array All available information about the environments
      */
-    public function getBrowserCompatibility()
+    private function initUrl()
     {
-        // Check browser compatibility
-        $this->app['browser']['is_compatible'] = "unknown";
-        foreach ($this->app['browser']['compatible'] as $browser)
+        $url = false;
+
+        // 1. If a website is defined, use the website as default environment
+        if ($this->website)
         {
-            $browser_found = strpos(
-                $this->visitor->browser['name'],
-                $browser['name']
-            ); // Search browser in user browser
-            if ($browser_found !== false)
+            $this->reasons[] = "ENV: Website is defined";
+
+            // Validate the Website url
+            if (
+                strpos($this->website, "www.facebook.com/") !== false ||
+                strpos($this->website, "static.sk.facebook.com") !== false ||
+                strpos($this->website, ".js") !== false
+            )
             {
-                if ($this->visitor->browser['version'] < $browser['version'])
-                {
-                    $this->app['browser']['is_compatible'] = false;
-                }
-                else
-                {
-                    $this->app['browser']['is_compatible'] = true;
-                }
-                break;
+                $this->reasons[] = "ENV: Website target is not valid, so it cannot be used as target.";
+            } else {
+                $this->setTarget("website");
+                $this->setUrl($this->website);
+                return;
             }
+
         }
+        else
+        {
+            $this->reasons[] = "ENV: No website parameter defined";
+        }
+
+        // If there is no website defined, check if the device is tablet or mobile. If so, use direct access
+        if (in_array($this->getDeviceType(), array("mobile", "tablet"))) {
+            $this->reasons[]   = "DEVICE: User is using a " . $this->getDeviceType() . " device. Direct Access.";
+            $this->setTarget("direct");
+            $this->setUrl($this->instance->getInfo('base_url'));
+            return;
+        }
+
+        // So here should be only Desktop devices... So check if facebook page tab information are available...
+        $this->reasons[]   = "DEVICE: User is using a desktop device.";
+        $facebook = $this->getFacebook();
+        if (isset($facebook['page_id']) && $facebook['page_id'] && isset($facebook['app_id']) && $facebook['app_id']) {
+            $this->reasons[] = "ENV: Facebook environment data available. Use it as SmartLink";
+            $this->setTarget("facebook");
+            $this->setUrl($facebook['page_tab']);
+            return;
+        }
+
+        // If no optimal url is defined yet, then use direct source
+        $this->reasons[] = "DEVICE: No website or facebook defined. Choose environment direct";
+        $this->setTarget("direct");
+        $this->setUrl($this->instance->getInfo('base_url'));
+        return;
+
     }
 
+
     /**
-     * Renders the SmartLink page
+     * Initializes the best language for the user
+     * @return bool
+     */
+    private function initLanguage()
+    {
+        $lang = false;
+
+        // Check if lang GET-parameter is available
+        if (!$lang && isset($_GET['lang']))
+        {
+            $lang            = $_GET['lang'];
+            $this->reasons[] = "LANGUAGE: GET['lang']-Parameter available: " . $lang;
+        }
+
+        // Check if language cookie is available
+        if (!$lang && $this->getCookieValue('lang'))
+        {
+            $lang            = $this->getCookieValue('lang');
+            $this->reasons[] = "LANGUAGE: COOKIE['aa_" . $this->i_id . "_lang']-Parameter available: " . $lang;
+        }
+
+        // If no language selected yet, then use the apps default language
+        if (!$lang)
+        {
+            $this->reasons[] = "LANGUAGE: No language preference defined or applicable. Use the default app language.";
+            $lang            = $this->instance->getLangTag();
+        }
+
+        $this->lang = $lang;
+
+        return $this->lang;
+    }
+
+
+    /**
+     * Renders the SmartLink Redirect Share Page
      *
      * @param bool $debug Show debug information on the page?
      */
-    public function render($debug = false)
+    public function renderSharePage($debug = false)
     {
-        echo $this->m->render(
+        if (!$this->mustache)
+        {
+            if (!defined("SMART_LIB_PATH"))
+            {
+                define("SMART_LIB_PATH", realpath(dirname(__FILE__)));
+            }
+            // Initialize mustache
+            $loader   = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views');
+            $partials = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views/partials');
+            $this->mustache  = new \Mustache_Engine(
+                array(
+                    'loader' => $loader,
+                    'partials_loader' => $partials,
+                )
+            );
+        }
+
+        echo $this->mustache->render(
             'smartLink',
             array(
-                'meta' => $this->meta,
+                'meta' => $this->getMeta(),
                 'og_meta' => $this->prepareMustacheArray($this->meta['og']),
                 'debug' => $debug,
-                'env' => $this->env,
-                'visitor' => $this->visitor->getVisitor(),
-                'referrer' => $this->referrer->getReferrer(),
-                'app' => $this->app,
                 'reasons' => $this->reasons,
-                'request' => $this->prepareMustacheArray($this->request),
-                'server' => $this->server,
-                'smartLinkUrl' => $this->smartLinkUrl
+                'request' => $this->prepareMustacheArray($_REQUEST),
+                'smartLinkUrl' => $this->getUrl()
             )
         );
     }
@@ -747,7 +449,6 @@ class SmartLink
      * Returns the url of the current script file
      *
      * @param bool $removeParams Should all GET parameters be removed?
-     *
      * @return string Url of the current script
      */
     private function getCurrentUrl($removeParams = false)
@@ -773,154 +474,77 @@ class SmartLink
     /**
      * Set all relevant information as json object (stringified) in a cookie on the visitors computer
      */
-    private function setCookie()
+    private function initCookies()
     {
         $i_id = $this->i_id;
+        $host = $_SERVER['HTTP_HOST'];
+        preg_match("/[^\.\/]+\.[^\.\/]+$/", $host, $matches);
+        if (count($matches) > 0) {
+            $domain = $matches[0];
+        } else {
+            $domain = $host;
+        }
 
         // Set cookie with the current instance ID
-        setcookie("aa_i_id", $i_id, time() + 172600, '/');
+        setcookie("aa_i_id", $i_id, time() + 172600, '/', $domain);
 
-        $cookie_key = "aa_" . $i_id . "_referral";
-        $app        = array(
-            "i_id" => $i_id,
-            "locale" => $this->env['optimal']['lang'],
-            "m_id" => $this->instanceInfo['m_id']
-        );
+        // Get custom request parameters from Cookie to set them for websites (as they can't be passed into the iframe)
+        if (isset($_COOKIE[$this->cookie_key]))
+        {
+            $cookie_params = json_decode($_COOKIE[$this->cookie_key], true);
+            if (is_array($cookie_params) && isset($cookie_params['params']))
+            {
+                $params = $cookie_params['params'];
+                foreach ($params as $key => $value)
+                {
+                    if (!isset($_GET[$key]))
+                    {
+                        $_GET[$key] = $value;
+                        unset($params[$key]);
+                        // Add the param to paramsExpired so that it will not be written to the cookie any more
+                        $this->paramsExpired[$key] = $value;
+                    }
+                }
+            }
+        }
 
-        // Add all params and GET-Parameters to the cookie as well, if parameter pass-through is activated
+        // Add all params and GET-Parameters to the cookie as well
         $params = $this->params;
-        if ($this->paramsPassthrough)
+        foreach ($_GET as $key => $value)
         {
-            foreach ($_GET as $key => $value)
+            if (!isset($this->paramsExpired[$key]))
             {
-                if (!isset($this->paramsExpired[$key]))
-                {
-                    $params[$key] = $value;
-                }
+                $params[$key] = $value;
             }
         }
 
-        $referrer = array();
-        if (isset($this->referrer->app['env']))
-        {
-            $referrer['env'] = $this->referrer->app['env'];
-        }
-        if (isset($this->referrer->app['info']['auth_uid']))
-        {
-            $referrer['auth_uid'] = $this->referrer->app['info']['auth_uid'];
-        }
+        // Set the SmartCookie
+        $smart_cookie           = $this->toArray();
+        $smart_cookie["params"] = $params;
+        setcookie($this->cookie_key, json_encode($smart_cookie), time() + 3600, '/', $domain);
 
-        $value = array(
-            'app' => $app,
-            'params' => $params
-        );
-        setcookie($cookie_key, json_encode($value), time() + 3600, '/');
-
-        // Set locale cookie
-        if (isset($this->env['optimal']['lang']))
-        {
-            setcookie("aa_" . $i_id . "_locale", $this->env['optimal']['lang'], time() + 172600, '/');
-        }
-
-        // Set environment cookie for websites and facebook
-        if (isset($this->env['optimal']['env']) && $this->env['optimal']['env'] != "direct")
-        {
-            setcookie("aa_" . $i_id . "_env", $this->env['optimal']['env'], time() + 172600, '/');
-        }
-
-        // Set device cookie
-        if (isset($this->env['optimal']['device']))
-        {
-            setcookie("aa_" . $i_id . "_device", $this->env['optimal']['device'], time() + 172600, '/');
-        }
-
-        // Set environment url
-        if (isset($this->env['optimal']['url']))
-        {
-            setcookie("aa_" . $i_id . "_env_url", $this->env['optimal']['url'], time() + 172600, '/');
-        }
-    }
-
-    /**
-     * Generates the SmartLink for the current visitor
-     *
-     * @param bool $shortenLink Shorten the SmartLink using bit.ly
-     *
-     * @return Returns the SmartLink
-     */
-    public function getSmartLinkUrl($shortenLink = false)
-    {
-        // Get Link to this page
-        //$smartLink = $this->getCurrentUrl(true);
-
-        $smartLink = $this->instanceInfo['base_url'] . "share.php";
-
-        // Add parameters
-        $smartLink .= "?i_id=" . $this->i_id;
-        if (isset($this->env['optimal']['env']))
-        {
-            $smartLink .= "&ref_app_env=" . $this->env['optimal']['env'];
-        }
-        if (isset($this->env['optimal']['lang']))
-        {
-            $smartLink .= "&locale=" . $this->env['optimal']['lang'];
-        }
-        if (isset($this->referrer->info['auth_uid']))
-        {
-            $smartLink .= "&ref_info_uid=" . $this->referrer->info['auth_uid'];
-        }
-        // Add website url, when url is no script file and no static.sk.facebook.com Url
-        if (isset($this->env['website']['url']) && isset($this->env['optimal']['env']) && $this->env['optimal']['env'] == "website")
-        {
-            // Check if website url comes from an facebook iframe. Remove it then
-            if (strpos($this->env['website']['url'], "static.sk.facebook.com") === false)
-            {
-                // Check if the website url is a script file
-                if (strpos($this->env['website']['url'], ".js") === false)
-                {
-                    $smartLink .= "&env_website_url=" . urlencode($this->env['website']['url']);
-                }
-            }
-        }
-
-        // Add additional parameters if available in $this->params
-        if (count($this->params) > 0)
-        {
-            foreach ($this->params as $key => $value)
-            {
-                $smartLink .= "&" . $key . "=" . urlencode($value);
-            }
-        }
-
-        // Shorten Link
-        if ($shortenLink)
-        {
-            $smartLink = $this->createGoogleShortLink($smartLink);
-        }
-
-        return $smartLink;
     }
 
     /**
      * Returns an array of the most important SmartLink information
      */
-    public function getSmartLink()
+    /*public function getSmartLink()
     {
 
         $response = array(
             'meta' => $this->meta,
             'env' => $this->env,
-            'visitor' => $this->visitor->getVisitor(),
-            'referrer' => $this->referrer->getReferrer(),
+            //'visitor' => $this->visitor->getVisitor(),
+            //'referrer' => $this->referrer->getReferrer(),
             'app' => $this->app,
             'reasons' => $this->reasons,
-            'request' => $this->request,
-            'server' => $this->server,
+            'request' => $_REQUEST,
+            'server' => $_SERVER,
             'smartLinkUrl' => $this->smartLinkUrl
         );
 
         return $response;
-    }
+    }*/
 
     /**
      * @param $url
@@ -968,116 +592,6 @@ class SmartLink
         return $response;
     }
 
-    /**
-     * Tries to get information about the user using the Facebook App Request IDs. A lookup in the database for
-     * these request ids is necessary
-     * @return array|mixed Returns all available information related to the latest request available or false, when no
-     *                     info available
-     */
-    private function parseFBAppRequests()
-    {
-        if (!empty($_GET['request_ids']))
-        {
-            $fb_request_id = explode(",", $_GET['request_ids']);
-            // check if more than one ID exists
-            if (is_array($fb_request_id) == true)
-            {
-                $fb_request_id = array_pop($fb_request_id); // the most recent one is the last one
-            }
-
-            try
-            {
-                $sql = "SELECT * FROM mod_facebook_friends WHERE request_id = :request_id LIMIT 1";
-
-                $stmt = $this->db->prepare($sql);
-                $stmt->bindParam(':request_id', $fb_request_id, PDO::PARAM_INT);
-                $stmt->execute();
-
-                if ($stmt->rowCount() > 0)
-                {
-                    $result = $stmt->fetchObject();
-
-                    return $result;
-                }
-                else
-                {
-                    return false;
-                }
-            } catch (Exception $e)
-            {
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Tries to get the latest instance the user was using, by looking it up in the user log
-     * @return array|bool Returns the user information and the instance id the user was using lately or false, when no
-     *                    info available
-     */
-    private function getFBCanvasInformation()
-    {
-
-        if (!isset($this->i_id) || !$this->i_id)
-        {
-            $fb_user_id = false;
-            $fb_page_id = false;
-            // Get FB User ID
-            if (isset($_REQUEST["signed_request"]))
-            {
-                $fb_signed_request = $this->parse_signed_request($_REQUEST["signed_request"]);
-
-                if (isset($fb_signed_request->user_id))
-                {
-                    $fb_user_id = $fb_signed_request->user_id;
-                }
-
-                if (isset($fb_signed_request->page->id))
-                {
-                    $fb_page_id = $fb_signed_request->page->id;
-                }
-            }
-
-            // Check if user already participated and get the instance with the most current user interaction
-            if ($fb_user_id && !$fb_page_id)
-            {
-                try
-                {
-                    $sql = "SELECT mod_log_action.i_id
-                            FROM mod_log_action
-                            INNER JOIN
-                            `user`
-                            ON uid=element_id
-                            WHERE fb_user_id=:fb_user_id
-                            AND scope='user'
-                            ORDER BY `timestamp` DESC
-                            LIMIT 1";
-
-                    $stmt = $this->db->prepare($sql);
-                    $stmt->bindParam(':fb_user_id', $fb_user_id, PDO::PARAM_STR);
-                    $stmt->execute();
-
-                    if ($stmt->rowCount() > 0)
-                    {
-                        $result = $stmt->fetchObject();
-
-                        return $result;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                } catch (Exception $e)
-                {
-                    return false;
-                }
-            }
-        }
-
-        return false;
-    }
 
     /**
      * Decodes Facebooks signed request parameter
@@ -1112,8 +626,7 @@ class SmartLink
         {
             $this->params[$key] = $value;
         }
-        // Now update the optimal url
-
+        $this->initUrl();
     }
 
     /**
@@ -1121,7 +634,25 @@ class SmartLink
      */
     public function getDevice()
     {
-        return $this->visitor->getDevice();
+        if (!$this->device)
+        {
+            $this->device = $this->initDevice();
+        }
+
+        return $this->device;
+    }
+
+    /**
+     * Returns the device type of the current device 'mobile', 'tablet', 'desktop'
+     */
+    public function getDeviceType()
+    {
+        if (!$this->device)
+        {
+            $this->device = $this->getDevice();
+        }
+
+        return $this->device['type'];
     }
 
     /**
@@ -1129,6 +660,210 @@ class SmartLink
      */
     public function getBrowser()
     {
-        return $this->visitor->getBrowser();
+        if (!$this->browser)
+        {
+            $this->browser = $this->initBrowser();
+        }
+
+        return $this->browser;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getLang()
+    {
+        if (!$this->lang)
+        {
+            $this->lang = $this->initLanguage();
+        }
+
+        return $this->lang;
+    }
+
+    /**
+     * Returns the most important smartlink information as array
+     * @return array Most important smartlink information
+     */
+    public function toArray()
+    {
+        return array(
+            "browser" => $this->getBrowser(),
+            "device" => $this->getDevice(),
+            "facebook" => $this->getFacebook(),
+            "i_id" => $this->i_id,
+            "lang" => $this->getLang(),
+            "m_id" => $this->instance->getMId(),
+            "website" => $this->getWebsite()
+        );
+    }
+
+    /**
+     * Returns a value from the SmartCookie
+     * @param $key Key to search in the SmartCookie
+     * @return Value corresponding to the key
+     */
+    private function getCookieValue($key)
+    {
+
+        if (isset($_COOKIE[$this->cookie_key][$key]))
+        {
+            return $_COOKIE[$this->cookie_key][$key];
+        }
+
+        return false;
+
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getFacebook()
+    {
+        return $this->facebook;
+    }
+
+    /**
+     * Sets the website Url the App is embedded in
+     * @param mixed $website
+     */
+    public function setWebsite($website)
+    {
+        $this->website = $website;
+    }
+
+    /**
+     * Returns the Url of the website, this app is embedded in
+     * @return mixed
+     */
+    public function getWebsite()
+    {
+        return $this->website;
+    }
+
+
+    /**
+     * Returns the Desktop OS from the UA string
+     * @return string
+     */
+    private function getDesktopOs()
+    {
+
+        $user_agent = $_SERVER['HTTP_USER_AGENT'];
+
+        $os_platform = "unknown";
+
+        $os_array = array(
+            '/windows nt 6.3/i' => 'Windows 8.1',
+            '/windows nt 6.2/i' => 'Windows 8',
+            '/windows nt 6.1/i' => 'Windows 7',
+            '/windows nt 6.0/i' => 'Windows Vista',
+            '/windows nt 5.2/i' => 'Windows Server 2003/XP x64',
+            '/windows nt 5.1/i' => 'Windows XP',
+            '/windows xp/i' => 'Windows XP',
+            '/windows nt 5.0/i' => 'Windows 2000',
+            '/windows me/i' => 'Windows ME',
+            '/win98/i' => 'Windows 98',
+            '/win95/i' => 'Windows 95',
+            '/win16/i' => 'Windows 3.11',
+            '/macintosh|mac os x/i' => 'Mac OS X',
+            '/mac_powerpc/i' => 'Mac OS 9',
+            '/linux/i' => 'Linux',
+            '/ubuntu/i' => 'Ubuntu',
+            '/iphone/i' => 'iPhone',
+            '/ipod/i' => 'iPod',
+            '/ipad/i' => 'iPad',
+            '/android/i' => 'Android',
+            '/blackberry/i' => 'BlackBerry',
+            '/webos/i' => 'Mobile'
+        );
+
+        foreach ($os_array as $regex => $value)
+        {
+            if (preg_match($regex, $user_agent))
+            {
+                $os_platform = $value;
+            }
+        }
+
+        return $os_platform;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUrl()
+    {
+        if (!$this->url) {
+            $this->initUrl();
+        }
+
+        return $this->url;
+    }
+
+    /**
+     * Generates the SmartLink from the submitted url
+     * @param String $target_url Url to generate the smartlink from
+     * @param bool $shortenLink Shorten the SmartLink using bit.ly
+     */
+    private function setUrl($target_url, $shortenLink = false)
+    {
+
+        $filename = "smartlink.php";
+        $url = $this->getCurrentUrl(true) . $filename;
+
+        // Add App-Arena Parameters
+        $url .= "?i_id=" . $this->instance->getId() . "&m_id=" . $this->instance->getMId();
+
+        // Add the target
+        $url .= "&target=" . $this->getTarget();
+
+        // Add the Target Url
+        $url .= "&url=" . urlencode($target_url);
+
+        // Add the Language
+        $url .= "&lang=" . $this->getLang();
+
+        // Add additional parameters if available in $this->params
+        if (count($this->params) > 0)
+        {
+            $this->params['lang'] = $this->getLang();
+            if ($this->getTarget() == "facebook")
+            {
+                $url .= '&app_data=' . urlencode(json_encode($this->params));
+            }
+            else
+            {
+                foreach ($this->params as $key => $value)
+                {
+                    $url .= "&" . $key . "=" . urlencode($value);
+                }
+            }
+        }
+
+        // Shorten Link
+        if ($shortenLink)
+        {
+            $url = $this->createGoogleShortLink($url);
+        }
+
+        $this->url = $url;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTarget()
+    {
+        return $this->target;
+    }
+
+    /**
+     * @param mixed $target
+     */
+    private function setTarget($target)
+    {
+        $this->target = $target;
+    }
+
 }
