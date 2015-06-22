@@ -1,0 +1,93 @@
+<!doctype html>
+<html itemscope itemtype="http://schema.org/{{ meta.schema_type }}">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- General meta data -->
+    <title>{{ meta.title }}</title>
+    <meta name="description" content="{{ meta.desc }}">
+    <link rel="image_src" href="{{ meta.image }}"/>
+    <link rel="canonical" href="{{ meta.url }}"/>
+
+    <!-- Google Meta data -->
+    <meta itemprop="name" content="{{ meta.title }}">
+    <meta itemprop="description" content="{{ meta.desc }}">
+    <meta itemprop="image" content="{{ meta.image }}">
+    <meta itemprop="url" content="{{ meta.url }}">
+
+    <!-- Facebook Meta Data -->
+    <meta property="fb:app_id" content="{{ env.fb.app_id }}"/>
+    <meta property="og:title" content="{{ meta.title }}"/>
+    <meta property="og:type" content="{{ meta.og_type }}"/>
+    <meta property="og:url" content="{{ meta.url }}"/>
+    <meta property="og:image" content="{{ meta.image }}"/>
+    <meta property="og:site_name" content="{{ meta.title }}"/>
+    <meta property="og:description" content="{{ meta.desc }}"/>
+    <meta property="og:i_id" content="{{app.aa.info.i_id}}"/>
+
+    {{# og_meta }}
+        <meta property="{{ key }}" content="{{ value }}"/>
+    {{/ og_meta }}
+
+    <!-- Twitter Meta Data -->
+    <meta property="twitter:card" content="photo"/>
+    <meta property="twitter:title" content="{{ meta.title }}"/>
+    <meta property="twitter:description" content="{{ meta.desc }}"/>
+    <meta property="twitter:image" content="{{ meta.image }}"/>
+    <meta property="twitter:url" content="{{ meta.url }}"/>
+
+    <!-- Applinks.org Meta-Data -->
+    <meta property="al:web:url" content="{{ meta.url }}"/>
+
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .glyphicon {
+            font-size: 10px;
+        }
+    </style>
+
+</head>
+<body>
+
+<!-- Prepare data in js -->
+<script>
+    var data = {
+        'browser': {
+            'name':    '{{ browser.name }}',
+            'version': '{{ browser.version }}',
+            'ua':      '{{ browser.ua }}'
+        },
+        'debug':   '{{ debug }}',
+        'device':  {
+            'os':   '{{ device.os }}',
+            'type': '{{ device.type }}'
+        },
+        'i_id':    '{{ i_id }}',
+        'lang':    '{{ lang }}',
+        'target':  '{{ target }}',
+        'url':     '{{ url }}'
+    }
+</script>
+<!-- Save data in localstorage -->
+<script>
+    var key = "aa_" + "{{i_id}}" + "_smartLink";
+    localStorage.setItem(key, JSON.stringify(data));
+</script>
+
+<!-- Redirect user immediately if debug mode deactivted -->
+<script>
+        {{^ debug }}
+        // Automatic redirect, when debug mode deactivated
+        //window.location = '{{{ env.optimal.url }}}';
+        {{/ debug }}
+</script>
+
+<!-- Show debug information -->
+{{#debug}}
+    {{> shareDebug}}
+{{/debug}}
+
+</body>
+</html>

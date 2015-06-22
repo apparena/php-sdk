@@ -271,7 +271,7 @@ class AppManager
      */
     public function getEnvironment()
     {
-        return $this->smart_link->getTarget();
+        return $this->smart_link->getEnvironment();
     }
 
     /**

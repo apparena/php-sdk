@@ -21,6 +21,7 @@ class SmartLink
     private $browser = array(); // Browser information
     private $cookie_key; // SmartCookie key
     private $device = array(); // Device information
+    private $environment; // Target environment
     private $facebook = array(); // All available information about the facebook page the instance is embedded in
     private $i_id;
     private $lang; // Currently selected language
@@ -28,8 +29,8 @@ class SmartLink
     private $params = array(); // Additional parameters which will be passed through
     private $paramsExpired = array(); // These expired params will not be set to the cookie any more
     private $reasons = array(); // Array of reasons, why the SmartLink refers to a certain environment
-    private $target; // Target environment
-    private $url; // SmartLink Url
+    private $url; // SmartLink Url (Url for sharing)
+    private $url_target; // The url the user will be redirected to
     private $website; // All available information about the website the instance is embedded in
 
     // Library objects
@@ -92,6 +93,9 @@ class SmartLink
 
         // Initializes the SmartCookie
         $this->initCookies();
+
+        // Initialize Request parameters
+        $this->initParams();
 
         // Initialize the SmartLink Url
         $this->initUrl();
@@ -189,7 +193,7 @@ class SmartLink
      */
     private function initBaseUrl()
     {
-        $base_url  = 'http';
+        $base_url = 'http';
         if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on")
         {
             $base_url .= "s";
@@ -197,7 +201,8 @@ class SmartLink
         $base_url .= "://";
         $base_url .= $_SERVER["SERVER_NAME"];
 
-        if (substr($base_url, -1) != "/") {
+        if (substr($base_url, -1) != "/")
+        {
             $base_url .= "/";
         }
 
@@ -335,6 +340,23 @@ class SmartLink
         $this->device = $device;
     }
 
+    /**
+     * Initializes all GET parameters so that they are used, when set
+     */
+    private function initParams()
+    {
+        $params = array();
+
+        if (count($_GET) > 0) {
+            foreach ($_GET as $key => $value)
+            {
+                $params[$key] = $value;
+            }
+            $this->setParams($params);
+        }
+
+    }
+
 
     /**
      * Analyzes all available data and sets the best suited target environment for the user
@@ -358,9 +380,12 @@ class SmartLink
             )
             {
                 $this->reasons[] = "ENV: Website target is not valid, so it cannot be used as target.";
-            } else {
-                $this->setTarget("website");
+            }
+            else
+            {
+                $this->setEnvironment("website");
                 $this->setUrl($this->website);
+
                 return;
             }
 
@@ -371,31 +396,39 @@ class SmartLink
         }
 
         // If there is no website defined, check if the device is tablet or mobile. If so, use direct access
-        if (in_array($this->getDeviceType(), array("mobile", "tablet"))) {
-            $this->reasons[]   = "DEVICE: User is using a " . $this->getDeviceType() . " device. Direct Access.";
-            $this->setTarget("direct");
+        if (in_array($this->getDeviceType(), array("mobile", "tablet")))
+        {
+            $this->reasons[] = "DEVICE: User is using a " . $this->getDeviceType() . " device. Direct Access.";
+            $this->setEnvironment("direct");
             $this->setUrl($this->instance->getInfo('base_url'));
+
             return;
         }
 
         // So here should be only Desktop devices... So check if facebook page tab information are available...
-        $this->reasons[]   = "DEVICE: User is using a desktop device.";
-        $facebook = $this->getFacebook();
-        if (isset($facebook['page_id']) && $facebook['page_id'] && isset($facebook['app_id']) && $facebook['app_id']) {
+        $this->reasons[] = "DEVICE: User is using a desktop device.";
+        $facebook        = $this->getFacebook();
+        if (isset($facebook['page_id']) && $facebook['page_id'] && isset($facebook['app_id']) && $facebook['app_id'])
+        {
             $this->reasons[] = "ENV: Facebook environment data available. Use it as SmartLink";
-            $this->setTarget("facebook");
+            $this->setEnvironment("facebook");
             $this->setUrl($facebook['page_tab']);
+
             return;
         }
 
         // If no optimal url is defined yet, then use direct source
         $this->reasons[] = "DEVICE: No website or facebook defined. Choose environment direct";
-        $this->setTarget("direct");
-        if ($this->getBaseUrl()) {
+        $this->setEnvironment("direct");
+        if ($this->getBaseUrl())
+        {
             $this->setUrl($this->getBaseUrl());
-        } else {
+        }
+        else
+        {
             $this->setUrl($this->instance->getInfo('base_url'));
         }
+
         return;
 
     }
@@ -450,9 +483,9 @@ class SmartLink
                 define("SMART_LIB_PATH", realpath(dirname(__FILE__)));
             }
             // Initialize mustache
-            $loader   = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views');
-            $partials = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views/partials');
-            $this->mustache  = new \Mustache_Engine(
+            $loader         = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views');
+            $partials       = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views/partials');
+            $this->mustache = new \Mustache_Engine(
                 array(
                     'loader' => $loader,
                     'partials_loader' => $partials,
@@ -460,17 +493,21 @@ class SmartLink
             );
         }
 
-        echo $this->mustache->render(
-            'smartLink',
-            array(
-                'meta' => $this->getMeta(),
-                'og_meta' => $this->prepareMustacheArray($this->meta['og']),
-                'debug' => $debug,
-                'reasons' => $this->reasons,
-                'request' => $this->prepareMustacheArray($_REQUEST),
-                'smartLinkUrl' => $this->getUrl()
-            )
+        $data = array(
+            'browser' => $this->getBrowser(),
+            'debug' => $debug,
+            'device' => $this->getDevice(),
+            'i_id' => $this->i_id,
+            'lang' => $this->getLang(),
+            'meta' => $this->getMeta(),
+            'og_meta' => $this->prepareMustacheArray($this->meta['og']),
+            'params' => $this->params,
+            'reasons' => $this->reasons,
+            'target' => $this->getEnvironment(),
+            'url' => $this->getUrl(),
+            'url_target' => $this->getUrlTarget()
         );
+        echo $this->mustache->render('share', $data);
     }
 
     /**
@@ -507,9 +544,12 @@ class SmartLink
         $i_id = $this->i_id;
         $host = $_SERVER['HTTP_HOST'];
         preg_match("/[^\.\/]+\.[^\.\/]+$/", $host, $matches);
-        if (count($matches) > 0) {
+        if (count($matches) > 0)
+        {
             $domain = $matches[0];
-        } else {
+        }
+        else
+        {
             $domain = $host;
         }
 
@@ -611,6 +651,10 @@ class SmartLink
         $response = array();
         foreach ($data as $key => $value)
         {
+            if (is_array($value))
+            {
+                continue;
+            }
             $response[] = array(
                 "key" => $key,
                 "value" => $value
@@ -757,7 +801,10 @@ class SmartLink
      */
     public function setWebsite($website)
     {
-        $this->website = $website;
+        if ($website) {
+            $this->website = $website;
+            $this->setParams(array("website"=>$this->website));
+        }
     }
 
     /**
@@ -822,7 +869,8 @@ class SmartLink
      */
     public function getUrl()
     {
-        if (!$this->url) {
+        if (!$this->url)
+        {
             $this->initUrl();
         }
 
@@ -831,42 +879,44 @@ class SmartLink
 
     /**
      * Generates the SmartLink from the submitted url
-     * @param String $target_url Url to generate the smartlink from
-     * @param bool $shortenLink Shorten the SmartLink using bit.ly
+     * @param String $target_url  Url to generate the smartlink from
+     * @param bool   $shortenLink Shorten the SmartLink using bit.ly
      */
     private function setUrl($target_url, $shortenLink = false)
     {
+        $filename  = "smartlink.php";
+        $share_url = $this->getBaseUrl() . $filename;
+        $target_original = $target_url;
 
-        $filename = "smartlink.php";
-        $url = $this->getBaseUrl() . $filename;
+        $params = array();
 
         // Add App-Arena Parameters
-        $url .= "?i_id=" . $this->instance->getId() . "&m_id=" . $this->instance->getMId();
-
-        // Add the target
-        $url .= "&target=" . $this->getTarget();
-
-        // Add the Target Url
-        $url .= "&url=" . urlencode($target_url);
-
-        // Add the Language
-        $url .= "&lang=" . $this->getLang();
+        $params['i_id'] = $this->instance->getId();
+        $params['m_id'] = $this->instance->getMId();
+        $params['lang'] = $this->getLang();
 
         // Add additional parameters if available in $this->params
-        if (count($this->params) > 0)
+        $params = array_merge($this->params, $params);
+
+        // Generate sharing and target Url
+        foreach ($params as $key => $value)
         {
-            $this->params['lang'] = $this->getLang();
-            if ($this->getTarget() == "facebook")
-            {
-                $url .= '&app_data=' . urlencode(json_encode($this->params));
+            // If it is the first parameter, then use "?", else use  "&"
+            if (strpos($target_url, "?") === false) {
+                $target_url .= "?" . $key . "=" . urlencode($value);
+            } else {
+                $target_url .= "&" . $key . "=" . urlencode($value);
             }
-            else
-            {
-                foreach ($this->params as $key => $value)
-                {
-                    $url .= "&" . $key . "=" . urlencode($value);
-                }
+            if (strpos($share_url, "?") === false) {
+                $share_url .= "?" . $key . "=" . urlencode($value);
+            } else {
+                $share_url .= "&" . $key . "=" . urlencode($value);
             }
+        }
+
+        if ($this->getEnvironment() == "facebook")
+        {
+            $target_url = $target_original . '&app_data=' . urlencode(json_encode($params));
         }
 
         // Shorten Link
@@ -875,23 +925,24 @@ class SmartLink
             $url = $this->createGoogleShortLink($url);
         }
 
-        $this->url = $url;
+        $this->url = $share_url;
+        $this->setUrlTarget($target_url);
     }
 
     /**
      * @return mixed
      */
-    public function getTarget()
+    public function getEnvironment()
     {
-        return $this->target;
+        return $this->environment;
     }
 
     /**
-     * @param mixed $target
+     * @param mixed $environment
      */
-    private function setTarget($target)
+    private function setEnvironment($environment)
     {
-        $this->target = $target;
+        $this->environment = $environment;
     }
 
     /**
@@ -907,11 +958,28 @@ class SmartLink
      */
     public function setBaseUrl($base_url)
     {
-        if (substr($base_url, -1) != "/") {
+        if (substr($base_url, -1) != "/")
+        {
             $base_url .= "/";
         }
         $this->base_url = $base_url;
         $this->initUrl();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUrlTarget()
+    {
+        return $this->url_target;
+    }
+
+    /**
+     * @param mixed $url_target
+     */
+    public function setUrlTarget($url_target)
+    {
+        $this->url_target = $url_target;
     }
 
 
