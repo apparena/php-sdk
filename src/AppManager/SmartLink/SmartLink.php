@@ -647,7 +647,7 @@ class SmartLink
     {
         if (!$this->device)
         {
-            $this->device = $this->initDevice();
+            $this->initDevice();
         }
 
         return $this->device;
@@ -673,7 +673,7 @@ class SmartLink
     {
         if (!$this->browser)
         {
-            $this->browser = $this->initBrowser();
+            $this->initBrowser();
         }
 
         return $this->browser;
@@ -894,6 +894,7 @@ class SmartLink
             $base_url .= "/";
         }
         $this->base_url = $base_url;
+        $this->initUrl();
     }
 
 
