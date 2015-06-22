@@ -274,5 +274,23 @@ class AppManager
         return $this->smart_link->getTarget();
     }
 
+    /**
+     * @return mixed
+     */
+    public function getBaseUrl()
+    {
+        return $this->smart_link->getBaseUrl();
+    }
+
+    /**
+     * @param mixed $base_url
+     */
+    public function setBaseUrl($base_url)
+    {
+        $this->smart_link->setBaseUrl($base_url);
+    }
+
+
+
 
 }

@@ -17,6 +17,7 @@ class SmartLink
     protected $api; // API object
     protected $instance; // Instance object
 
+    private $base_url;
     private $browser = array(); // Browser information
     private $cookie_key; // SmartCookie key
     private $device = array(); // Device information
@@ -55,6 +56,16 @@ class SmartLink
      */
     public function __construct($instance)
     {
+        // Initialize the base url
+        $base_url  = 'http';
+        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on")
+        {
+            $base_url .= "s";
+        }
+        $base_url .= "://";
+        $base_url .= $_SERVER["SERVER_NAME"];
+        $this->setBaseUrl($base_url);
+
         // Initialize the instance information
         $this->instance = $instance;
         $this->i_id     = $this->instance->getId();
@@ -810,7 +821,7 @@ class SmartLink
     {
 
         $filename = "smartlink.php";
-        $url = $this->getCurrentUrl(true) . $filename;
+        $url = $this->getBaseUrl() . $filename;
 
         // Add App-Arena Parameters
         $url .= "?i_id=" . $this->instance->getId() . "&m_id=" . $this->instance->getMId();
@@ -865,5 +876,25 @@ class SmartLink
     {
         $this->target = $target;
     }
+
+    /**
+     * @return string
+     */
+    public function getBaseUrl()
+    {
+        return $this->base_url;
+    }
+
+    /**
+     * @param string $base_url
+     */
+    public function setBaseUrl($base_url)
+    {
+        if (substr($base_url, -1) != "/") {
+            $base_url .= "/";
+        }
+        $this->base_url = $base_url;
+    }
+
 
 }
