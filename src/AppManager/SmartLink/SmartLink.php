@@ -258,7 +258,7 @@ class SmartLink
         $this->browser = array(
             "ua" => $this->browser_php->getUserAgent(),
             "platform" => $this->browser_php->getPlatform(),
-            "browser" => $this->browser_php->getBrowser(),
+            "name" => $this->browser_php->getBrowser(),
             "version" => $this->browser_php->getVersion()
         );
     }
