@@ -22,6 +22,10 @@ $am = new \AppManager\AppManager(
         "cache_dir" => ROOT_PATH . "/var/cache"
     )
 );
+// Get all necessary instance information to start working
+$config = $am->getConfigs();
+$translation = $am->getTranslations();
+$info = $am->getInfos();
 ```
 
 Now the connection is build up and you can start using you App-Instance. The App-Manager SDK automatically tries to get 
