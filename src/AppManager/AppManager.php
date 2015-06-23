@@ -14,10 +14,7 @@ class AppManager
     private $i_id;
     private $m_id;
     private $lang = "de_DE"; // Language: e.g. de_DE, en_US, en_UK, ...
-    private $info;
     private $instance;
-    private $config;
-    private $translation;
     private $smart_link;
     private $url;
 
@@ -73,19 +70,7 @@ class AppManager
      */
     public function getInfos()
     {
-        if ($this->info)
-        {
-            return $this->info;
-        }
-
-        if ($this->instance)
-        {
-            $this->info = $this->instance->getInfos();
-
-            return $this->info;
-        }
-
-        return false;
+        return $this->instance->getInfos();
 
     }
 
@@ -95,19 +80,7 @@ class AppManager
      */
     public function getConfigs()
     {
-        if ($this->config)
-        {
-            return $this->config;
-        }
-
-        if ($this->instance)
-        {
-            $this->config = $this->instance->getConfigs();
-
-            return $this->config;
-        }
-
-        return false;
+        return $this->instance->getConfigs();
     }
 
     /**
@@ -115,20 +88,7 @@ class AppManager
      */
     public function getTranslations()
     {
-        if ($this->translation)
-        {
-            return $this->translation;
-        }
-
-
-        if ($this->instance)
-        {
-            $this->translation = $this->instance->getTranslations();
-
-            return $this->translation;
-        }
-
-        return false;
+        return $this->instance->getTranslations();
     }
 
     /**
@@ -137,16 +97,7 @@ class AppManager
      */
     public function getUrl()
     {
-        if ($this->url)
-        {
-            return $this->url;
-        }
-        else
-        {
-            $this->url = $this->smart_link->getUrl();
-
-            return $this->url;
-        }
+        return $this->smart_link->getUrl();
     }
 
     /**
@@ -155,19 +106,7 @@ class AppManager
      */
     public function getIId()
     {
-        if ($this->i_id)
-        {
-            return $this->i_id;
-        }
-
-        if ($this->instance)
-        {
-            $this->i_id = $this->instance->getId();
-
-            return $this->i_id;
-        }
-
-        return false;
+        return $this->instance->getId();
     }
 
     /**
@@ -298,11 +237,6 @@ class AppManager
         if (in_array($lang, $allowed)) {
             $this->lang = $lang;
             $this->instance->setLang($this->lang);
-
-            // Resets the object cache, so that new requests will be generated
-            $this->translation = null;
-            $this->config      = null;
-            $this->info        = null;
         }
 
     }
@@ -331,9 +265,7 @@ class AppManager
      */
     public function renderSharePage($debug = false)
     {
-
         return $this->smart_link->renderSharePage($debug);
-
     }
 
     /**
