@@ -372,6 +372,7 @@ class SmartLink
         // Due to Safari Cookie Blocking policies, redirect Safari Users to the direct page
         $browser = $this->getBrowser();
         if ($browser['name'] == "Safari") {
+            $this->reasons[] = "BROWSER: Safari is used. Change target to direct";
             $this->setTarget("direct");
         }
 
@@ -396,7 +397,7 @@ class SmartLink
             // Check if another target is defined, then add the website as GET param, but do not use it for redirection
             if ( $this->getTarget() && $this->getUrlTarget() != "website" ) {
                 $this->reasons[] = "ENV: Website valid, but another target is defined";
-                $this->setParams(array("website" => $this->website));
+                $this->params["website"] = $this->website;
                 $website_valid = false;
             }
 
