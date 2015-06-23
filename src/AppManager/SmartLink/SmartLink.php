@@ -495,13 +495,15 @@ class SmartLink
 
         $data = array(
             'browser' => $this->getBrowser(),
+            'cookies' => $this->prepareMustacheArray($_COOKIE),
             'debug' => $debug,
             'device' => $this->getDevice(),
             'i_id' => $this->i_id,
             'lang' => $this->getLang(),
             'meta' => $this->getMeta(),
             'og_meta' => $this->prepareMustacheArray($this->meta['og']),
-            'params' => $this->params,
+            'params' => $this->prepareMustacheArray($this->params),
+            'params_expired' => $this->prepareMustacheArray($this->paramsExpired),
             'reasons' => $this->reasons,
             'target' => $this->getEnvironment(),
             'url' => $this->getUrl(),
@@ -589,7 +591,8 @@ class SmartLink
         // Set the SmartCookie
         $smart_cookie           = $this->toArray();
         $smart_cookie["params"] = $params;
-        setcookie($this->cookie_key, json_encode($smart_cookie), time() + 3600, '/', $domain);
+        $data = json_encode($smart_cookie);
+        setcookie($this->cookie_key, $data, time() + 3600, '/', $domain);
 
     }
 
