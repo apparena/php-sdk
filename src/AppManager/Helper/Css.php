@@ -19,11 +19,23 @@ class Css
 {
 
     protected $parser = null;
+    private $i_id;
+    private $lang;
+    private $cache_key;
+    private $file_id;
 
-    function __construct($cache_dir, $i_id, $locale)
+    /**
+     * Initializes the CSS compiler class
+     * @param        $cache_dir Directory for the compiled CSS files
+     * @param        $i_id Instance ID
+     * @param        $lang Language to generate the CSS for (does not need to be necessarily different
+     * @param string $file_id File identifier, in case you want to compile more than one file
+     */
+    function __construct($cache_dir, $i_id, $lang = "de_DE", $file_id = "style")
     {
         $this->i_id   = $i_id;
-        $this->locale = $locale;
+        $this->locale = $lang;
+        $this->file_id = $file_id;
 
         $this->cache = new Cache(
             array(
@@ -33,7 +45,7 @@ class Css
 
         $this->parser = new \Less_Parser();
 
-        $this->cache_key = "instances_$i_id" . "_$locale" . ".css";
+        $this->cache_key = "instances_$i_id" . "_$lang" . "_$filename.css";
     }
 
     /**
