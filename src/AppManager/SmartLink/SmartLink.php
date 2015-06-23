@@ -499,6 +499,7 @@ class SmartLink
             'debug' => $debug,
             'device' => $this->getDevice(),
             'i_id' => $this->i_id,
+            'info' => $this->instance->getInfos(),
             'lang' => $this->getLang(),
             'meta' => $this->getMeta(),
             'og_meta' => $this->prepareMustacheArray($this->meta['og']),
@@ -929,7 +930,7 @@ class SmartLink
         // Shorten Link
         if ($shortenLink)
         {
-            $url = $this->createGoogleShortLink($url);
+            $share_url = $this->createGoogleShortLink($share_url);
         }
 
         $this->url = $share_url;
