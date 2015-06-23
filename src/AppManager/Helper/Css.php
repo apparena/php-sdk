@@ -27,14 +27,14 @@ class Css
     /**
      * Initializes the CSS compiler class
      * @param        $cache_dir Directory for the compiled CSS files
-     * @param        $i_id Instance ID
-     * @param        $lang Language to generate the CSS for (does not need to be necessarily different
-     * @param string $file_id File identifier, in case you want to compile more than one file
+     * @param        $i_id      Instance ID
+     * @param        $lang      Language to generate the CSS for (does not need to be necessarily different
+     * @param string $file_id   File identifier, in case you want to compile more than one file
      */
     function __construct($cache_dir, $i_id, $lang = "de_DE", $file_id = "style")
     {
-        $this->i_id   = $i_id;
-        $this->locale = $lang;
+        $this->i_id    = $i_id;
+        $this->lang    = $lang;
         $this->file_id = $file_id;
 
         $this->cache = new Cache(
@@ -45,27 +45,27 @@ class Css
 
         $this->parser = new \Less_Parser();
 
-        $this->cache_key = "instances_$i_id" . "_$lang" . "_$filename.css";
+        $this->cache_key = "instances_" . $this->i_id . "_" . $this->lang . "_" . $this->file_id . ".css";
     }
 
     /**
      * Minifies, compiles (Less) and concatenates Less and Css files and content
-     * @param array $data Array of filenames and CSS/Less content to be processed. Format:
-     *                  $css_files = array(
-     *                      'files' => array(
-     *                          ROOT_PATH.'/css/style.css'
-     *                          ROOT_PATH.'/css/bootstrap.min.css'
-     *                      ),
-     *                      'css' => array(
-     *                          'body { color:red; }',
-     *                          '@variable1: #123; p { color: @variable1; }'
-     *                      )
-     *                  );
+     * @param array $data         Array of filenames and CSS/Less content to be processed. Format:
+     *                            $css_files = array(
+     *                            'files' => array(
+     *                            ROOT_PATH.'/css/style.css'
+     *                            ROOT_PATH.'/css/bootstrap.min.css'
+     *                            ),
+     *                            'css' => array(
+     *                            'body { color:red; }',
+     *                            '@variable1: #123; p { color: @variable1; }'
+     *                            )
+     *                            );
      * @param array $replacements Array of values to be replaced in CSS/Less content before compiling. Format:
-     *                  $css_replacements = array(
-     *                       '{{app_color_primary.value}}' => __c('app_color_primary'),
-     *                       '../fonts/fontawesome' => '../../js/vendor_bower/font-awesome/fonts/fontawesome'
-     *                   );
+     *                            $css_replacements = array(
+     *                            '{{app_color_primary.value}}' => __c('app_color_primary'),
+     *                            '../fonts/fontawesome' => '../../js/vendor_bower/font-awesome/fonts/fontawesome'
+     *                            );
      * @return string Filename of the generated CSS file
      * @throws \Exception
      */
