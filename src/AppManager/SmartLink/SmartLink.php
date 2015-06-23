@@ -904,6 +904,10 @@ class SmartLink
         // Generate sharing and target Url
         foreach ($params as $key => $value)
         {
+            if (is_array($value)) {
+                $value = json_encode($value);
+            }
+
             // If it is the first parameter, then use "?", else use  "&"
             if (strpos($target_url, "?") === false) {
                 $target_url .= "?" . $key . "=" . urlencode($value);
@@ -984,6 +988,5 @@ class SmartLink
     {
         $this->url_target = $url_target;
     }
-
 
 }
