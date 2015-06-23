@@ -29,6 +29,7 @@ class SmartLink
     private $params = array(); // Additional parameters which will be passed through
     private $paramsExpired = array(); // These expired params will not be set to the cookie any more
     private $reasons = array(); // Array of reasons, why the SmartLink refers to a certain environment
+    private $target; // If a target is defined, then this will be used as preferred redirect location
     private $url; // SmartLink Url (Url for sharing)
     private $url_target; // The url the user will be redirected to
     private $website; // All available information about the website the instance is embedded in
@@ -290,6 +291,7 @@ class SmartLink
             "name" => $this->browser_php->getBrowser(),
             "version" => $this->browser_php->getVersion()
         );
+
     }
 
     /**
@@ -367,12 +369,20 @@ class SmartLink
     {
         $url = false;
 
+        // Due to Safari Cookie Blocking policies, redirect Safari Users to the direct page
+        $browser = $this->getBrowser();
+        if ($browser['name'] == "Safari") {
+            $this->setTarget("direct");
+        }
+
+
         // 1. If a website is defined, use the website as default environment
         if ($this->website)
         {
             $this->reasons[] = "ENV: Website is defined";
 
             // Validate the Website url
+            $website_valid = true;
             if (
                 strpos($this->website, "www.facebook.com/") !== false ||
                 strpos($this->website, "static.sk.facebook.com") !== false ||
@@ -380,15 +390,22 @@ class SmartLink
             )
             {
                 $this->reasons[] = "ENV: Website target is not valid, so it cannot be used as target.";
+                $website_valid = false;
             }
-            else
-            {
+
+            // Check if another target is defined, then add the website as GET param, but do not use it for redirection
+            if ( $this->getTarget() && $this->getUrlTarget() != "website" ) {
+                $this->reasons[] = "ENV: Website valid, but another target is defined";
+                $this->setParams(array("website" => $this->website));
+                $website_valid = false;
+            }
+
+            // If Website is valid, then use it
+            if ($website_valid) {
                 $this->setEnvironment("website");
                 $this->setUrl($this->website);
-
                 return;
             }
-
         }
         else
         {
@@ -410,11 +427,22 @@ class SmartLink
         $facebook        = $this->getFacebook();
         if (isset($facebook['page_id']) && $facebook['page_id'] && isset($facebook['app_id']) && $facebook['app_id'])
         {
-            $this->reasons[] = "ENV: Facebook environment data available. Use it as SmartLink";
-            $this->setEnvironment("facebook");
-            $this->setUrl($facebook['page_tab']);
+            $this->reasons[] = "ENV: Facebook environment data available.";
 
-            return;
+            // Check if another target is defined, then add the website as GET param, but do not use it for redirection
+            $facebook_valid = true;
+            if ( $this->getTarget() && $this->getUrlTarget() != "facebook" ) {
+                $this->reasons[] = "ENV: Facebook environment valid, but another target is defined";
+                $facebook_valid = false;
+            }
+
+            // If Facebook Environment is valid, then use it
+            if ($facebook_valid) {
+                $this->setEnvironment("facebook");
+                $this->setUrl($facebook['page_tab']);
+                return;
+            }
+
         }
 
         // If no optimal url is defined yet, then use direct source
@@ -988,6 +1016,27 @@ class SmartLink
     public function setUrlTarget($url_target)
     {
         $this->url_target = $url_target;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTarget()
+    {
+        return $this->target;
+    }
+
+    /**
+     * @param mixed $target
+     */
+    public function setTarget($target)
+    {
+        $allowed = array("website", "facebook", "direct");
+
+        if (in_array($target, $allowed)) {
+            $this->target = $target;
+        }
+
     }
 
 }
