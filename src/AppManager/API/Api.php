@@ -22,6 +22,7 @@ class Api
     protected $error_msg = ''; // Error message on failed soap call
     protected $cache = false;
     private $cache_reset = false;
+    private $lang; // Language
 
     protected $auth_username = '';
     protected $auth_password = '';
@@ -29,20 +30,25 @@ class Api
 
     /**
      * @param array $params Parameter to control the initialization
-     *      bool 'cache_reset' Reset the cache on initialization?
+     *                      bool 'cache_reset' Reset the cache on initialization?
      */
     function __construct($params = array())
     {
 
         // Initialize Cache object
-        if (isset($params['cache_dir'])){
+        if (isset($params['cache_dir']))
+        {
             $cache_dir = $params['cache_dir'];
-        } else {
+        }
+        else
+        {
             $cache_dir = false;
         }
-        $this->cache = new Cache(array(
+        $this->cache = new Cache(
+            array(
                 'cache_dir' => $cache_dir
-            ));
+            )
+        );
 
     }
 
@@ -55,14 +61,14 @@ class Api
      */
     function get($route, $params = array())
     {
-      if(isset($params['lang_tag']))
-      {
-        $cache_key = str_replace('/','_',$route) . "_" . $params['lang_tag']."_".md5($route . json_encode($params));
-      }
-      else
-      {
-        $cache_key = str_replace('/','_',$route) . "_" . md5($route . json_encode($params));
-      }
+        if ($this->lang)
+        {
+            $cache_key = str_replace('/', '_', $route) . "_" . $this->lang . "_" . md5($route . json_encode($params));
+        }
+        else
+        {
+            $cache_key = str_replace('/', '_', $route) . "_" . md5($route . json_encode($params));
+        }
 
         if (!$this->cache_reset && $this->cache->exists($cache_key))
         {
@@ -127,6 +133,16 @@ class Api
 
         return $out;
     }
+
+    /**
+     * @param mixed $lang
+     */
+    public function setLang($lang)
+    {
+        $this->lang = $lang;
+    }
+
+
 
 
 }

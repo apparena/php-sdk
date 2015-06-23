@@ -44,7 +44,7 @@ class AppManager
     /**
      * Establishes the API connection, current instance and the SmartLink object
      */
-    public function init()
+    private function init()
     {
 
         $this->api = new Api(
@@ -55,13 +55,11 @@ class AppManager
 
         $i_id = $this->getIId();
         $m_id = $this->getMId();
-        $lang = $this->getLang();
 
         $this->instance = new Instance(
             $this->api, array(
                 "i_id" => $i_id,
-                "m_id" => $m_id,
-                "lang" => $lang
+                "m_id" => $m_id
             )
         );
 
@@ -83,6 +81,7 @@ class AppManager
         if ($this->instance)
         {
             $this->info = $this->instance->getInfos();
+
             return $this->info;
         }
 
@@ -91,7 +90,8 @@ class AppManager
     }
 
     /**
-     * @return mixed
+     * Returns all Config Elements of the current instance as array
+     * @return array All config elements of the current instance
      */
     public function getConfigs()
     {
@@ -103,6 +103,7 @@ class AppManager
         if ($this->instance)
         {
             $this->config = $this->instance->getConfigs();
+
             return $this->config;
         }
 
@@ -123,6 +124,7 @@ class AppManager
         if ($this->instance)
         {
             $this->translation = $this->instance->getTranslations();
+
             return $this->translation;
         }
 
@@ -148,6 +150,7 @@ class AppManager
     }
 
     /**
+     * Returns the currently used Instance ID
      * @return mixed
      */
     public function getIId()
@@ -160,6 +163,7 @@ class AppManager
         if ($this->instance)
         {
             $this->i_id = $this->instance->getId();
+
             return $this->i_id;
         }
 
@@ -167,7 +171,8 @@ class AppManager
     }
 
     /**
-     * @return mixed
+     * Returns the currently used Language
+     * @return string Language Code (e.g. de_DE, en_US, ...)
      */
     public function getLang()
     {
@@ -175,15 +180,136 @@ class AppManager
     }
 
     /**
-     * @param mixed $lang
+     * Sets a new language for the app manager
+     * @param string $lang Language Code
      */
     public function setLang($lang)
     {
-        $this->lang = $lang;
+        $allowed    = array(
+            'sq_AL',
+            'ar_DZ',
+            'ar_BH',
+            'ar_EG',
+            'ar_IQ',
+            'ar_JO',
+            'ar_KW',
+            'ar_LB',
+            'ar_LY',
+            'ar_MA',
+            'ar_OM',
+            'ar_QA',
+            'ar_SA',
+            'ar_SD',
+            'ar_SY',
+            'ar_TN',
+            'ar_AE',
+            'ar_YE',
+            'be_BY',
+            'bg_BG',
+            'ca_ES',
+            'zh_CN',
+            'zh_HK',
+            'zh_SG',
+            'hr_HR',
+            'cs_CZ',
+            'da_DK',
+            'nl_BE',
+            'nl_NL',
+            'en_AU',
+            'en_CA',
+            'en_IN',
+            'en_IE',
+            'en_MT',
+            'en_NZ',
+            'en_PH',
+            'en_SG',
+            'en_ZA',
+            'en_GB',
+            'en_US',
+            'et_EE',
+            'fi_FI',
+            'fr_BE',
+            'fr_CA',
+            'fr_FR',
+            'fr_LU',
+            'fr_CH',
+            'de_AT',
+            'de_DE',
+            'de_LU',
+            'de_CH',
+            'el_CY',
+            'el_GR',
+            'iw_IL',
+            'hi_IN',
+            'hu_HU',
+            'is_IS',
+            'in_ID',
+            'ga_IE',
+            'it_IT',
+            'it_CH',
+            'ja_JP',
+            'ja_JP',
+            'ko_KR',
+            'lv_LV',
+            'lt_LT',
+            'mk_MK',
+            'ms_MY',
+            'mt_MT',
+            'no_NO',
+            'no_NO',
+            'pl_PL',
+            'pt_BR',
+            'pt_PT',
+            'ro_RO',
+            'ru_RU',
+            'sr_BA',
+            'sr_ME',
+            'sr_CS',
+            'sr_RS',
+            'sk_SK',
+            'sl_SI',
+            'es_AR',
+            'es_BO',
+            'es_CL',
+            'es_CO',
+            'es_CR',
+            'es_DO',
+            'es_EC',
+            'es_SV',
+            'es_GT',
+            'es_HN',
+            'es_MX',
+            'es_NI',
+            'es_PA',
+            'es_PY',
+            'es_PE',
+            'es_PR',
+            'es_ES',
+            'es_US',
+            'es_UY',
+            'es_VE',
+            'sv_SE',
+            'th_TH',
+            'th_TH',
+            'tr_TR',
+            'uk_UA',
+            'vi_VN'
+        );
+        if (in_array($lang, $allowed)) {
+            $this->lang = $lang;
+            $this->instance->setLang($this->lang);
+
+            // Resets the object cache, so that new requests will be generated
+            $this->translation = null;
+            $this->config      = null;
+            $this->info        = null;
+        }
+
     }
 
     /**
-     * @return int
+     * Returns the model ID of the currently selected instance
+     * @return int Model ID
      */
     public function getMId()
     {
@@ -200,10 +326,11 @@ class AppManager
 
 
     /**
-     * Renders the complete share.php page
+     * Renders the complete smartlink.php page
      * @param bool $debug Show debug information on the page?
      */
-    public function renderSharePage($debug = false){
+    public function renderSharePage($debug = false)
+    {
 
         return $this->smart_link->renderSharePage($debug);
 
@@ -223,7 +350,8 @@ class AppManager
      *
      * @return array Returns meta data for the page
      */
-    public function setMeta($meta) {
+    public function setMeta($meta)
+    {
         return $this->smart_link->setMeta($meta);
     }
 
@@ -275,7 +403,8 @@ class AppManager
     }
 
     /**
-     * @return mixed
+     * Returns the BaseUrl your Sharing Url is generated with. By default it will use the currently used domain
+     * @return string Base Url
      */
     public function getBaseUrl()
     {
@@ -283,14 +412,13 @@ class AppManager
     }
 
     /**
-     * @param mixed $base_url
+     * Sets a new base url for your sharing links (-->getUrl()).
+     * @param string $base_url New base url
      */
     public function setBaseUrl($base_url)
     {
         $this->smart_link->setBaseUrl($base_url);
     }
-
-
 
 
 }

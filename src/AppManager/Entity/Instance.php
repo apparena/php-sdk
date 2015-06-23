@@ -23,7 +23,7 @@ class Instance
     protected $config = array();
     protected $translation = array();
     protected $info = array();
-    protected $lang_tag = "de_DE";
+    protected $lang = "de_DE";
     private $cache_dir = false;
 
     /**
@@ -54,7 +54,7 @@ class Instance
         // Initialize Language
         if (isset($params['lang']))
         {
-            $this->lang_tag = $params['lang'];
+            $this->lang = $params['lang'];
         }
         else
         {
@@ -73,6 +73,8 @@ class Instance
             return $this->info;
         }
 
+        // Update the language for the current request
+        $this->api->setLang($this->getLang());
         $response = $this->api->get("instances/" . $this->id);
         if ($response == false)
         {
@@ -90,6 +92,8 @@ class Instance
             return $this->config;
         }
 
+        // Update the language for the current request
+        $this->api->setLang($this->getLang());
         $response = $this->api->get("instances/$this->id/configs", array('page_size' => 10000));
 
         if ($response == false)
@@ -115,9 +119,10 @@ class Instance
             return $this->translation;
         }
 
-        $lang_tag = $this->getLangTag();
+        $lang = $this->getLang();
+        $this->api->setLang($lang);
         $response = $this->api->get(
-            "instances/$this->id/languages/$lang_tag/translations",
+            "instances/$this->id/languages/$lang/translations",
             array('page_size' => 10000)
         );
         if ($response == false)
@@ -196,39 +201,39 @@ class Instance
     private function recoverLangTag()
     {
 
-        $lang_tag = false;
-        if (isset($_GET['lang_tag']))
+        $lang = false;
+        if (isset($_GET['lang']))
         {
-            $lang_tag = $_GET['lang_tag'];
+            $lang = $_GET['lang'];
         }
         else
         {
             if (isset($_GET['locale']))
             {
-                $lang_tag = $_GET['locale'];
+                $lang = $_GET['locale'];
             }
             else
             {
                 if (isset($app_data) && isset($app_data['locale']))
                 {
-                    $lang_tag = $app_data['locale'];
+                    $lang = $app_data['locale'];
                 }
                 else
                 {
-                    if (isset($_COOKIE['aa_' . $this->id . '_lang_tag']))
+                    if (isset($_COOKIE['aa_' . $this->id . '_lang']))
                     {
-                        $lang_tag = $_COOKIE['aa_' . $this->id . '_lang_tag'];
+                        $lang = $_COOKIE['aa_' . $this->id . '_lang'];
                     }
                 }
             }
         }
 
-        if ($lang_tag)
+        if ($lang)
         {
-            $this->lang_tag = $lang_tag;
+            $this->lang = $lang;
         }
 
-        return $this->lang_tag;
+        return $this->lang;
     }
 
     /**
@@ -275,17 +280,17 @@ class Instance
     /**
      * @return string
      */
-    public function getLangTag()
+    public function getLang()
     {
-        return $this->lang_tag;
+        return $this->lang;
     }
 
     /**
-     * @param string $lang_tag
+     * @param string $lang
      */
-    public function setLangTag($lang_tag)
+    public function setLang($lang)
     {
-        $this->lang_tag = $lang_tag;
+        $this->lang = $lang;
     }
 
     /**
