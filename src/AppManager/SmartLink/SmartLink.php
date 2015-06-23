@@ -460,7 +460,7 @@ class SmartLink
         if (!$lang)
         {
             $this->reasons[] = "LANGUAGE: No language preference defined or applicable. Use the default app language.";
-            $lang            = $this->instance->getLangTag();
+            $lang            = $this->instance->getLang();
         }
 
         $this->lang = $lang;
