@@ -20,6 +20,7 @@ class SmartLink
     private $base_url;
     private $browser = array(); // Browser information
     private $cookie_key; // SmartCookie key
+    private $domain; // Domain to use for the cookie
     private $device = array(); // Device information
     private $environment; // Target environment
     private $facebook = array(); // All available information about the facebook page the instance is embedded in
@@ -493,6 +494,7 @@ class SmartLink
         }
 
         $this->lang = $lang;
+        $this->setCookieValues(array("lang" => $this->lang));
 
         return $this->lang;
     }
@@ -584,6 +586,7 @@ class SmartLink
         {
             $domain = $host;
         }
+        $this->domain = $domain;
 
         // Set cookie with the current instance ID
         setcookie("aa_i_id", $i_id, time() + 172600, '/', $domain);
@@ -819,6 +822,33 @@ class SmartLink
         return false;
 
     }
+
+
+    /**
+     * Sets values to the SmartCookie
+     * @param array $values Array of key value pairs which should be added to the Smart-Cookie cookie
+     * @return array Returns the whole updated cookie as array
+     */
+    private function setCookieValues($values)
+    {
+        $cookie = array();
+        if (isset($_COOKIE[$this->cookie_key][$key]))
+        {
+            $cookie = $_COOKIE[$this->cookie_key][$key];
+        }
+
+        foreach ($values as $key => $value)
+        {
+            $cookie[$key] = $value;
+        }
+
+        // Write the cookie to the users cookies
+        setcookie($this->cookie_key, $cookie , time() + 172600, '/', $this->domain);
+
+        return false;
+
+    }
+
 
     /**
      * @return mixed

@@ -230,7 +230,7 @@ class Instance
 
         if ($lang)
         {
-            $this->lang = $lang;
+            $this->setLang($lang);
         }
 
         return $this->lang;

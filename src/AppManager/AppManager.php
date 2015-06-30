@@ -10,6 +10,7 @@ class AppManager
     protected $api; // API object
     protected $cache_dir = false; // E.g. ROOTPATH . /var/cache, When no path is set, then caching will be deactivated
     private $browser;
+    private $cookie; // The App-Manager Cookie for the current user
     private $device;
     private $i_id;
     private $m_id;
@@ -119,7 +120,7 @@ class AppManager
      */
     public function getLang()
     {
-        return $this->lang;
+        return $this->smart_link->getLang();
     }
 
     /**
@@ -354,6 +355,22 @@ class AppManager
     public function setBaseUrl($base_url)
     {
         $this->smart_link->setBaseUrl($base_url);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCookie()
+    {
+        return $this->cookie;
+    }
+
+    /**
+     * @param mixed $cookie
+     */
+    public function setCookieValue($cookie)
+    {
+        $this->cookie = $cookie;
     }
 
 
