@@ -68,11 +68,6 @@ class Instance
      */
     public function getInfos()
     {
-        if ($this->info)
-        {
-            return $this->info;
-        }
-
         // Update the language for the current request
         $this->api->setLang($this->getLang());
         $response = $this->api->get("instances/" . $this->id);
@@ -87,11 +82,6 @@ class Instance
 
     function getConfigs()
     {
-        if ($this->config)
-        {
-            return $this->config;
-        }
-
         // Update the language for the current request
         $this->api->setLang($this->getLang());
         $response = $this->api->get("instances/$this->id/configs", array('page_size' => 10000));
@@ -114,11 +104,6 @@ class Instance
 
     function getTranslations()
     {
-        if ($this->translation)
-        {
-            return $this->translation;
-        }
-
         $lang = $this->getLang();
         $this->api->setLang($lang);
         $response = $this->api->get(

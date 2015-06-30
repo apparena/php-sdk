@@ -57,7 +57,7 @@ class SmartLink
      * @param Instance $instance Instance object
      * @throws \Exception When no instance ID is passed
      */
-    public function __construct($instance)
+    public function __construct(&$instance)
     {
         // Initialize the base url
         $this->initBaseUrl();
@@ -494,6 +494,7 @@ class SmartLink
         }
 
         $this->lang = $lang;
+        $this->instance->setLang($lang);
         $this->setCookieValues(array("lang" => $this->lang));
 
         return $this->lang;
