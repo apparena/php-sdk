@@ -76,6 +76,7 @@ class Api
         }
         else
         {
+            $params['lang_id'] = $this->lang;
             $response = $this->_get($route, $params);
             if ($response != false)
             {
