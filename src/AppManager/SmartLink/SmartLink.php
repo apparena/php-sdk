@@ -624,9 +624,7 @@ class SmartLink
         // Set the SmartCookie
         $smart_cookie           = $this->toArray();
         $smart_cookie["params"] = $params;
-        $data = json_encode($smart_cookie);
-        setcookie($this->cookie_key, $data, time() + 3600, '/', $domain);
-
+        $this->setCookieValues($smart_cookie);
     }
 
     /**
@@ -813,10 +811,13 @@ class SmartLink
      */
     private function getCookieValue($key)
     {
-
-        if (isset($_COOKIE[$this->cookie_key][$key]))
+        if (isset($_COOKIE[$this->cookie_key]))
         {
-            return $_COOKIE[$this->cookie_key][$key];
+            // Encode cookie value
+            $cookie = json_decode($_COOKIE[$this->cookie_key], true);
+            if (isset($cookie[$key])) {
+                return $cookie[$key];
+            }
         }
 
         return false;
@@ -832,9 +833,13 @@ class SmartLink
     private function setCookieValues($values)
     {
         $cookie = array();
-        if (isset($_COOKIE[$this->cookie_key][$key]))
+        if (isset($_COOKIE[$this->cookie_key]))
         {
-            $cookie = $_COOKIE[$this->cookie_key][$key];
+            $cookie = json_decode($_COOKIE[$this->cookie_key], true);
+        }
+
+        if (!is_array($cookie)) {
+            $cookie = array();
         }
 
         foreach ($values as $key => $value)
@@ -843,7 +848,7 @@ class SmartLink
         }
 
         // Write the cookie to the users cookies
-        setcookie($this->cookie_key, $cookie , time() + 172600, '/', $this->domain);
+        setcookie($this->cookie_key, json_encode($cookie) , time() + 172600, '/', $this->domain);
 
         return false;
 
