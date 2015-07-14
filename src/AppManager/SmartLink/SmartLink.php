@@ -472,25 +472,35 @@ class SmartLink
     {
         $lang = false;
 
-        // Check if lang GET-parameter is available
-        if (!$lang && isset($_GET['lang']))
+        // Try to get the language from the REQUEST
+        if (isset($_REQUEST['lang']))
         {
-            $lang            = $_GET['lang'];
-            $this->reasons[] = "LANGUAGE: GET['lang']-Parameter available: " . $lang;
+            $lang = $_REQUEST['lang'];
+            $this->reasons[] = "LANGUAGE: REQUEST['lang']-Parameter available: " . $lang;
         }
-
-        // Check if language cookie is available
-        if (!$lang && $this->getCookieValue('lang'))
+        else
         {
-            $lang            = $this->getCookieValue('lang');
-            $this->reasons[] = "LANGUAGE: COOKIE['aa_" . $this->i_id . "_lang']-Parameter available: " . $lang;
-        }
-
-        // If no language selected yet, then use the apps default language
-        if (!$lang)
-        {
-            $this->reasons[] = "LANGUAGE: No language preference defined or applicable. Use the default app language.";
-            $lang            = $this->instance->getLang();
+            // Check if the language is configured in the VirtualHost
+            if (isset($_SERVER['lang']))
+            {
+                $lang = $_SERVER['lang'];
+                $this->reasons[] = "LANGUAGE: GET['lang']-Parameter available: " . $lang;
+            }
+            else
+            {
+                // Check if language cookie is available
+                if ($this->getCookieValue('lang'))
+                {
+                    $lang = $this->getCookieValue('lang');
+                    $this->reasons[] = "LANGUAGE: COOKIE['aa_" . $this->i_id . "_lang']-Parameter available: " . $lang;
+                }
+                else
+                {
+                    // If no language selected yet, then use the apps default language
+                    $this->reasons[] = "LANGUAGE: No language preference defined or applicable. Use the default app language.";
+                    $lang            = $this->instance->getLang();
+                }
+            }
         }
 
         $this->lang = $lang;
@@ -807,8 +817,8 @@ class SmartLink
 
     /**
      * Returns a value from the SmartCookie
-     * @param $key Key to search in the SmartCookie
-     * @return Value corresponding to the key
+     * @param String $key to search in the SmartCookie
+     * @return mixed Value corresponding to the key
      */
     private function getCookieValue($key)
     {
