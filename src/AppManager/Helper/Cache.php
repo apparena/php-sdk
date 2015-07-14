@@ -133,7 +133,7 @@ class Cache
 
             if (!$fileinfo->isDot() && $fileinfo->isFile())
             {
-                $files[] = $fileinfo->getPathname();
+                $files[] = str_replace("\\", "/", $fileinfo->getPathname());
             }
         }
 
