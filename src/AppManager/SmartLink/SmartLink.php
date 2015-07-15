@@ -65,8 +65,7 @@ class SmartLink
         // Initialize the instance information
         $this->instance = $instance;
         $this->i_id     = $this->instance->getId();
-        if (!$this->i_id)
-        {
+        if (!$this->i_id) {
             throw(new \Exception("No instance id available"));
         }
         $this->cookie_key = "aa_" . $this->i_id . "_smartLink";
@@ -124,38 +123,30 @@ class SmartLink
         $schema_type = "WebApplication";
 
         // Initialize default values, in case values are missing
-        if (isset($meta['title']))
-        {
+        if (isset($meta['title'])) {
             $title = $meta['title'];
         }
-        if (isset($meta['desc']))
-        {
+        if (isset($meta['desc'])) {
             $desc = $meta['desc'];
         }
-        if (isset($meta['image']))
-        {
+        if (isset($meta['image'])) {
             $image = $meta['image'];
         }
-        if (isset($meta['og_type']))
-        {
+        if (isset($meta['og_type'])) {
             $og_type = $meta['og_type'];
         }
-        if (isset($meta['schema_type']))
-        {
+        if (isset($meta['schema_type'])) {
             $schema_type = $meta['schema_type'];
         }
 
         // Get values from the instance config values
-        if (isset($meta['title']) && $this->instance->getConfig($meta['title']))
-        {
+        if (isset($meta['title']) && $this->instance->getConfig($meta['title'])) {
             $title = $this->instance->getConfig($meta['title']);
         }
-        if (isset($meta['desc']) && $this->instance->getConfig($meta['desc']))
-        {
+        if (isset($meta['desc']) && $this->instance->getConfig($meta['desc'])) {
             $desc = $this->instance->getConfig($meta['desc']);
         }
-        if (isset($meta['image']) && $this->instance->getConfig($meta['image'], 'src'))
-        {
+        if (isset($meta['image']) && $this->instance->getConfig($meta['image'], 'src')) {
             $image = $this->instance->getConfig($meta['image'], 'src');
         }
 
@@ -170,10 +161,8 @@ class SmartLink
 
         // Add Open Graph OG meta-data attributes
         $og_meta = array();
-        foreach ($meta as $key => $value)
-        {
-            if (substr($key, 0, 3) == "og:")
-            {
+        foreach ($meta as $key => $value) {
+            if (substr($key, 0, 3) == "og:") {
                 $og_meta[$key] = $value;
             }
         }
@@ -196,15 +185,13 @@ class SmartLink
     private function initBaseUrl()
     {
         $base_url = 'http';
-        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on")
-        {
+        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
             $base_url .= "s";
         }
         $base_url .= "://";
         $base_url .= $_SERVER["SERVER_NAME"];
 
-        if (substr($base_url, -1) != "/")
-        {
+        if (substr($base_url, -1) != "/") {
             $base_url .= "/";
         }
 
@@ -217,8 +204,7 @@ class SmartLink
     private function initFacebook()
     {
         // Initialize Facebook Page Tab information
-        if ($this->instance->getInfo('fb_page_url') && $this->instance->getInfo('fb_app_id'))
-        {
+        if ($this->instance->getInfo('fb_page_url') && $this->instance->getInfo('fb_app_id')) {
             $fb_page_url = $this->instance->getInfo('fb_page_url') . "?sk=app_" . $this->instance->getInfo('fb_app_id');
 
             $this->facebook["app_id"]   = $this->instance->getInfo('fb_app_id');
@@ -228,8 +214,7 @@ class SmartLink
         }
 
         // Initializes Facebook canvas information
-        if ($this->instance->getInfo('fb_app_id') && $this->instance->getInfo('fb_app_namespace'))
-        {
+        if ($this->instance->getInfo('fb_app_id') && $this->instance->getInfo('fb_app_namespace')) {
             $this->facebook["app_namespace"] = $this->instance->getInfo('fb_app_namespace');
             $this->facebook["app_id"]        = $this->instance->getInfo('fb_app_id');
             $canvas_url                      = "https://apps.facebook.com/" . $this->facebook["app_namespace"] . "/?i_id=" . $this->i_id;
@@ -237,16 +222,12 @@ class SmartLink
         }
 
         // Get Facebook page tab parameters and write them to GET parameters
-        if (isset($_REQUEST["signed_request"]))
-        {
+        if (isset($_REQUEST["signed_request"])) {
             $fb_signed_request = $this->parse_signed_request($_REQUEST["signed_request"]);
-            if (isset($fb_signed_request['app_data']))
-            {
+            if (isset($fb_signed_request['app_data'])) {
                 $params = json_decode(urldecode($fb_signed_request['app_data']), true);
-                foreach ($params as $key => $value)
-                {
-                    if (!isset($_GET[$key]))
-                    {
+                foreach ($params as $key => $value) {
+                    if (!isset($_GET[$key])) {
                         $_GET[$key] = $value;
                     }
                 }
@@ -262,17 +243,19 @@ class SmartLink
         $website = false;
 
         // Try to get the website Url from the URL
-        if (isset($_GET['website']))
-        {
-            $website = $_GET['website'];
+        if (isset($_REQUEST['website'])) {
+            $website = $_REQUEST['website'];
         }
 
         // Try to get the website from the cookie
-        if (!$website && $this->getCookieValue("website"))
-        {
+        if (!$website && $this->getCookieValue("website")) {
             $website = $this->getCookieValue("website");
         }
 
+        // Set website to cookie, so that it will be included in the smartlink
+        $this->setCookieValues(array(
+                                   "website" => $website
+                               ), 3600);
         $this->setWebsite($website);
     }
 
@@ -281,8 +264,7 @@ class SmartLink
      */
     private function initBrowser()
     {
-        if (!$this->browser_php)
-        {
+        if (!$this->browser_php) {
             $this->browser_php = new Browser();
         }
 
@@ -302,40 +284,31 @@ class SmartLink
     {
         $device = array();
 
-        if (!$this->mobile_detect)
-        {
+        if (!$this->mobile_detect) {
             $this->mobile_detect = new MobileDetect();
         }
 
         // Get device type
         $device['type'] = "desktop";
-        if ($this->mobile_detect->isMobile())
-        {
+        if ($this->mobile_detect->isMobile()) {
             $device['type'] = "mobile";
         }
-        if ($this->mobile_detect->isTablet())
-        {
+        if ($this->mobile_detect->isTablet()) {
             $device['type'] = "tablet";
         }
 
         // Get operating system
         $device['os'] = "other";
-        if ($device['type'] == "desktop")
-        {
+        if ($device['type'] == "desktop") {
             $device['os'] = $this->getDesktopOs();
-        }
-        else
-        {
-            if ($this->mobile_detect->isiOS())
-            {
+        } else {
+            if ($this->mobile_detect->isiOS()) {
                 $device['os'] = "ios";
             }
-            if ($this->mobile_detect->isAndroidOS())
-            {
+            if ($this->mobile_detect->isAndroidOS()) {
                 $device['os'] = "android";
             }
-            if ($this->mobile_detect->isWindowsMobileOS())
-            {
+            if ($this->mobile_detect->isWindowsMobileOS()) {
                 $device['os'] = "windows";
             }
         }
@@ -351,8 +324,7 @@ class SmartLink
         $params = array();
 
         if (count($_GET) > 0) {
-            foreach ($_GET as $key => $value)
-            {
+            foreach ($_GET as $key => $value) {
                 $params[$key] = $value;
             }
             $this->setParams($params);
@@ -379,8 +351,7 @@ class SmartLink
 
 
         // 1. If a website is defined, use the website as default environment
-        if ($this->website)
-        {
+        if ($this->website) {
             $this->reasons[] = "ENV: Website is defined";
 
             // Validate the Website url
@@ -389,34 +360,31 @@ class SmartLink
                 strpos($this->website, "www.facebook.com/") !== false ||
                 strpos($this->website, "static.sk.facebook.com") !== false ||
                 strpos($this->website, ".js") !== false
-            )
-            {
+            ) {
                 $this->reasons[] = "ENV: Website target is not valid, so it cannot be used as target.";
-                $website_valid = false;
+                $website_valid   = false;
             }
 
             // Check if another target is defined, then add the website as GET param, but do not use it for redirection
-            if ( $this->getTarget() && $this->getUrlTarget() != "website" ) {
-                $this->reasons[] = "ENV: Website valid, but another target is defined";
+            if ($this->getTarget() && $this->getUrlTarget() != "website") {
+                $this->reasons[]         = "ENV: Website valid, but another target is defined";
                 $this->params["website"] = $this->website;
-                $website_valid = false;
+                $website_valid           = false;
             }
 
             // If Website is valid, then use it
             if ($website_valid) {
                 $this->setEnvironment("website");
                 $this->setUrl($this->website);
+
                 return;
             }
-        }
-        else
-        {
+        } else {
             $this->reasons[] = "ENV: No website parameter defined";
         }
 
         // If there is no website defined, check if the device is tablet or mobile. If so, use direct access
-        if (in_array($this->getDeviceType(), array("mobile", "tablet")))
-        {
+        if (in_array($this->getDeviceType(), array("mobile", "tablet"))) {
             $this->reasons[] = "DEVICE: User is using a " . $this->getDeviceType() . " device. Direct Access.";
             $this->setEnvironment("direct");
             $this->setUrl($this->instance->getInfo('base_url'));
@@ -427,21 +395,21 @@ class SmartLink
         // So here should be only Desktop devices... So check if facebook page tab information are available...
         $this->reasons[] = "DEVICE: User is using a desktop device.";
         $facebook        = $this->getFacebook();
-        if (isset($facebook['page_id']) && $facebook['page_id'] && isset($facebook['app_id']) && $facebook['app_id'])
-        {
+        if (isset($facebook['page_id']) && $facebook['page_id'] && isset($facebook['app_id']) && $facebook['app_id']) {
             $this->reasons[] = "ENV: Facebook environment data available.";
 
             // Check if another target is defined, then add the website as GET param, but do not use it for redirection
             $facebook_valid = true;
-            if ( $this->getTarget() && $this->getUrlTarget() != "facebook" ) {
+            if ($this->getTarget() && $this->getUrlTarget() != "facebook") {
                 $this->reasons[] = "ENV: Facebook environment valid, but another target is defined";
-                $facebook_valid = false;
+                $facebook_valid  = false;
             }
 
             // If Facebook Environment is valid, then use it
             if ($facebook_valid) {
                 $this->setEnvironment("facebook");
                 $this->setUrl($facebook['page_tab']);
+
                 return;
             }
 
@@ -450,12 +418,9 @@ class SmartLink
         // If no optimal url is defined yet, then use direct source
         $this->reasons[] = "DEVICE: No website or facebook defined. Choose environment direct";
         $this->setEnvironment("direct");
-        if ($this->getBaseUrl())
-        {
+        if ($this->getBaseUrl()) {
             $this->setUrl($this->getBaseUrl());
-        }
-        else
-        {
+        } else {
             $this->setUrl($this->instance->getInfo('base_url'));
         }
 
@@ -473,29 +438,20 @@ class SmartLink
         $lang = false;
 
         // Try to get the language from the REQUEST
-        if (isset($_REQUEST['lang']))
-        {
-            $lang = $_REQUEST['lang'];
+        if (isset($_REQUEST['lang'])) {
+            $lang            = $_REQUEST['lang'];
             $this->reasons[] = "LANGUAGE: REQUEST['lang']-Parameter available: " . $lang;
-        }
-        else
-        {
+        } else {
             // Check if the language is configured in the VirtualHost
-            if (isset($_SERVER['lang']))
-            {
-                $lang = $_SERVER['lang'];
+            if (isset($_SERVER['lang'])) {
+                $lang            = $_SERVER['lang'];
                 $this->reasons[] = "LANGUAGE: GET['lang']-Parameter available: " . $lang;
-            }
-            else
-            {
+            } else {
                 // Check if language cookie is available
-                if ($this->getCookieValue('lang'))
-                {
-                    $lang = $this->getCookieValue('lang');
+                if ($this->getCookieValue('lang')) {
+                    $lang            = $this->getCookieValue('lang');
                     $this->reasons[] = "LANGUAGE: COOKIE['aa_" . $this->i_id . "_lang']-Parameter available: " . $lang;
-                }
-                else
-                {
+                } else {
                     // If no language selected yet, then use the apps default language
                     $this->reasons[] = "LANGUAGE: No language preference defined or applicable. Use the default app language.";
                     $lang            = $this->instance->getLang();
@@ -518,10 +474,8 @@ class SmartLink
      */
     public function renderSharePage($debug = false)
     {
-        if (!$this->mustache)
-        {
-            if (!defined("SMART_LIB_PATH"))
-            {
+        if (!$this->mustache) {
+            if (!defined("SMART_LIB_PATH")) {
                 define("SMART_LIB_PATH", realpath(dirname(__FILE__)));
             }
             // Initialize mustache
@@ -564,16 +518,14 @@ class SmartLink
     private function getCurrentUrl($removeParams = false)
     {
         $pageURL = 'http';
-        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on")
-        {
+        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
             $pageURL .= "s";
         }
         $pageURL .= "://";
         $pageURL .= $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"];
 
         // Remove GET parameters if wanted
-        if ($removeParams)
-        {
+        if ($removeParams) {
             $pos     = strpos($pageURL, "?");
             $pageURL = substr($pageURL, 0, $pos);
         }
@@ -589,12 +541,9 @@ class SmartLink
         $i_id = $this->i_id;
         $host = $_SERVER['HTTP_HOST'];
         preg_match("/[^\.\/]+\.[^\.\/]+$/", $host, $matches);
-        if (count($matches) > 0)
-        {
+        if (count($matches) > 0) {
             $domain = $matches[0];
-        }
-        else
-        {
+        } else {
             $domain = $host;
         }
         $this->domain = $domain;
@@ -603,16 +552,12 @@ class SmartLink
         setcookie("aa_i_id", $i_id, time() + 172600, '/', $domain);
 
         // Get custom request parameters from Cookie to set them for websites (as they can't be passed into the iframe)
-        if (isset($_COOKIE[$this->cookie_key]))
-        {
+        if (isset($_COOKIE[$this->cookie_key])) {
             $cookie_params = json_decode($_COOKIE[$this->cookie_key], true);
-            if (is_array($cookie_params) && isset($cookie_params['params']))
-            {
+            if (is_array($cookie_params) && isset($cookie_params['params'])) {
                 $params = $cookie_params['params'];
-                foreach ($params as $key => $value)
-                {
-                    if (!isset($_GET[$key]))
-                    {
+                foreach ($params as $key => $value) {
+                    if (!isset($_GET[$key])) {
                         $_GET[$key] = $value;
                         unset($params[$key]);
                         // Add the param to paramsExpired so that it will not be written to the cookie any more
@@ -624,10 +569,8 @@ class SmartLink
 
         // Add all params and GET-Parameters to the cookie as well
         $params = $this->params;
-        foreach ($_GET as $key => $value)
-        {
-            if (!isset($this->paramsExpired[$key]))
-            {
+        foreach ($_GET as $key => $value) {
+            if (!isset($this->paramsExpired[$key])) {
                 $params[$key] = $value;
             }
         }
@@ -694,10 +637,8 @@ class SmartLink
     private function prepareMustacheArray($data)
     {
         $response = array();
-        foreach ($data as $key => $value)
-        {
-            if (is_array($value))
-            {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
                 continue;
             }
             $response[] = array(
@@ -719,8 +660,7 @@ class SmartLink
      */
     private function parse_signed_request($signed_request)
     {
-        if ($signed_request == false)
-        {
+        if ($signed_request == false) {
             return array();
         }
 
@@ -739,8 +679,7 @@ class SmartLink
      */
     public function setParams($params)
     {
-        foreach ($params as $key => $value)
-        {
+        foreach ($params as $key => $value) {
             $this->params[$key] = $value;
         }
         $this->initUrl();
@@ -751,8 +690,7 @@ class SmartLink
      */
     public function getDevice()
     {
-        if (!$this->device)
-        {
+        if (!$this->device) {
             $this->initDevice();
         }
 
@@ -764,8 +702,7 @@ class SmartLink
      */
     public function getDeviceType()
     {
-        if (!$this->device)
-        {
+        if (!$this->device) {
             $this->device = $this->getDevice();
         }
 
@@ -777,8 +714,7 @@ class SmartLink
      */
     public function getBrowser()
     {
-        if (!$this->browser)
-        {
+        if (!$this->browser) {
             $this->initBrowser();
         }
 
@@ -790,8 +726,7 @@ class SmartLink
      */
     public function getLang()
     {
-        if (!$this->lang)
-        {
+        if (!$this->lang) {
             $this->lang = $this->initLanguage();
         }
 
@@ -822,8 +757,7 @@ class SmartLink
      */
     private function getCookieValue($key)
     {
-        if (isset($_COOKIE[$this->cookie_key]))
-        {
+        if (isset($_COOKIE[$this->cookie_key])) {
             // Encode cookie value
             $cookie = json_decode($_COOKIE[$this->cookie_key], true);
             if (isset($cookie[$key])) {
@@ -838,14 +772,14 @@ class SmartLink
 
     /**
      * Sets values to the SmartCookie
-     * @param array $values Array of key value pairs which should be added to the Smart-Cookie cookie
+     * @param array $values     Array of key value pairs which should be added to the Smart-Cookie cookie
+     * @param int   $expiration Number of seconds until the cookie will expire
      * @return array Returns the whole updated cookie as array
      */
-    private function setCookieValues($values)
+    private function setCookieValues($values, $expiration = 172600)
     {
         $cookie = array();
-        if (isset($_COOKIE[$this->cookie_key]))
-        {
+        if (isset($_COOKIE[$this->cookie_key])) {
             $cookie = json_decode($_COOKIE[$this->cookie_key], true);
         }
 
@@ -853,13 +787,12 @@ class SmartLink
             $cookie = array();
         }
 
-        foreach ($values as $key => $value)
-        {
+        foreach ($values as $key => $value) {
             $cookie[$key] = $value;
         }
 
         // Write the cookie to the users cookies
-        setcookie($this->cookie_key, json_encode($cookie) , time() + 172600, '/', $this->domain);
+        setcookie($this->cookie_key, json_encode($cookie), time() + $expiration, '/', $this->domain);
 
         return false;
 
@@ -882,7 +815,7 @@ class SmartLink
     {
         if ($website) {
             $this->website = $website;
-            $this->setParams(array("website"=>$this->website));
+            $this->setParams(array("website" => $this->website));
         }
     }
 
@@ -932,10 +865,8 @@ class SmartLink
             '/webos/i' => 'Mobile'
         );
 
-        foreach ($os_array as $regex => $value)
-        {
-            if (preg_match($regex, $user_agent))
-            {
+        foreach ($os_array as $regex => $value) {
+            if (preg_match($regex, $user_agent)) {
                 $os_platform = $value;
             }
         }
@@ -948,8 +879,7 @@ class SmartLink
      */
     public function getUrl()
     {
-        if (!$this->url)
-        {
+        if (!$this->url) {
             $this->initUrl();
         }
 
@@ -963,8 +893,8 @@ class SmartLink
      */
     private function setUrl($target_url, $shortenLink = false)
     {
-        $filename  = "smartlink.php";
-        $share_url = $this->getBaseUrl() . $filename;
+        $filename        = "smartlink.php";
+        $share_url       = $this->getBaseUrl() . $filename;
         $target_original = $target_url;
 
         $params = array();
@@ -978,8 +908,7 @@ class SmartLink
         $params = array_merge($this->params, $params);
 
         // Generate sharing and target Url
-        foreach ($params as $key => $value)
-        {
+        foreach ($params as $key => $value) {
             if (is_array($value)) {
                 $value = json_encode($value);
             }
@@ -997,14 +926,12 @@ class SmartLink
             }
         }
 
-        if ($this->getEnvironment() == "facebook")
-        {
+        if ($this->getEnvironment() == "facebook") {
             $target_url = $target_original . '&app_data=' . urlencode(json_encode($params));
         }
 
         // Shorten Link
-        if ($shortenLink)
-        {
+        if ($shortenLink) {
             $share_url = $this->createGoogleShortLink($share_url);
         }
 
@@ -1041,8 +968,7 @@ class SmartLink
      */
     public function setBaseUrl($base_url)
     {
-        if (substr($base_url, -1) != "/")
-        {
+        if (substr($base_url, -1) != "/") {
             $base_url .= "/";
         }
         $this->base_url = $base_url;
