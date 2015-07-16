@@ -299,9 +299,9 @@ class AppManager
      *
      * @param Array $params Array of parameters which should be passed through
      */
-    public function setParams($params)
+    public function addParams($params)
     {
-        $this->smart_link->setParams($params);
+        $this->smart_link->addParams($params);
     }
 
     /**
