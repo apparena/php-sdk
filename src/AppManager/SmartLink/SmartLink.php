@@ -51,6 +51,9 @@ class SmartLink
         // Initialize the base url
         $this->initBaseUrl();
 
+        // Initialize GET parameters
+        $this->initParams();
+
         // Initialize the instance information
         $this->instance = $instance;
         $this->i_id     = $this->instance->getId();
@@ -83,9 +86,6 @@ class SmartLink
 
         // Initializes the SmartCookie
         $this->initCookies();
-
-        // Initialize the SmartLink Url
-        $this->initUrl();
     }
 
     /**
@@ -197,10 +197,25 @@ class SmartLink
         }
         $this->domain = $domain;
 
-        $this->cookie_domain = $this->domain;
+        $this->cookie_domain = "." . $this->domain;
         if ($this->domain == 'localhost') {
             $this->cookie_domain = null;
         }
+
+    }
+
+    /**
+     * Initializes all GET parameters so that they are used, when set
+     */
+    private function initParams()
+    {
+        $params = array();
+
+        if (count($_GET) > 0) {
+            $params = $_GET;
+        }
+
+        $this->params = $params;
 
     }
 
@@ -249,8 +264,8 @@ class SmartLink
         $website = false;
 
         // Try to get the website Url from the URL
-        if (isset($_REQUEST['website'])) {
-            $website = $_REQUEST['website'];
+        if (isset($_GET['website'])) {
+            $website = $_GET['website'];
         }
 
         // Try to get the website from the cookie
@@ -353,7 +368,7 @@ class SmartLink
             // Check if another target is defined, then add the website as GET param, but do not use it for redirection
             if ($this->getTarget() && $this->getUrlTarget() != 'website') {
                 $this->reasons[]         = 'ENV: Website valid, but another target is defined';
-                $this->params['website'] = $this->website;
+                $this->addParams(array('website' => $this->website));
                 $website_valid           = false;
             }
 
@@ -547,7 +562,7 @@ class SmartLink
                 $params[$key] = $value;
             }
         }
-        $this->setParams($params);
+        $this->addParams($params);
 
         // Set the SmartCookie
         $smart_cookie = $this->toArray();
@@ -635,7 +650,6 @@ class SmartLink
         foreach ($params as $key => $value) {
             $this->params[$key] = $value;
         }
-        $this->initUrl();
     }
 
     /**
@@ -707,7 +721,7 @@ class SmartLink
             'device' => $this->getDevice(),
             'facebook' => $this->getFacebook(),
             'i_id' => $this->i_id,
-            'params' => $this->getParams(),
+            'params' => array_merge($_GET, $this->getParams()),
             'lang' => $this->getLang(),
             'm_id' => $this->instance->getMId(),
             'website' => $this->getWebsite()
@@ -758,6 +772,7 @@ class SmartLink
 
         // Write the cookie to the users cookies
         $cookie_encoded = json_encode($cookie);
+
         setcookie($this->cookie_key, $cookie_encoded, time() + $expiration, '/', $this->cookie_domain);
 
         return false;
@@ -845,9 +860,7 @@ class SmartLink
      */
     public function getUrl()
     {
-        if (!$this->url) {
-            $this->initUrl();
-        }
+        $this->initUrl();
 
         return $this->url;
     }
@@ -938,7 +951,6 @@ class SmartLink
             $base_url .= '/';
         }
         $this->base_url = $base_url;
-        $this->initUrl();
     }
 
     /**
