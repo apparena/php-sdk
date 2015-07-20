@@ -172,8 +172,8 @@ class Instance
         // Set ID to the object and the users session and cookie
         if ($id)
         {
-            $_SESSION['current_i_id'] = $id;
-            $this->id                 = $id;
+            $_SESSION['current_i_id'] = intval($id);
+            $this->id                 = intval($id);
         }
 
         return $this->id;
@@ -247,7 +247,7 @@ class Instance
             if ($fb_page_id && $this->m_id)
             {
                 $request_url = "https://manager.app-arena.com/api/v1/env/fb/pages/" . $fb_page_id .
-                    "/instances.json?m_id=" . $this->m_id . "&active=true";
+                               "/instances.json?m_id=" . $this->m_id . "&active=true";
                 $instances   = json_decode(file_get_contents($request_url), true);
                 foreach ($instances['data'] as $instance)
                 {
@@ -283,7 +283,7 @@ class Instance
      */
     public function getId()
     {
-        return $this->id;
+        return intval($this->id);
     }
 
 

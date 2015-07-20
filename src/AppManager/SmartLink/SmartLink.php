@@ -197,7 +197,7 @@ class SmartLink
         }
         $this->domain = $domain;
 
-        $this->cookie_domain = '.' . $this->domain;
+        $this->cookie_domain = $this->domain;
         if ($this->domain == 'localhost') {
             $this->cookie_domain = null;
         }
@@ -741,17 +741,12 @@ class SmartLink
      * @param int   $expiration Number of seconds until the cookie will expire
      * @return array Returns the whole updated cookie as array
      */
-    private function setCookieValues($values, $expiration = 172600)
+    private function setCookieValues($values, $expiration = 7200)
     {
         $cookie = array();
         if (isset($_COOKIE[$this->cookie_key])) {
             $cookie = json_decode($_COOKIE[$this->cookie_key], true);
         }
-
-        /*echo "<hr>";
-        echo "<h3>setCookieValues: Reading current cookie:</h3>";
-        var_dump($cookie);
-        echo "<hr>";*/
 
         if (!is_array($cookie)) {
             $cookie = array();
@@ -761,42 +756,9 @@ class SmartLink
             $cookie[$key] = $value;
         }
 
-        /*echo "<hr>";
-        echo "<h3>setCookieValues: Add new values. So this should be the new cookie:</h3>";
-        var_dump($cookie);
-        echo "<hr>";*/
-
         // Write the cookie to the users cookies
         $cookie_encoded = json_encode($cookie);
-        //setcookie($this->cookie_key, NULL, 1, '/', $this->cookie_domain);
-        setcookie($this->cookie_key, $cookie_encoded);
-        //$params = json_encode($cookie['params']);
-        //$key = $this->cookie_key . "_params";
-        //setcookie($key, $params, time()+$expiration);
-
-        /*echo "<hr>";
-        echo "<hr>";
-        echo "<h3>This should have been set to the cookie:</h3>";
-        var_dump(json_decode($cookie_encoded, true));
-        echo "<hr>";
-        echo "<h3>And this is the cookie: $this->cookie_key</h3>";
-        var_dump(json_decode($_COOKIE[$this->cookie_key], true));
-        echo "<hr>";
-        echo "<hr>";
-
-        echo "<h3>And this is the params part: params</h3>";
-        var_dump($params);
-        echo "<hr>";
-        echo "<hr>";
-        echo "<h3>And this is the cookie: $key</h3>";
-        var_dump($_COOKIE[$key]);
-        echo "<hr>";
-        echo "<hr>";
-        echo "<h3>The fucking COOKIE</h3>";
-        var_dump($_COOKIE);
-        echo "<hr>";
-        echo "<hr>";*/
-
+        setcookie($this->cookie_key, $cookie_encoded, time() + $expiration, '/', $this->cookie_domain);
 
         return false;
 
