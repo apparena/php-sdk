@@ -529,7 +529,6 @@ class SmartLink
                 if (!isset($_GET[$key])) {
                     // 1.1 Write parameters from the cookie to the Request and set them expired after that
                     $_GET[$key] = $value;
-                    $this->removeParams(array($key));
                     $paramsExpired[$key] = $value;
                 }
             }
@@ -538,12 +537,6 @@ class SmartLink
         }
         $this->paramsExpired = $paramsExpired;
 
-        // 2. Add GET parameters to the cookie
-        foreach ($_GET as $key => $value) {
-            if (!isset($this->paramsExpired[$key])) {
-                $params[$key] = $value;
-            }
-        }
         $this->addParams($params);
 
         // Set the SmartCookie
@@ -635,13 +628,6 @@ class SmartLink
         }
     }
 
-    public function removeParams($params)
-    {
-        foreach ($params as $key => $value) {
-            unset($this->paramsAdditional[$key]);
-        }
-    }
-
     /**
      * Overwrites all existing parameters
      *
@@ -699,6 +685,7 @@ class SmartLink
             'facebook' => $this->getFacebook(),
             'i_id' => $this->i_id,
             'params' => $this->getParams(),
+            'paramsExpired' => $this->paramsExpired,
             'lang' => $this->getLang(),
             'm_id' => $this->instance->getMId(),
             'website' => $this->getWebsite()
@@ -751,7 +738,6 @@ class SmartLink
         $cookie_encoded = json_encode($cookie);
 
         setcookie($this->cookie_key, $cookie_encoded, time() + $expiration, '/', $this->cookie_domain);
-
         return false;
 
     }
