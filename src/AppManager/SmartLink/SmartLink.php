@@ -2,7 +2,6 @@
 
 namespace AppManager\SmartLink;
 
-use AppManager\API\Api;
 use AppManager\Entity\Instance;
 use Browser;
 use Detection\MobileDetect;
@@ -20,14 +19,14 @@ class SmartLink
     private $base_url;
     private $browser = array(); // Browser information
     private $cookie_key; // SmartCookie key
-    private $domain; // Domain to use for the cookie
+    private $cookie_domain; // Domain to use for the cookie
     private $device = array(); // Device information
     private $environment; // Target environment
     private $facebook = array(); // All available information about the facebook page the instance is embedded in
     private $i_id;
     private $lang; // Currently selected language
     private $meta = array(); // Meta data which should be rendered to the share HTML document
-    private $params = array(); // Additional parameters which will be passed through
+    private $paramsAdditional = array(); // Additional parameters which will be passed through
     private $paramsExpired = array(); // These expired params will not be set to the cookie any more
     private $reasons = array(); // Array of reasons, why the SmartLink refers to a certain environment
     private $target; // If a target is defined, then this will be used as preferred redirect location
@@ -50,9 +49,6 @@ class SmartLink
     {
         // Initialize the base url
         $this->initBaseUrl();
-
-        // Initialize GET parameters
-        $this->initParams();
 
         // Initialize the instance information
         $this->instance = $instance;
@@ -195,27 +191,10 @@ class SmartLink
         } else {
             $domain = $host;
         }
-        $this->domain = $domain;
-
-        $this->cookie_domain = "." . $this->domain;
+        $this->cookie_domain = "." . $domain;
         if ($this->domain == 'localhost') {
             $this->cookie_domain = null;
         }
-
-    }
-
-    /**
-     * Initializes all GET parameters so that they are used, when set
-     */
-    private function initParams()
-    {
-        $params = array();
-
-        if (count($_GET) > 0) {
-            $params = $_GET;
-        }
-
-        $this->params = $params;
 
     }
 
@@ -497,7 +476,7 @@ class SmartLink
             'lang' => $this->getLang(),
             'meta' => $this->getMeta(),
             'og_meta' => $this->prepareMustacheArray($this->meta['og']),
-            'params' => $this->prepareMustacheArray($this->params),
+            'params' => $this->prepareMustacheArray($this->getParams()),
             'params_expired' => $this->prepareMustacheArray($this->paramsExpired),
             'reasons' => $this->reasons,
             'target' => $this->getEnvironment(),
@@ -544,15 +523,17 @@ class SmartLink
         // Iframe Parameter Passthrough
         // 1. Get parameters from Cookie
         $params = $this->getCookieValue('params');
+        $paramsExpired = array();
         if (is_array($params)) {
             foreach ($params as $key => $value) {
                 if (!isset($_GET[$key])) {
                     // 1.1 Write parameters from the cookie to the Request and set them expired after that
                     $_GET[$key] = $value;
                     unset($params[$key]);
-                    $this->paramsExpired[$key] = $value;
+                    $paramsExpired[$key] = $value;
                 }
             }
+            $this->paramsExpired = $paramsExpired;
         } else {
             $params = array();
         }
@@ -648,7 +629,7 @@ class SmartLink
     public function addParams($params)
     {
         foreach ($params as $key => $value) {
-            $this->params[$key] = $value;
+            $this->paramsAdditional[$key] = $value;
         }
     }
 
@@ -659,7 +640,7 @@ class SmartLink
      */
     private function setParams($params)
     {
-        $this->params = $params;
+        $this->paramsAdditional = $params;
     }
 
     /**
@@ -721,7 +702,7 @@ class SmartLink
             'device' => $this->getDevice(),
             'facebook' => $this->getFacebook(),
             'i_id' => $this->i_id,
-            'params' => array_merge($_GET, $this->getParams()),
+            'params' => $this->getParams(),
             'lang' => $this->getLang(),
             'm_id' => $this->instance->getMId(),
             'website' => $this->getWebsite()
@@ -884,7 +865,7 @@ class SmartLink
         $params['lang'] = $this->getLang();
 
         // Add additional parameters if available in $this->params
-        $params = array_merge($this->params, $params);
+        //$params = array_merge($this->params, $params);
 
         // Generate sharing and target Url
         foreach ($params as $key => $value) {
@@ -991,11 +972,21 @@ class SmartLink
     }
 
     /**
+     * Prepare the params.
      * @return array
      */
     public function getParams()
     {
-        return $this->params;
+        $params = array_merge($_GET, $this->paramsAdditional);
+
+        // Remove expired params
+        foreach ($this->paramsExpired as $key => $value) {
+            if (isset($params[$key])){
+                unset($params[$key]);
+            }
+        }
+
+        return $params;
     }
 
 }
