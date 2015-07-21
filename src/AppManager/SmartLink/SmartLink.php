@@ -192,7 +192,7 @@ class SmartLink
             $domain = $host;
         }
         $this->cookie_domain = "." . $domain;
-        if ($this->domain == 'localhost') {
+        if ($domain == 'localhost') {
             $this->cookie_domain = null;
         }
 
@@ -529,14 +529,15 @@ class SmartLink
                 if (!isset($_GET[$key])) {
                     // 1.1 Write parameters from the cookie to the Request and set them expired after that
                     $_GET[$key] = $value;
-                    unset($params[$key]);
+                    $this->removeParams(array($key));
                     $paramsExpired[$key] = $value;
                 }
             }
-            $this->paramsExpired = $paramsExpired;
         } else {
             $params = array();
         }
+        $this->paramsExpired = $paramsExpired;
+
         // 2. Add GET parameters to the cookie
         foreach ($_GET as $key => $value) {
             if (!isset($this->paramsExpired[$key])) {
@@ -548,6 +549,7 @@ class SmartLink
         // Set the SmartCookie
         $smart_cookie = $this->toArray();
         $this->setCookieValues($smart_cookie);
+
     }
 
 
@@ -633,6 +635,13 @@ class SmartLink
         }
     }
 
+    public function removeParams($params)
+    {
+        foreach ($params as $key => $value) {
+            unset($this->paramsAdditional[$key]);
+        }
+    }
+
     /**
      * Overwrites all existing parameters
      *
@@ -648,10 +657,6 @@ class SmartLink
      */
     public function getDevice()
     {
-        if (!$this->device) {
-            $this->initDevice();
-        }
-
         return $this->device;
     }
 
@@ -660,11 +665,10 @@ class SmartLink
      */
     public function getDeviceType()
     {
-        if (!$this->device) {
-            $this->device = $this->getDevice();
+        if (isset($this->device['type'])) {
+            return $this->device['type'];
         }
-
-        return $this->device['type'];
+        return false;
     }
 
     /**
@@ -672,10 +676,6 @@ class SmartLink
      */
     public function getBrowser()
     {
-        if (!$this->browser) {
-            $this->initBrowser();
-        }
-
         return $this->browser;
     }
 
@@ -684,10 +684,6 @@ class SmartLink
      */
     public function getLang()
     {
-        if (!$this->lang) {
-            $this->lang = $this->initLanguage();
-        }
-
         return $this->lang;
     }
 
@@ -797,6 +793,9 @@ class SmartLink
      */
     private function getDesktopOs()
     {
+        if (!isset($_SERVER['HTTP_USER_AGENT'])) {
+            return 'unknown';
+        }
 
         $user_agent = $_SERVER['HTTP_USER_AGENT'];
 
