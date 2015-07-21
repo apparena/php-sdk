@@ -18,7 +18,6 @@ use AppManager\Helper\Cache;
 class Api
 {
     protected $base_url = 'https://v2.app-arena.com/api/v1/';
-    //protected $base_url = 'http://appmanager2.frd.info/api/v1/';
     protected $error_msg = ''; // Error message on failed soap call
     protected $cache = false;
     private $cache_reset = false;
@@ -142,6 +141,23 @@ class Api
     {
         $this->lang = $lang;
     }
+
+    /**
+     * Returns the caching object
+     * @return Cache|bool
+     */
+    private function getCache()
+    {
+        return $this->cache;
+    }
+
+    /**
+     * Cleans the cache
+     */
+    public function cleanCache($cache_key) {
+        $this->getCache()->clean($cache_key);
+    }
+
 
 
 

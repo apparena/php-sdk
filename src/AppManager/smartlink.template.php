@@ -18,7 +18,7 @@ $am->setMeta(array(
         "image" => "https://c2.staticflickr.com/4/3734/9566728014_039da2e73e_h.jpg"
     ));
 // And add some custom parameters to the url
-$am->setParams(array(
+$am->addParams(array(
         "age" => 16,
         "name" => "King of Bongobong!"
     ));
@@ -26,7 +26,9 @@ $am->setParams(array(
 if (isset($_GET['action'])) {
     switch ($_GET['action']){
         case "clean":
-            $am->renderCleanPage();
+            $am->cleanCache();
+            echo "Cache successfully cleaned.";
+            exit();
             break;
         case "share":
             $am->renderSharePage();

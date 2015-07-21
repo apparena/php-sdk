@@ -60,8 +60,43 @@ This will use Instance 1234 to setup your connection. Now these functions are av
 | setParams($params)              | This will add parameters to the smartLink Url. These parameters will be available as GET-Parameters, when a user* clicks on the smartLink. The parameters will be available as GET parameters as well in the facebook page tab* or within an iframe                           | (array) $params Array of parameters which should be passed through |          |
 
 
-
-
 ## Smart-Link
 
-Smart-Link technology provides intelligent sharing link generation for all type of devices. 
+To setup a SmartLink, which is responsible for all your redirects, copy the `smartlink.template.php` file to your root
+folder and rename it to `smartlink.template.php`. As you can see in the file you can customize Meta-Data for sharing 
+by calling `setMetaData(..)`. Additional Parameters which will be passed to your app as GET-Parameters can be add via
+ `addParams(..)` or by just adding your parameters as GET parameter to the "Smart-Link"-Url you will get, when calling
+  `getUrl()`.  
+  
+  
+### Device detection
+
+The users device will be detected, when the user is being redirected to your app target. So mobile and tablet devices
+will never be redirected to a facebook page tab, as it is not possible for them to display them (No Support from Facebook).
+
+
+### Browser detection and the Safari Cookie Issue
+
+As Safari is blocking third-party cookies within iframes, it is not possible to redirect Safari users to embedded apps.
+Safari Users will be detected and automatically being redirected the direct app (unembedded).
+
+
+### Website Embeds
+
+If your app is being embedded in a website via iframe, you should add a GET-Parameter called `website` containing the URL
+the app is embedded in to your smartlink.php Url. Your users will then be redirected the Website Url and not directly to
+your app. Like this you can keep your traffic up on the website. :-)
+
+Use the `website`-GET Parameter for your iframe-Source is the easiest way to keep your visitors on the website. The 
+App-Manager SDK automatically detects `website`-GET Parameters and set them to a cookie.
+
+### Easy parameter passthrough
+
+The SmartLink Technology makes it easy to pass parameters to your application no matter if the application is embedded 
+via iframe or into a Facebook Page-Tab. 
+All GET Parameters passed to your `smartlink.php` file will be written to a cookie (Cookie-key `aa_1234_smartlink`, 1234
+is the instance id of your application). When you initialize the app manager object in your application again, then all
+parameters will be deleted from the cookie and written to the GET parameter again.
+
+So you don't have to care about that... Pass GET parameters to your smartlink.php file and expect them in your app 
+target file. :-)

@@ -373,5 +373,21 @@ class AppManager
         $this->cookie = $cookie;
     }
 
+    /**
+     * @return mixed
+     */
+    private function getApi()
+    {
+        return $this->api;
+    }
+
+    /**
+     * Cleans the cache
+     */
+    public function cleanCache() {
+        $this->getApi()->cleanCache("instances/" . $this->getIId());
+    }
+
+
 
 }
