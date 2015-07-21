@@ -850,7 +850,7 @@ class SmartLink
         $params['lang'] = $this->getLang();
 
         // Add additional parameters if available in $this->params
-        //$params = array_merge($this->params, $params);
+        $params = array_merge($this->paramsAdditional, $params);
 
         // Generate sharing and target Url
         foreach ($params as $key => $value) {
