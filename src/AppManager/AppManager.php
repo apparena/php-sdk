@@ -103,6 +103,15 @@ class AppManager
     }
 
     /**
+     * Returns the Long version of the smartLink
+     * @return mixed
+     */
+    public function getUrlLong()
+    {
+        return $this->smart_link->getUrlLong();
+    }
+
+    /**
      * Returns the currently used Instance ID
      * @return mixed
      */
