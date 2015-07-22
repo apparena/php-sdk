@@ -324,11 +324,11 @@ class SmartLink
         $url = false;
 
         // Due to Safari Cookie Blocking policies, redirect Safari Users to the direct page
-        $browser = $this->getBrowser();
+        /*$browser = $this->getBrowser();
         if ($browser['name'] == 'Safari') {
             $this->reasons[] = 'BROWSER: Safari is used. Change target to direct';
             $this->setTarget('direct');
-        }
+        }*/
 
 
         // 1. If a website is defined, use the website as default environment
