@@ -881,6 +881,14 @@ class SmartLink
     }
 
     /**
+     * @return mixed
+     */
+    public function getUrlLong()
+    {
+        return $this->url_long;
+    }
+
+    /**
      * Generates the SmartLink from the submitted url
      * @param String $target_url  Url to generate the smartlink from
      * @param bool   $shortenLink Shorten the SmartLink using bit.ly
@@ -931,6 +939,8 @@ class SmartLink
             $this->url_long = $share_url;
             $share_url = $this->createGoogleShortLink($share_url);
             $this->url_short = $share_url;
+        } else {
+            $this->url_long = $share_url;
         }
 
         $this->url = $share_url;
