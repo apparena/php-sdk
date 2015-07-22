@@ -31,6 +31,8 @@ class SmartLink
     private $reasons = array(); // Array of reasons, why the SmartLink refers to a certain environment
     private $target; // If a target is defined, then this will be used as preferred redirect location
     private $url; // SmartLink Url (Url for sharing)
+    private $url_long; // SmartLink Url in long form
+    private $url_short; // ShartLink Url processed by an url shortener
     private $url_target; // The url the user will be redirected to
     private $website; // All available information about the website the instance is embedded in
 
@@ -346,9 +348,9 @@ class SmartLink
 
             // Check if another target is defined, then add the website as GET param, but do not use it for redirection
             if ($this->getTarget() && $this->getUrlTarget() != 'website') {
-                $this->reasons[]         = 'ENV: Website valid, but another target is defined';
+                $this->reasons[] = 'ENV: Website valid, but another target is defined';
                 $this->addParams(array('website' => $this->website));
-                $website_valid           = false;
+                $website_valid = false;
             }
 
             // If Website is valid, then use it
@@ -522,13 +524,13 @@ class SmartLink
 
         // Iframe Parameter Passthrough
         // 1. Get parameters from Cookie
-        $params = $this->getCookieValue('params');
+        $params        = $this->getCookieValue('params');
         $paramsExpired = array();
         if (is_array($params)) {
             foreach ($params as $key => $value) {
                 if (!isset($_GET[$key])) {
                     // 1.1 Write parameters from the cookie to the Request and set them expired after that
-                    $_GET[$key] = $value;
+                    $_GET[$key]          = $value;
                     $paramsExpired[$key] = $value;
                 }
             }
@@ -568,6 +570,46 @@ class SmartLink
 
         return $shortURL;
     }
+
+
+    /**
+     * Creates a Short Url using App-Arena Url Shortener
+     * @param Strin $url Long Url
+     *
+     * @return String Short Url
+     */
+    private function shortenLink($url)
+    {
+        $timestamp = time();
+        $signature = md5($timestamp . '2ff4988406');
+        $api_url   = 'http://smartl.ink/yourls-api.php';
+
+        // Init the CURL session
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $api_url);
+        curl_setopt($ch, CURLOPT_HEADER, 0);            // No header in the result
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return, do not echo result
+        curl_setopt($ch, CURLOPT_POST, 1);              // This is a POST request
+        curl_setopt($ch,
+                    CURLOPT_POSTFIELDS,
+                    array(     // Data to POST
+                        'url' => $url,
+                        'format' => 'json',
+                        'action' => 'shorturl',
+                        'timestamp' => $timestamp,
+                        'signature' => $signature
+                    ));
+
+        // Fetch and return content
+        $data = curl_exec($ch);
+        curl_close($ch);
+
+        // Do something with the result. Here, we echo the long URL
+        $data = json_decode($data);
+
+        return $data->shorturl;
+    }
+
 
     /**
      * Prepares an associative array to be rendered in mustache. The format changes from
@@ -633,7 +675,7 @@ class SmartLink
      *
      * @param Array $params Array of parameters which should be passed through
      */
-    private function setParams($params)
+    public function setParams($params)
     {
         $this->paramsAdditional = $params;
     }
@@ -654,6 +696,7 @@ class SmartLink
         if (isset($this->device['type'])) {
             return $this->device['type'];
         }
+
         return false;
     }
 
@@ -738,6 +781,7 @@ class SmartLink
         $cookie_encoded = json_encode($cookie);
 
         setcookie($this->cookie_key, $cookie_encoded, time() + $expiration, '/', $this->cookie_domain);
+
         return false;
 
     }
@@ -822,11 +866,16 @@ class SmartLink
     }
 
     /**
+     * @params bool $shortenLink Make a Short Link?
      * @return mixed
      */
-    public function getUrl()
+    public function getUrl($shortenLink = false)
     {
         $this->initUrl();
+
+        if ($shortenLink) {
+            $this->url = $this->shortenLink($this->url);
+        }
 
         return $this->url;
     }
@@ -854,20 +903,22 @@ class SmartLink
 
         // Generate sharing and target Url
         foreach ($params as $key => $value) {
-            if (is_array($value)) {
-                $value = json_encode($value);
-            }
+            if ($value != "") {
+                if (is_array($value)) {
+                    $value = json_encode($value);
+                }
 
-            // If it is the first parameter, then use '?', else use  '&'
-            if (strpos($target_url, '?') === false) {
-                $target_url .= '?' . $key . '=' . urlencode($value);
-            } else {
-                $target_url .= '&' . $key . '=' . urlencode($value);
-            }
-            if (strpos($share_url, '?') === false) {
-                $share_url .= '?' . $key . '=' . urlencode($value);
-            } else {
-                $share_url .= '&' . $key . '=' . urlencode($value);
+                // If it is the first parameter, then use '?', else use  '&'
+                if (strpos($target_url, '?') === false) {
+                    $target_url .= '?' . $key . '=' . urlencode($value);
+                } else {
+                    $target_url .= '&' . $key . '=' . urlencode($value);
+                }
+                if (strpos($share_url, '?') === false) {
+                    $share_url .= '?' . $key . '=' . urlencode($value);
+                } else {
+                    $share_url .= '&' . $key . '=' . urlencode($value);
+                }
             }
         }
 
@@ -875,9 +926,11 @@ class SmartLink
             $target_url = $target_original . '&app_data=' . urlencode(json_encode($params));
         }
 
-        // Shorten Link
-        if ($shortenLink) {
+        // Shorten Link, when the link changed...
+        if ($shortenLink && $this->url_long != $share_url) {
+            $this->url_long = $share_url;
             $share_url = $this->createGoogleShortLink($share_url);
+            $this->url_short = $share_url;
         }
 
         $this->url = $share_url;
@@ -966,7 +1019,7 @@ class SmartLink
 
         // Remove expired params
         foreach ($this->paramsExpired as $key => $value) {
-            if (isset($params[$key])){
+            if (isset($params[$key])) {
                 unset($params[$key]);
             }
         }

@@ -56,9 +56,9 @@ class AppManager
 
         $this->instance = new Instance(
             $this->api, array(
-                "i_id" => $i_id,
-                "m_id" => $m_id
-            )
+                          "i_id" => $i_id,
+                          "m_id" => $m_id
+                      )
         );
 
         $smartLink        = new \AppManager\SmartLink\SmartLink($this->getInstance());
@@ -94,11 +94,12 @@ class AppManager
 
     /**
      * Returns the SmartLink Url
+     * @param bool $shortenLink Make the Short Link?
      * @return mixed
      */
-    public function getUrl()
+    public function getUrl($shortenLink = false)
     {
-        return $this->smart_link->getUrl();
+        return $this->smart_link->getUrl($shortenLink);
     }
 
     /**
@@ -305,6 +306,16 @@ class AppManager
     }
 
     /**
+     * Resets all params for the SmartLink Url
+     *
+     * @param Array $params Array of parameters which should be passed through
+     */
+    public function setParams($params)
+    {
+        $this->smart_link->setParams($params);
+    }
+
+    /**
      * Returns user device information
      */
     public function getDevice()
@@ -387,7 +398,5 @@ class AppManager
     public function cleanCache() {
         $this->getApi()->cleanCache("instances/" . $this->getIId());
     }
-
-
 
 }
