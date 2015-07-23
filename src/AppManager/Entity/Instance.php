@@ -36,28 +36,21 @@ class Instance
         $this->api = $api;
 
         // Initialize Instance ID
-        if (isset($params['m_id']) && $params['m_id'])
-        {
+        if (isset($params['m_id']) && $params['m_id']) {
             $this->m_id = $params['m_id'];
         }
 
         // Initialize Instance ID
-        if (isset($params['i_id']) && $params['i_id'])
-        {
+        if (isset($params['i_id']) && $params['i_id']) {
             $this->id = $params['i_id'];
-        }
-        else
-        {
+        } else {
             $this->recoverId();
         }
 
         // Initialize Language
-        if (isset($params['lang']))
-        {
+        if (isset($params['lang'])) {
             $this->lang = $params['lang'];
-        }
-        else
-        {
+        } else {
             $this->recoverLangTag();
         }
 
@@ -71,8 +64,7 @@ class Instance
         // Update the language for the current request
         $this->api->setLang($this->getLang());
         $response = $this->api->get("instances/" . $this->id);
-        if ($response == false)
-        {
+        if ($response == false) {
             return false;
         }
         $this->info = $response;
@@ -86,15 +78,13 @@ class Instance
         $this->api->setLang($this->getLang());
         $response = $this->api->get("instances/$this->id/configs", array('page_size' => 10000));
 
-        if ($response == false)
-        {
+        if ($response == false) {
             return false;
         }
         $data = $response['_embedded']['data'];
 
         $config = array();
-        foreach ($data as $v)
-        {
+        foreach ($data as $v) {
             $config[$v['id']] = $v;
         }
         $this->config = $config;
@@ -110,16 +100,14 @@ class Instance
             "instances/$this->id/languages/$lang/translations",
             array('page_size' => 10000)
         );
-        if ($response == false)
-        {
+        if ($response == false) {
             return false;
         }
 
         $data = $response['_embedded']['data'];
 
         $translation = array();
-        foreach ($data as $v)
-        {
+        foreach ($data as $v) {
             $translation[$v['translation_id']] = $v['value'];
         }
         $this->translation = $translation;
@@ -136,42 +124,31 @@ class Instance
         $id = false;
 
         // Try to get the ID from the REQUEST
-        if (isset($_REQUEST['i_id']))
-        {
+        if (isset($_REQUEST['i_id'])) {
             $id = $_REQUEST['i_id'];
-        }
-        else
-        {
-            if (isset($_SERVER['i_id']))
-            {
+        } else {
+            if (isset($_SERVER['i_id'])) {
                 $id = $_SERVER['i_id'];
-            }
-            else
-            {
-                // Try to get the ID from a cookie
-                if (isset($_COOKIE['aa_i_id']))
-                {
-                    $id = $_COOKIE['aa_i_id'];
-                }
-                else
-                {
-                    // Try to get the ID from the user session
-                    if (!empty($_SESSION['current_i_id']))
-                    {
-                        $id = $_SESSION["current_i_id"];
-                    }
-                    else
-                    {
-                        // Try to get the ID from the facebook fanpage tab and m_id (app model)
-                        $id = $this->getIdFromFBRequest();
+            } else {
+                // Try to get the ID from the facebook fanpage tab and m_id (app model)
+                $id = $this->getIdFromFBRequest();
+
+                if (!$id) {
+                    // Try to get the ID from a cookie
+                    if (isset($_COOKIE['aa_i_id'])) {
+                        $id = $_COOKIE['aa_i_id'];
+                    } else {
+                        // Try to get the ID from the user session
+                        if (!empty($_SESSION['current_i_id'])) {
+                            $id = $_SESSION["current_i_id"];
+                        }
                     }
                 }
             }
         }
 
         // Set ID to the object and the users session and cookie
-        if ($id)
-        {
+        if ($id) {
             $_SESSION['current_i_id'] = intval($id);
             $this->id                 = intval($id);
         }
@@ -187,34 +164,23 @@ class Instance
     {
 
         $lang = false;
-        if (isset($_GET['lang']))
-        {
+        if (isset($_GET['lang'])) {
             $lang = $_GET['lang'];
-        }
-        else
-        {
-            if (isset($_GET['locale']))
-            {
+        } else {
+            if (isset($_GET['locale'])) {
                 $lang = $_GET['locale'];
-            }
-            else
-            {
-                if (isset($app_data) && isset($app_data['locale']))
-                {
+            } else {
+                if (isset($app_data) && isset($app_data['locale'])) {
                     $lang = $app_data['locale'];
-                }
-                else
-                {
-                    if (isset($_COOKIE['aa_' . $this->id . '_lang']))
-                    {
+                } else {
+                    if (isset($_COOKIE['aa_' . $this->id . '_lang'])) {
                         $lang = $_COOKIE['aa_' . $this->id . '_lang'];
                     }
                 }
             }
         }
 
-        if ($lang)
-        {
+        if ($lang) {
             $this->setLang($lang);
         }
 
@@ -230,29 +196,23 @@ class Instance
         $fb_page_id = false;
         $i_id       = false;
 
-        if (isset($_REQUEST['signed_request']))
-        {
+        if (isset($_REQUEST['signed_request'])) {
             list($encoded_sig, $payload) = explode('.', $_REQUEST['signed_request'], 2);
             $signed_request = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
-            if (isset($signed_request['app_data']))
-            {
+            if (isset($signed_request['app_data'])) {
                 $app_data = json_decode($signed_request['app_data'], true);
             }
 
-            if (isset($signed_request['page']['id']) && $signed_request['page']['id'])
-            {
+            if (isset($signed_request['page']['id']) && $signed_request['page']['id']) {
                 $fb_page_id = $signed_request['page']['id'];
             }
 
-            if ($fb_page_id && $this->m_id)
-            {
+            if ($fb_page_id && $this->m_id) {
                 $request_url = "https://manager.app-arena.com/api/v1/env/fb/pages/" . $fb_page_id .
                                "/instances.json?m_id=" . $this->m_id . "&active=true";
                 $instances   = json_decode(file_get_contents($request_url), true);
-                foreach ($instances['data'] as $instance)
-                {
-                    if ($instance['activate'] == 1)
-                    {
+                foreach ($instances['data'] as $instance) {
+                    if ($instance['activate'] == 1) {
                         $i_id = $instance['i_id'];
                     }
                 }
@@ -299,35 +259,26 @@ class Instance
         $args   = func_get_args();
         $num    = func_num_args();
 
-        if ($num == 0)
-        {
+        if ($num == 0) {
             return '';
         }
 
         $config_id = $args[0];
-        if ($num == 1)
-        {
-            if (isset($config[$config_id]['value']))
-            {
+        if ($num == 1) {
+            if (isset($config[$config_id]['value'])) {
                 return $config[$config_id]['value'];
             }
         }
 
         // Return certain attributes of a config value
-        if ($num == 2)
-        {
+        if ($num == 2) {
             $attributes = $args[1];
-            if (isset($config[$config_id]) && is_array($attributes))
-            {
+            if (isset($config[$config_id]) && is_array($attributes)) {
                 $result = array($attributes);
-                foreach ($config[$config_id] as $attribute => $value)
-                {
-                    if (isset($result[$attribute]))
-                    {
+                foreach ($config[$config_id] as $attribute => $value) {
+                    if (isset($result[$attribute])) {
                         $result[$attribute] = $value;
-                    }
-                    else
-                    {
+                    } else {
                         $result[$attribute] = null;
                     }
 
@@ -335,8 +286,7 @@ class Instance
                 }
             }
 
-            if (isset($config[$config_id][$attributes]))
-            {
+            if (isset($config[$config_id][$attributes])) {
                 return $config[$config_id][$attributes];
             }
 
@@ -357,14 +307,12 @@ class Instance
         $args = func_get_args();
         $num  = func_num_args();
 
-        if ($num == 0)
-        {
+        if ($num == 0) {
             return '';
         }
 
         $str = $args[0];
-        if ($num == 1)
-        {
+        if ($num == 1) {
             return $translate->_($str);
         }
 
@@ -383,8 +331,7 @@ class Instance
      */
     public function getMId()
     {
-        if ($this->m_id)
-        {
+        if ($this->m_id) {
             return $this->m_id;
         }
 
@@ -398,7 +345,8 @@ class Instance
      * @param $key Key of the attribute
      * @return String Value of the requested attribute
      */
-    public function getInfo($key) {
+    public function getInfo($key)
+    {
         $infos = $this->getInfos();
 
         if (isset($infos[$key])) {
