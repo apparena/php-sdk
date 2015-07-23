@@ -314,6 +314,11 @@ class SmartLink
             }
         }
 
+        // If device-type is submitted via GET-Parameter
+        if (isset($_GET['device']) && in_array($_GET['device'], array('mobile', 'tablet', 'desktop'))) {
+            $device['type'] = $_GET['device'];
+        }
+
         $this->device = $device;
     }
 
