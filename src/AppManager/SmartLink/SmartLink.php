@@ -225,6 +225,7 @@ class SmartLink
 
         // Get Facebook page tab parameters and write them to GET parameters
         if (isset($_REQUEST['signed_request'])) {
+            $this->facebook['signed_request'] = $_REQUEST['signed_request'];
             $fb_signed_request = $this->parse_signed_request($_REQUEST['signed_request']);
             if (isset($fb_signed_request['app_data'])) {
                 $params = json_decode(urldecode($fb_signed_request['app_data']), true);
@@ -234,6 +235,8 @@ class SmartLink
                     }
                 }
             }
+        } else {
+            $this->facebook['signed_request'] = false;
         }
     }
 
@@ -330,7 +333,6 @@ class SmartLink
             $this->setTarget('direct');
         }*/
 
-
         // 1. If a website is defined, use the website as default environment
         if ($this->website) {
             $this->reasons[] = 'ENV: Website is defined';
@@ -347,7 +349,7 @@ class SmartLink
             }
 
             // Check if another target is defined, then add the website as GET param, but do not use it for redirection
-            if ($this->getTarget() && $this->getUrlTarget() != 'website') {
+            if ($this->getUrlTarget() && $this->getTarget() != 'website') {
                 $this->reasons[] = 'ENV: Website valid, but another target is defined';
                 $this->addParams(array('website' => $this->website));
                 $website_valid = false;
@@ -381,13 +383,13 @@ class SmartLink
 
             // Check if another target is defined, then add the website as GET param, but do not use it for redirection
             $facebook_valid = true;
-            if ($this->getTarget() && $this->getUrlTarget() != 'facebook') {
+            if ($this->getUrlTarget() && $this->getTarget() != 'facebook') {
                 $this->reasons[] = 'ENV: Facebook environment valid, but another target is defined';
                 $facebook_valid  = false;
             }
 
-            // If Facebook Environment is valid, then use it
-            if ($facebook_valid) {
+            // If Facebook Environment is valid we are currently on Facebook, then use it
+            if ($facebook_valid && $facebook['signed_request']) {
                 $this->setEnvironment('facebook');
                 $this->setUrl($facebook['page_tab']);
 
@@ -960,7 +962,11 @@ class SmartLink
      */
     private function setEnvironment($environment)
     {
-        $this->environment = $environment;
+        $allowed = array('website', 'facebook', 'direct');
+
+        if (in_array($environment, $allowed)) {
+            $this->environment = $environment;
+        }
     }
 
     /**
