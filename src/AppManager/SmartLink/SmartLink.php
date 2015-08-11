@@ -137,7 +137,8 @@ class SmartLink
         $this->meta = array(
             'title' => $title,
             'desc' => $desc,
-            'image' => $image,
+            'image' => str_replace("https://", "http://", $image),
+            'image_secure' => $image,
             'og_type' => $og_type,
             'schema_type' => $schema_type,
             'url' => $this->getCurrentUrl()
