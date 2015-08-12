@@ -17,33 +17,33 @@ namespace AppManager\Helper;
 
 class Css
 {
-
-    protected $parser = null;
     private $i_id;
     private $lang;
     private $cache_key;
+    private $cache_dir;
     private $file_id;
+    private $less_files = array(); // Array of less files to be included
+    private $variables = array(); // Variables to be replaced in the source files
 
     /**
      * Initializes the CSS compiler class
-     * @param        $cache_dir Directory for the compiled CSS files
-     * @param        $i_id      Instance ID
-     * @param        $lang      Language to generate the CSS for (does not need to be necessarily different
+     * @param string $cache_dir Directory for the compiled CSS files
+     * @param int    $i_id      Instance ID
+     * @param string $lang      Language to generate the CSS for (does not need to be necessarily different
      * @param string $file_id   File identifier, in case you want to compile more than one file
      */
     function __construct($cache_dir, $i_id, $lang = "de_DE", $file_id = "style")
     {
-        $this->i_id    = $i_id;
-        $this->lang    = $lang;
-        $this->file_id = $file_id;
+        $this->i_id      = $i_id;
+        $this->lang      = $lang;
+        $this->file_id   = $file_id;
+        $this->cache_dir = $cache_dir;
 
         $this->cache = new Cache(
             array(
                 'cache_dir' => $cache_dir
             )
         );
-
-        $this->parser = new \Less_Parser();
 
         $this->cache_key = "instances_" . $this->i_id . "_" . $this->lang . "_" . $this->file_id . ".css";
     }
@@ -71,60 +71,95 @@ class Css
      */
     function concat(array $data, array $replacements)
     {
-        if ($this->cache->exists($this->cache_key))
-        {
-            $content = $this->cache->load($this->cache_key);
-        }
-        else
-        {
-            if (isset($data['files']))
-            {
+        $parser = new \Less_Parser();
+        if (!$this->cache->exists($this->cache_key)) {
+            if (isset($data['files'])) {
                 $files = $data['files'];
-            }
-            else
-            {
+            } else {
                 $files = array();
             }
 
-            if (isset($data['css']))
-            {
+            if (isset($data['css'])) {
                 $css = $data['css'];
-            }
-            else
-            {
+            } else {
                 $css = array();
             }
 
             // Get list of files and download them
-            foreach ($files as $file)
-            {
+            foreach ($files as $file) {
                 $file_content = file_get_contents($file);
 
-                foreach ($replacements as $k => $v)
-                {
+                foreach ($replacements as $k => $v) {
                     $file_content = str_replace($k, $v, $file_content);
                 }
-                $this->parser->parse($file_content);
+                $parser->parse($file_content);
             }
 
             // Get CSS content and add them to the parser object
-            foreach ($css as $v)
-            {
+            foreach ($css as $v) {
                 $file_content = $v;
 
-                foreach ($replacements as $k => $v)
-                {
+                foreach ($replacements as $k => $v) {
                     $file_content = str_replace($k, $v, $file_content);
                 }
-                $this->parser->parse($file_content);
+                $parser->parse($file_content);
             }
 
-            $content = $this->parser->getCss();
+            $content = $parser->getCss();
 
             $this->cache->save($this->cache_key, $content, "plain");
         }
 
         return $this->cache_key;
+    }
+
+
+    /**
+     * Returns the filepath to the compiled CSS file
+     * @return string
+     * @throws \Exception
+     */
+    public function getFilePath()
+    {
+        if (!$this->cache->exists($this->cache_key)) {
+
+            // Compile Less files
+            try {
+                $parser = new \Less_Parser();
+                foreach ($this->less_files as $file) {
+                    $parser->parseFile($file);
+                }
+
+                // Replace Variables
+                $parser->ModifyVars($this->variables);
+
+                $css = $parser->getCss();
+
+            } catch (Exception $e) {
+                $error_message = $e->getMessage();
+            }
+
+            $this->cache->save($this->cache_key, $css, "plain");
+        }
+
+        return $this->cache_dir . "/" . $this->cache_key;
+    }
+
+    /**
+     * Key value pairs of variables and their values to be replaced in the original source file
+     * @param Array $variables Variables and their values
+     */
+    public function setVariables($variables)
+    {
+        $this->variables = $variables;
+    }
+
+    /**
+     * @param Array $less_files Array of aboslute filepaths, which should be compiled
+     */
+    public function setLessFiles($less_files)
+    {
+        $this->less_files = $less_files;
     }
 
 
