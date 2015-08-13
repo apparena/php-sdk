@@ -274,16 +274,20 @@ class Instance
         if ($num == 2) {
             $attributes = $args[1];
             if (isset($config[$config_id]) && is_array($attributes)) {
-                $result = array($attributes);
-                foreach ($config[$config_id] as $attribute => $value) {
-                    if (isset($result[$attribute])) {
-                        $result[$attribute] = $value;
-                    } else {
-                        $result[$attribute] = null;
-                    }
-
-                    return $result;
+                $result = array();
+                // Initialize all required attributes with null
+                foreach ($attributes as $attribute) {
+                    $result[$attribute] = null;
                 }
+
+                // Add attributes from config value
+                foreach ($config[$config_id] as $attribute => $value) {
+                    if (in_array($attribute, $attributes)) {
+                        $result[$attribute] = $value;
+                    }
+                }
+
+                return $result;
             }
 
             if (isset($config[$config_id][$attributes])) {

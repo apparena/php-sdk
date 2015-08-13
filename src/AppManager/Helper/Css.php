@@ -21,23 +21,29 @@ class Css
     private $lang;
     private $cache_key;
     private $cache_dir;
+    private $root_path;
     private $file_id;
-    private $less_files = array(); // Array of less files to be included
+    private $files = array(); // Array of less files to be included
+    private $config_values = array(); // Array of Config value IDs (Type CSS) which will be included in the compilation
     private $variables = array(); // Variables to be replaced in the source files
+    private $replacements = array(); // Key value pair of string replacements in the compiled file
 
     /**
      * Initializes the CSS compiler class
-     * @param string $cache_dir Directory for the compiled CSS files
-     * @param int    $i_id      Instance ID
-     * @param string $lang      Language to generate the CSS for (does not need to be necessarily different
-     * @param string $file_id   File identifier, in case you want to compile more than one file
+     * @param string                      $cache_dir Directory for the compiled CSS files
+     * @param \AppManager\Entity\Instance $instance  Instance object
+     * @param string                      $lang      Language to generate the CSS for (does not need to be necessarily
+     *                                               different
+     * @param string                      $file_id   File identifier, in case you want to compile more than one file
+     * @param string $root_path Absolute path to the project root
      */
-    function __construct($cache_dir, $i_id, $lang = "de_DE", $file_id = "style")
+    function __construct($cache_dir, $instance, $lang = "de_DE", $file_id = "style", $root_path = "")
     {
-        $this->i_id      = $i_id;
+        $this->instance  = $instance;
         $this->lang      = $lang;
         $this->file_id   = $file_id;
         $this->cache_dir = $cache_dir;
+        $this->root_path = $root_path;
 
         $this->cache = new Cache(
             array(
@@ -45,74 +51,8 @@ class Css
             )
         );
 
-        $this->cache_key = "instances_" . $this->i_id . "_" . $this->lang . "_" . $this->file_id . ".css";
+        $this->cache_key = "instances_" . $this->instance->getId() . "_" . $this->lang . "_" . $this->file_id . ".css";
     }
-
-    /**
-     * Minifies, compiles (Less) and concatenates Less and Css files and content
-     * @param array $data         Array of filenames and CSS/Less content to be processed. Format:
-     *                            $css_files = array(
-     *                            'files' => array(
-     *                            ROOT_PATH.'/css/style.css'
-     *                            ROOT_PATH.'/css/bootstrap.min.css'
-     *                            ),
-     *                            'css' => array(
-     *                            'body { color:red; }',
-     *                            '@variable1: #123; p { color: @variable1; }'
-     *                            )
-     *                            );
-     * @param array $replacements Array of values to be replaced in CSS/Less content before compiling. Format:
-     *                            $css_replacements = array(
-     *                            '{{app_color_primary.value}}' => __c('app_color_primary'),
-     *                            '../fonts/fontawesome' => '../../js/vendor_bower/font-awesome/fonts/fontawesome'
-     *                            );
-     * @return string Filename of the generated CSS file
-     * @throws \Exception
-     */
-    function concat(array $data, array $replacements)
-    {
-        $parser = new \Less_Parser();
-        if (!$this->cache->exists($this->cache_key)) {
-            if (isset($data['files'])) {
-                $files = $data['files'];
-            } else {
-                $files = array();
-            }
-
-            if (isset($data['css'])) {
-                $css = $data['css'];
-            } else {
-                $css = array();
-            }
-
-            // Get list of files and download them
-            foreach ($files as $file) {
-                $file_content = file_get_contents($file);
-
-                foreach ($replacements as $k => $v) {
-                    $file_content = str_replace($k, $v, $file_content);
-                }
-                $parser->parse($file_content);
-            }
-
-            // Get CSS content and add them to the parser object
-            foreach ($css as $v) {
-                $file_content = $v;
-
-                foreach ($replacements as $k => $v) {
-                    $file_content = str_replace($k, $v, $file_content);
-                }
-                $parser->parse($file_content);
-            }
-
-            $content = $parser->getCss();
-
-            $this->cache->save($this->cache_key, $content, "plain");
-        }
-
-        return $this->cache_key;
-    }
-
 
     /**
      * Returns the filepath to the compiled CSS file
@@ -123,26 +63,46 @@ class Css
     {
         if (!$this->cache->exists($this->cache_key)) {
 
-            // Compile Less files
+
             try {
-                $parser = new \Less_Parser();
-                foreach ($this->less_files as $file) {
+                // Compile Less files
+                $options = array('compress' => true);
+                $parser  = new \Less_Parser($options);
+
+                // Add all files
+                foreach ($this->files as $file) {
                     $parser->parseFile($file);
+                }
+
+                // Add CSS from config variables
+                foreach ($this->config_values as $config_id) {
+                    $value = $this->instance->getConfig($config_id, array("value", "type"));
+                    if ($value['type'] == "css") {
+                        $parser->parse($value['value']);
+                    }
                 }
 
                 // Replace Variables
                 $parser->ModifyVars($this->variables);
 
-                $css = $parser->getCss();
+                $css_compiled = $parser->getCss();
 
             } catch (Exception $e) {
                 $error_message = $e->getMessage();
             }
 
-            $this->cache->save($this->cache_key, $css, "plain");
+            // Apply all replacements
+            foreach ($this->replacements as $k => $v) {
+                $css_compiled = str_replace($k, $v, $css_compiled);
+            }
+
+            $this->cache->save($this->cache_key, $css_compiled, "plain");
         }
 
-        return $this->cache_dir . "/" . $this->cache_key;
+        $base_path = substr($this->cache_dir, strlen($this->root_path));
+        $url = $base_path . "/" . $this->cache_key;
+
+        return $url;
     }
 
     /**
@@ -155,12 +115,43 @@ class Css
     }
 
     /**
-     * @param Array $less_files Array of aboslute filepaths, which should be compiled
+     * @param Array $files Array of absolute filepaths, which should be compiled
      */
-    public function setLessFiles($less_files)
+    public function setFiles($files)
     {
-        $this->less_files = $less_files;
+        $this->files = $files;
     }
+
+    /**
+     * Set an array with config value IDs, which will be included in the compilation process of the file
+     * @param array $config_values
+     */
+    public function setConfigValues($config_values)
+    {
+        $this->config_values = $config_values;
+    }
+
+    /**
+     * Sets the file ID to be used to generate the cache file
+     * @param string $file_id
+     */
+    public function setFileId($file_id)
+    {
+        $this->file_id = $file_id;
+        $this->cache_key = "instances_" . $this->instance->getId() . "_" . $this->lang . "_" . $this->file_id . ".css";
+    }
+
+    /**
+     * Search and replaces all strings (keys) of the submitted array with the corresponding value in the compiled css
+     * source
+     * @param array $replacements Array of key-value pairs. Key = Search-Term, Value = Replacement
+     */
+    public function setReplacements($replacements)
+    {
+        $this->replacements = $replacements;
+    }
+
+
 
 
 }

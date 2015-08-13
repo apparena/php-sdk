@@ -9,8 +9,10 @@ class AppManager
 
     protected $api; // API object
     protected $cache_dir = false; // E.g. ROOTPATH . /var/cache, When no path is set, then caching will be deactivated
+    protected $root_path = false; // Absolute root path of the project on the server
     private $browser;
     private $cookie; // The App-Manager Cookie for the current user
+    private $css_helper; // Css Helper object
     private $device;
     private $i_id;
     private $m_id;
@@ -31,9 +33,14 @@ class AppManager
         $this->m_id = $m_id;
         $this->i_id = $i_id;
 
+        if (isset($params['root_path']))
+        {
+            $this->root_path = $params['root_path'];
+        }
+
         if (isset($params['cache_dir']))
         {
-            $this->cache_dir = $params['cache_dir'];
+            $this->cache_dir = $this->root_path . $params['cache_dir'];
         }
 
         $this->init();
@@ -63,6 +70,15 @@ class AppManager
 
         $smartLink        = new \AppManager\SmartLink\SmartLink($this->getInstance());
         $this->smart_link = $smartLink;
+
+        // Create CSS Helper object
+        $this->css_helper = new Helper\Css(
+            $this->cache_dir,
+            $this->instance,
+            "de_DE",
+            "style",
+            $this->root_path
+        );
     }
 
     /**
@@ -407,5 +423,15 @@ class AppManager
     public function cleanCache() {
         $this->getApi()->cleanCache("instances/" . $this->getIId());
     }
+
+    /**
+     * Returns the CSS Helper object, which can be used to generate CSS files from Less or config value sources
+     * @return mixed
+     */
+    public function getCssHelper()
+    {
+        return $this->css_helper;
+    }
+
 
 }
