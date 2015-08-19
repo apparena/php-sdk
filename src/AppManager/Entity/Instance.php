@@ -346,7 +346,7 @@ class Instance
 
     /**
      * Returns only the requested info attribute
-     * @param $key Key of the attribute
+     * @param String $key Key of the attribute
      * @return String Value of the requested attribute
      */
     public function getInfo($key)

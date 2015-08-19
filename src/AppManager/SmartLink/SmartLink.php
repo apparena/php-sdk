@@ -206,28 +206,15 @@ class SmartLink
      */
     private function initFacebook()
     {
-        // Initialize Facebook Page Tab information
-        if ($this->instance->getInfo('fb_page_url') && $this->instance->getInfo('fb_app_id')) {
-            $fb_page_url = $this->instance->getInfo('fb_page_url') . '?sk=app_' . $this->instance->getInfo('fb_app_id');
-
-            $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
-            $this->facebook['page_id']  = $this->instance->getInfo('fb_page_id');
-            $this->facebook['page_url'] = $this->instance->getInfo('fb_page_url');
-            $this->facebook['page_tab'] = $fb_page_url;
-        }
-
-        // Initializes Facebook canvas information
-        if ($this->instance->getInfo('fb_app_id') && $this->instance->getInfo('fb_app_namespace')) {
-            $this->facebook['app_namespace'] = $this->instance->getInfo('fb_app_namespace');
-            $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
-            $canvas_url                      = 'https://apps.facebook.com/' . $this->facebook['app_namespace'] . '/?i_id=' . $this->i_id;
-            $this->facebook['canvas_url']    = $canvas_url;
-        }
-
         // Get Facebook page tab parameters and write them to GET parameters
         if (isset($_REQUEST['signed_request'])) {
             $this->facebook['signed_request'] = $_REQUEST['signed_request'];
-            $fb_signed_request = $this->parse_signed_request($_REQUEST['signed_request']);
+            $fb_signed_request                = $this->parse_signed_request($_REQUEST['signed_request']);
+            // So use the current Facebook page for sharing, if no fb_page_id is defined via GET
+            if (isset($fb_signed_request['page']['id']) && !isset($_GET['fb_page_id'])) {
+                $_GET['fb_page_id'] = $fb_signed_request['page']['id'];
+            }
+            // And the parameter-passthrough mechanism, will reset all GET parameters from app_data
             if (isset($fb_signed_request['app_data'])) {
                 $params = json_decode(urldecode($fb_signed_request['app_data']), true);
                 foreach ($params as $key => $value) {
@@ -238,6 +225,54 @@ class SmartLink
             }
         } else {
             $this->facebook['signed_request'] = false;
+        }
+
+        // Initialize Facebook Information ... (and check if the SmartLink should redirect to Facebook)
+        $fb_page_id = false;
+        if ($this->instance->getInfo('fb_app_id')) {
+            if (isset($_GET['fb_page_id'])) {
+                // ... from GET-Parameter
+                $fb_page_id  = $_GET['fb_page_id'];
+                $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '?sk=app_' . $this->instance->getInfo('fb_app_id');
+
+                $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
+                $this->facebook['page_id']  = $fb_page_id;
+                $this->facebook['page_url'] = "https://www.facebook.com/" . $fb_page_id;
+                $this->facebook['page_tab'] = $fb_page_url;
+                $this->facebook['use_as_target'] = true;
+            } else {
+                $facebook = $this->getCookieValue("facebook");
+                if (isset($facebook['page_id']) && $facebook['use_as_target']) {
+                    // ... from COOKIE-Parameter
+                    $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '?sk=app_' . $this->instance->getInfo('fb_app_id');
+
+                    $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
+                    $this->facebook['page_id']  = $fb_page_id;
+                    $this->facebook['page_url'] = "https://www.facebook.com/" . $fb_page_id;
+                    $this->facebook['page_tab'] = $fb_page_url;
+                    $this->facebook['use_as_target'] = true;
+                } else {
+                    // ... from the Instance
+                    if ($this->instance->getInfo('fb_page_url')) {
+                        $fb_page_id  = $this->instance->getInfo('fb_page_id');
+                        $fb_page_url = $this->instance->getInfo('fb_page_url') . '?sk=app_' . $this->instance->getInfo('fb_app_id');
+
+                        $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
+                        $this->facebook['page_id']  = $fb_page_id;
+                        $this->facebook['page_url'] = $this->instance->getInfo('fb_page_url');
+                        $this->facebook['page_tab'] = $fb_page_url;
+                        $this->facebook['use_as_target'] = false;
+                    }
+                }
+            }
+        }
+
+        // Initializes Facebook canvas information
+        if ($this->instance->getInfo('fb_app_id') && $this->instance->getInfo('fb_app_namespace')) {
+            $this->facebook['app_namespace'] = $this->instance->getInfo('fb_app_namespace');
+            $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
+            $canvas_url                      = 'https://apps.facebook.com/' . $this->facebook['app_namespace'] . '/?i_id=' . $this->i_id;
+            $this->facebook['canvas_url']    = $canvas_url;
         }
     }
 
@@ -394,8 +429,8 @@ class SmartLink
                 $facebook_valid  = false;
             }
 
-            // If Facebook Environment is valid we are currently on Facebook, then use it
-            if ($facebook_valid && $facebook['signed_request']) {
+            // If Facebook Environment is valid and the facebook should be used as target
+            if ($facebook_valid && isset($facebook['use_as_target']) && $facebook['use_as_target']) {
                 $this->setEnvironment('facebook');
                 $this->setUrl($facebook['page_tab']);
 
@@ -914,6 +949,12 @@ class SmartLink
         $params['m_id'] = $this->instance->getMId();
         $params['lang'] = $this->getLang();
 
+        // When the current environment is Facebook, then add the page ID of the current page to the SmartLink
+        $facebook = $this->getFacebook();
+        if (isset($facebook['signed_request']) && $facebook['signed_request'] && isset($facebook['page_id'])) {
+            $params['fb_page_id'] = $facebook['page_id'];
+        }
+
         // Add additional parameters if available in $this->params
         $params = array_merge($this->paramsAdditional, $params);
 
@@ -944,8 +985,8 @@ class SmartLink
 
         // Shorten Link, when the link changed...
         if ($shortenLink && $this->url_long != $share_url) {
-            $this->url_long = $share_url;
-            $share_url = $this->createGoogleShortLink($share_url);
+            $this->url_long  = $share_url;
+            $share_url       = $this->createGoogleShortLink($share_url);
             $this->url_short = $share_url;
         } else {
             $this->url_long = $share_url;
