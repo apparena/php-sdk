@@ -7,6 +7,9 @@ use AppManager\Entity\Instance;
 class AppManager
 {
 
+    /**
+     * @var
+     */
     protected $api; // API object
     protected $cache_dir = false; // E.g. ROOTPATH . /var/cache, When no path is set, then caching will be deactivated
     protected $root_path = false; // Absolute root path of the project on the server
@@ -17,7 +20,13 @@ class AppManager
     private $i_id;
     private $m_id;
     private $lang = "de_DE"; // Language: e.g. de_DE, en_US, en_UK, ...
+    /**
+     * @var \AppManager\Entity\Instance Instance object
+     */
     private $instance;
+    /**
+     * @var \AppManager\SmartLink\SmartLink SmartLink object
+     */
     private $smart_link;
     private $url;
 
@@ -33,13 +42,11 @@ class AppManager
         $this->m_id = $m_id;
         $this->i_id = $i_id;
 
-        if (isset($params['root_path']))
-        {
+        if (isset($params['root_path'])) {
             $this->root_path = $params['root_path'];
         }
 
-        if (isset($params['cache_dir']))
-        {
+        if (isset($params['cache_dir'])) {
             $this->cache_dir = $this->root_path . $params['cache_dir'];
         }
 
@@ -81,6 +88,18 @@ class AppManager
         );
     }
 
+
+    /**
+     * Returns an attribute of the instance
+     * @param String $attr Attribute you want to return
+     * @return mixed Requested instance attribute
+     */
+    function getInfo($attr)
+    {
+        return $this->instance->getInfo($attr);
+    }
+
+
     /**
      * Returns all basic information of one instance
      * @return array Basic information about the current instance
@@ -92,12 +111,35 @@ class AppManager
     }
 
     /**
+     * Returns the value of a config value
+     * @param String       $config_id Config identifier to get the data for
+     * @param String|array $attr      Attribute or Attributes which should be returned
+     * @return mixed Requested config value
+     */
+    function getConfig($config_id, $attr = "value")
+    {
+        return $this->instance->getConfig($config_id, $attr);
+    }
+
+    /**
      * Returns all Config Elements of the current instance as array
      * @return array All config elements of the current instance
      */
     public function getConfigs()
     {
         return $this->instance->getConfigs();
+    }
+
+    /**
+     * Returns the translation for the submitted ID
+     * @param String $translation_id Config identifier to get the data for
+     * @param Array  $args           Array of values to replace in the translation (@see
+     *                               http://php.net/manual/de/function.vsprintf.php)
+     * @return String Translated value
+     */
+    function getTranslation($translation_id, $args = array())
+    {
+        return $this->instance->getTranslation($translation_id, $args);
     }
 
     /**
@@ -155,7 +197,7 @@ class AppManager
      */
     public function setLang($lang)
     {
-        $allowed    = array(
+        $allowed = array(
             'sq_AL',
             'ar_DZ',
             'ar_BH',
@@ -420,7 +462,8 @@ class AppManager
     /**
      * Cleans the cache
      */
-    public function cleanCache() {
+    public function cleanCache()
+    {
         $this->getApi()->cleanCache("instances/" . $this->getIId());
     }
 

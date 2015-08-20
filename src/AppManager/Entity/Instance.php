@@ -61,6 +61,11 @@ class Instance
      */
     public function getInfos()
     {
+        // Return array from Memory if already available
+        if ($this->info) {
+            return $this->info;
+        }
+
         // Update the language for the current request
         $this->api->setLang($this->getLang());
         $response = $this->api->get("instances/" . $this->id);
@@ -74,6 +79,11 @@ class Instance
 
     function getConfigs()
     {
+        // Return array from Memory if already available
+        if ($this->config) {
+            return $this->config;
+        }
+
         // Update the language for the current request
         $this->api->setLang($this->getLang());
         $response = $this->api->get("instances/$this->id/configs", array('page_size' => 10000));
@@ -94,6 +104,11 @@ class Instance
 
     function getTranslations()
     {
+        // Return array from Memory if already available
+        if ($this->translation) {
+            return $this->translation;
+        }
+
         $lang = $this->getLang();
         $this->api->setLang($lang);
         $response = $this->api->get(
@@ -251,83 +266,70 @@ class Instance
      * Returns the value of a config value
      * @param String       $config_id Config identifier to get the data for
      * @param String|array $attr      Attribute or Attributes which should be returned
-     * @return mixed Requested config value
+     * @return String|array Requested config value as String or an
      */
-    function getConfig($config_id, $attr = null)
+    function getConfig($config_id, $attr = "value")
     {
-        $config = $this->getConfigs();
-        $args   = func_get_args();
-        $num    = func_num_args();
-
-        if ($num == 0) {
-            return '';
+        // Validate Input
+        if (!is_string($config_id) || !$config_id) {
+            return null;
         }
 
-        $config_id = $args[0];
-        if ($num == 1) {
-            if (isset($config[$config_id]['value'])) {
-                return $config[$config_id]['value'];
-            }
+        // Get all config values
+        $config = $this->getConfigs();
+
+        // Return the value as string
+        if (is_string($attr) && isset($config[$config_id][$attr])) {
+            return $config[$config_id][$attr];
         }
 
         // Return certain attributes of a config value
-        if ($num == 2) {
-            $attributes = $args[1];
-            if (isset($config[$config_id]) && is_array($attributes)) {
-                $result = array();
-                // Initialize all required attributes with null
-                foreach ($attributes as $attribute) {
-                    $result[$attribute] = null;
-                }
-
-                // Add attributes from config value
-                foreach ($config[$config_id] as $attribute => $value) {
-                    if (in_array($attribute, $attributes)) {
-                        $result[$attribute] = $value;
-                    }
-                }
-
-                return $result;
+        if (is_array($attr) && isset($config[$config_id])) {
+            $result = array();
+            // Initialize all required attributes with null
+            foreach ($attr as $attribute) {
+                $result[$attribute] = null;
             }
 
-            if (isset($config[$config_id][$attributes])) {
-                return $config[$config_id][$attributes];
+            // Add attributes from config value
+            foreach ($config[$config_id] as $attribute => $value) {
+                if (in_array($attribute, $attr)) {
+                    $result[$attribute] = $value;
+                }
             }
 
+            return $result;
         }
 
-        return false;
+        return null;
     }
 
-
     /**
-     * Returns one translation
-     * @return mixed
+     * Returns the translation for the submitted ID
+     * @param String $translation_id Config identifier to get the data for
+     * @param Array  $args         Array of values to replace in the translation (@see
+     *                             http://php.net/manual/de/function.vsprintf.php)
+     * @return String Translated value
      */
-    function getTranslation()
+    function getTranslation($translation_id, $args = array())
     {
-        $translate = $this->getTranslations();
-
-        $args = func_get_args();
-        $num  = func_num_args();
-
-        if ($num == 0) {
+        // Validate Input
+        if (!is_string($translation_id) || !is_array($args)) {
             return '';
         }
 
-        $str = $args[0];
-        if ($num == 1) {
-            return $translate->_($str);
+        $translate = $this->getTranslations();
+
+        // No replacements necessary, so just return the translation like it is
+        if (count($args) == 0 && isset($translate[$translation_id])) {
+            return $translate[$translation_id];
         }
 
-        unset($args[0]);
-        $args  = str_replace('"', '\"', $args);
-        $param = '"' . implode('","', $args) . '"';
+        if (isset($translate[$translation_id])) {
+            return vsprintf($translate[$translation_id], $args);
+        }
 
-        $str = '$ret=sprintf("' . $translate->_($str) . '",' . $param . ');';
-        eval($str);
-
-        return $ret;
+        return $translation_id;
     }
 
     /**
