@@ -187,18 +187,27 @@ class SmartLink
         $this->base_path = $base_path;
 
         // Initialize the domain and cookie domain
-        $host = $_SERVER['HTTP_HOST'];
-        preg_match("/[^\.\/]+\.[^\.\/]+$/", $host, $matches);
-        if (count($matches) > 0) {
-            $domain = $matches[0];
-        } else {
-            $domain = $host;
-        }
+        $host                = $_SERVER['HTTP_HOST'];
+        $domain              = $this->extract_domain($host);
         $this->cookie_domain = "." . $domain;
         if ($domain == 'localhost') {
             $this->cookie_domain = null;
         }
 
+    }
+
+    /**
+     * Extracts the domain from a given domain path (incl. Subdomains)
+     * @param $domain
+     * @return mixed
+     */
+    private function extract_domain($domain)
+    {
+        if (preg_match("/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i", $domain, $matches)) {
+            return $matches['domain'];
+        } else {
+            return $domain;
+        }
     }
 
     /**
@@ -235,10 +244,10 @@ class SmartLink
                 $fb_page_id  = $_GET['fb_page_id'];
                 $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '?sk=app_' . $this->instance->getInfo('fb_app_id');
 
-                $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
-                $this->facebook['page_id']  = $fb_page_id;
-                $this->facebook['page_url'] = "https://www.facebook.com/" . $fb_page_id;
-                $this->facebook['page_tab'] = $fb_page_url;
+                $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
+                $this->facebook['page_id']       = $fb_page_id;
+                $this->facebook['page_url']      = "https://www.facebook.com/" . $fb_page_id;
+                $this->facebook['page_tab']      = $fb_page_url;
                 $this->facebook['use_as_target'] = true;
             } else {
                 $facebook = $this->getCookieValue("facebook");
@@ -246,10 +255,10 @@ class SmartLink
                     // ... from COOKIE-Parameter
                     $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '?sk=app_' . $this->instance->getInfo('fb_app_id');
 
-                    $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
-                    $this->facebook['page_id']  = $fb_page_id;
-                    $this->facebook['page_url'] = "https://www.facebook.com/" . $fb_page_id;
-                    $this->facebook['page_tab'] = $fb_page_url;
+                    $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
+                    $this->facebook['page_id']       = $fb_page_id;
+                    $this->facebook['page_url']      = "https://www.facebook.com/" . $fb_page_id;
+                    $this->facebook['page_tab']      = $fb_page_url;
                     $this->facebook['use_as_target'] = true;
                 } else {
                     // ... from the Instance
@@ -257,10 +266,10 @@ class SmartLink
                         $fb_page_id  = $this->instance->getInfo('fb_page_id');
                         $fb_page_url = $this->instance->getInfo('fb_page_url') . '?sk=app_' . $this->instance->getInfo('fb_app_id');
 
-                        $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
-                        $this->facebook['page_id']  = $fb_page_id;
-                        $this->facebook['page_url'] = $this->instance->getInfo('fb_page_url');
-                        $this->facebook['page_tab'] = $fb_page_url;
+                        $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
+                        $this->facebook['page_id']       = $fb_page_id;
+                        $this->facebook['page_url']      = $this->instance->getInfo('fb_page_url');
+                        $this->facebook['page_tab']      = $fb_page_url;
                         $this->facebook['use_as_target'] = false;
                     }
                 }
