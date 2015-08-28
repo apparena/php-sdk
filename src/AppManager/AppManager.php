@@ -398,6 +398,15 @@ class AppManager
         return $this->smart_link->getDeviceType();
     }
 
+
+    /**
+     * Returns all available Facebook information, like currently used fanpage and canvas information
+     */
+    public function getFacebookInfo()
+    {
+        return $this->smart_link->getFacebook();
+    }
+
     /**
      * Returns user browser information
      */
