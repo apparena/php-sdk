@@ -270,7 +270,12 @@ class SmartLink
                         $this->facebook['page_id']       = $fb_page_id;
                         $this->facebook['page_url']      = $this->instance->getInfo('fb_page_url');
                         $this->facebook['page_tab']      = $fb_page_url;
-                        $this->facebook['use_as_target'] = false;
+                        // Only use this information, when explicitly requested
+                        if (isset($_GET['ref_app_env']) && $_GET['ref_app_env'] == "fb") {
+                            $this->facebook['use_as_target'] = true;
+                        } else {
+                            $this->facebook['use_as_target'] = false;
+                        }
                     }
                 }
             }
@@ -962,6 +967,9 @@ class SmartLink
         $facebook = $this->getFacebook();
         if (isset($facebook['signed_request']) && $facebook['signed_request'] && isset($facebook['page_id'])) {
             $params['fb_page_id'] = $facebook['page_id'];
+        }
+        if ($facebook['use_as_target']) {
+            $params['ref_app_env'] = "fb";
         }
 
         // Add additional parameters if available in $this->params
