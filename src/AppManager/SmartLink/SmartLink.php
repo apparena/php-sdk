@@ -251,8 +251,9 @@ class SmartLink
                 $this->facebook['use_as_target'] = true;
             } else {
                 $facebook = $this->getCookieValue("facebook");
-                if (isset($facebook['page_id']) && $facebook['use_as_target']) {
+                if (isset($facebook['page_id']) && $facebook['page_id'] && $facebook['use_as_target']) {
                     // ... from COOKIE-Parameter
+                    $fb_page_id  = $facebook['page_id'];
                     $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '?sk=app_' . $this->instance->getInfo('fb_app_id');
 
                     $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
@@ -266,10 +267,10 @@ class SmartLink
                         $fb_page_id  = $this->instance->getInfo('fb_page_id');
                         $fb_page_url = $this->instance->getInfo('fb_page_url') . '?sk=app_' . $this->instance->getInfo('fb_app_id');
 
-                        $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
-                        $this->facebook['page_id']       = $fb_page_id;
-                        $this->facebook['page_url']      = $this->instance->getInfo('fb_page_url');
-                        $this->facebook['page_tab']      = $fb_page_url;
+                        $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
+                        $this->facebook['page_id']  = $fb_page_id;
+                        $this->facebook['page_url'] = $this->instance->getInfo('fb_page_url');
+                        $this->facebook['page_tab'] = $fb_page_url;
                         // Only use this information, when explicitly requested
                         if (isset($_GET['ref_app_env']) && $_GET['ref_app_env'] == "fb") {
                             $this->facebook['use_as_target'] = true;
