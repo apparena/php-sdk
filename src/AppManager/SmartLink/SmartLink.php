@@ -969,7 +969,7 @@ class SmartLink
         if (isset($facebook['signed_request']) && $facebook['signed_request'] && isset($facebook['page_id'])) {
             $params['fb_page_id'] = $facebook['page_id'];
         }
-        if ($facebook['use_as_target']) {
+        if (isset($facebook['use_as_target']) && $facebook['use_as_target']) {
             $params['ref_app_env'] = "fb";
         }
 
