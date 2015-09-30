@@ -19,6 +19,10 @@ class Api
 {
     protected $base_url = 'https://v2.app-arena.com/api/v1/';
     protected $error_msg = ''; // Error message on failed soap call
+
+    /**
+     * @var Cache|bool $cache Cache object
+     */
     protected $cache = false;
     private $cache_reset = false;
     private $lang; // Language
@@ -146,7 +150,7 @@ class Api
      * Returns the caching object
      * @return Cache|bool
      */
-    private function getCache()
+    public function getCache()
     {
         return $this->cache;
     }

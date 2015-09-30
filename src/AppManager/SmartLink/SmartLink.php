@@ -2,6 +2,7 @@
 
 namespace AppManager\SmartLink;
 
+use AppManager\API\Api;
 use AppManager\Entity\Instance;
 use Browser;
 use Detection\MobileDetect;
@@ -13,6 +14,9 @@ use Detection\MobileDetect;
  */
 class SmartLink
 {
+    /**
+     * @var Api $api Api object
+     */
     protected $api; // API object
     protected $instance; // Instance object
 
@@ -33,6 +37,7 @@ class SmartLink
     private $url; // SmartLink Url (Url for sharing)
     private $url_long; // SmartLink Url in long form
     private $url_short; // ShartLink Url processed by an url shortener
+    private $url_short_array = array();
     private $url_target; // The url the user will be redirected to
     private $website; // All available information about the website the instance is embedded in
 
@@ -638,6 +643,21 @@ class SmartLink
      */
     private function shortenLink($url)
     {
+        // Get short links from Cache or memory
+        $url_short_cache_key = 'shortlinks_' . $this->i_id;
+        if (count($this->url_short_array) > 0 && isset($this->url_short_array[$url])) {
+            return $this->url_short_array[$url];
+        } else {
+            // Try to get Short Links from Cache
+            $cache = $this->instance->api->getCache();
+            $this->url_short_array = $cache->load($url_short_cache_key);
+        }
+        if (count($this->url_short_array) > 0 && isset($this->url_short_array[$url])) {
+            // The Short Link has been in cache
+            return $this->url_short_array[$url];
+        }
+
+        // This short-Link has not been found in cache
         $timestamp = time();
         $signature = md5($timestamp . '2ff4988406');
         $api_url   = 'http://smartl.ink/yourls-api.php';
@@ -664,6 +684,9 @@ class SmartLink
 
         // Do something with the result. Here, we echo the long URL
         $data = json_decode($data);
+
+        $this->url_short_array[$url] = $data->shorturl;
+        $cache->save($url_short_cache_key, $this->url_short_array);
 
         return $data->shorturl;
     }
