@@ -75,7 +75,8 @@ class AppManager
                       )
         );
 
-        $smartLink        = new \AppManager\SmartLink\SmartLink($this->getInstance());
+        $instance = $this->getInstance();
+        $smartLink        = new \AppManager\SmartLink\SmartLink($instance);
         $this->smart_link = $smartLink;
 
         // Create CSS Helper object
