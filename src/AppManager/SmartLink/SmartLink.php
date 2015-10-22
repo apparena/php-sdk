@@ -82,6 +82,7 @@ class SmartLink
         // Initialize the environment information
         $this->initFacebook();
         $this->initWebsite();
+        $this->initEnvironment();
 
         // Collect and prepare the Browser and device information of the current user
         $this->initBrowser();
@@ -213,6 +214,28 @@ class SmartLink
         } else {
             return $domain;
         }
+    }
+
+    /**
+     * Initialize all environment related information (e.g. are we currently on Facebook, Website(iframe) or direct
+     */
+    private function initEnvironment() {
+
+        $environment = "direct"; // Initialize environment
+
+        // If environment is Facebook, then use Facebook
+        $facebook = $this->getFacebook();
+        if (isset($facebook['page_tab']) && $facebook['page_tab'] && $facebook['use_as_target']){
+            $environment = "facebook";
+        }
+
+        // If environment is website, then set and prefer website over facebook
+        if ($this->getWebsite()) {
+            $environment = "website";
+        }
+
+        $this->setEnvironment($environment);
+
     }
 
     /**
@@ -430,7 +453,6 @@ class SmartLink
         // If there is no website defined, check if the device is tablet or mobile. If so, use direct access
         if (in_array($this->getDeviceType(), array('mobile', 'tablet'))) {
             $this->reasons[] = 'DEVICE: User is using a ' . $this->getDeviceType() . ' device. Direct Access.';
-            $this->setEnvironment('direct');
             $this->setUrl($this->instance->getInfo('base_url'));
 
             return;
@@ -451,9 +473,7 @@ class SmartLink
 
             // If Facebook Environment is valid and the facebook should be used as target
             if ($facebook_valid && isset($facebook['use_as_target']) && $facebook['use_as_target']) {
-                $this->setEnvironment('facebook');
                 $this->setUrl($facebook['page_tab']);
-
                 return;
             }
 
@@ -461,7 +481,7 @@ class SmartLink
 
         // If no optimal url is defined yet, then use direct source
         $this->reasons[] = 'DEVICE: No website or facebook defined. Choose environment direct';
-        $this->setEnvironment('direct');
+        //$this->setEnvironment('direct');
         if ($this->getBaseUrl()) {
             $this->setUrl($this->getBaseUrl());
         } else {
