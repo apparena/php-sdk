@@ -441,9 +441,7 @@ class SmartLink
 
             // If Website is valid, then use it
             if ($website_valid) {
-                $this->setEnvironment('website');
                 $this->setUrl($this->website);
-
                 return;
             }
         } else {
@@ -481,7 +479,6 @@ class SmartLink
 
         // If no optimal url is defined yet, then use direct source
         $this->reasons[] = 'DEVICE: No website or facebook defined. Choose environment direct';
-        //$this->setEnvironment('direct');
         if ($this->getBaseUrl()) {
             $this->setUrl($this->getBaseUrl());
         } else {
@@ -933,6 +930,7 @@ class SmartLink
         $os_platform = 'unknown';
 
         $os_array = array(
+            '/windows nt 10./i' => 'Windows 10',
             '/windows nt 6.3/i' => 'Windows 8.1',
             '/windows nt 6.2/i' => 'Windows 8',
             '/windows nt 6.1/i' => 'Windows 7',
@@ -961,6 +959,10 @@ class SmartLink
             if (preg_match($regex, $user_agent)) {
                 $os_platform = $value;
             }
+        }
+
+        if ($os_platform == "unknown" && isset($this->getBrowser()['platform'])) {
+            $os_platform = $this->getBrowser()['platform'];
         }
 
         return $os_platform;
