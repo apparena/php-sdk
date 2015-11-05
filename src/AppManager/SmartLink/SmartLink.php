@@ -1042,7 +1042,7 @@ class SmartLink
             }
         }
 
-        if ($this->getEnvironment() == 'facebook') {
+        if ($this->getEnvironment() == 'facebook' && !in_array($this->getDeviceType(), array("mobile", "tablet"))) {
             $target_url = $target_original . '&app_data=' . urlencode(json_encode($params));
         }
 
