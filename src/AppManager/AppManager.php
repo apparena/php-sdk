@@ -13,6 +13,7 @@ class AppManager
     protected $api; // API object
     protected $cache_dir = false; // E.g. ROOTPATH . /var/cache, When no path is set, then caching will be deactivated
     protected $root_path = false; // Absolute root path of the project on the server
+    protected $filename = "smartlink.php"; // Absolute root path of the project on the server
     private $browser;
     private $cookie; // The App-Manager Cookie for the current user
     private $css_helper; // Css Helper object
@@ -35,6 +36,8 @@ class AppManager
      * @param int   $m_id   Model ID of the current app model
      * @param array $params Parameter for the initialization
      *                      'cache_dir' Cache directory relative to the app source
+     *                      'root_path' Sets the Root path to the app, all path references will be relative to this path
+     *                      'filename' Filename of the SmartLink-File (default: smartlink.php)
      * @param int   $i_id   Instance ID if available
      */
     function __construct($m_id, $params = array(), $i_id = null)
@@ -48,6 +51,10 @@ class AppManager
 
         if (isset($params['cache_dir'])) {
             $this->cache_dir = $this->root_path . $params['cache_dir'];
+        }
+
+        if (isset($params['filename'])) {
+            $this->setFilename($params['filename']);
         }
 
         $this->init();
@@ -311,6 +318,7 @@ class AppManager
         if (in_array($lang, $allowed)) {
             $this->lang = $lang;
             $this->instance->setLang($this->lang);
+            $this->smart_link->setLang($this->lang);
         }
 
     }
@@ -486,5 +494,22 @@ class AppManager
         return $this->css_helper;
     }
 
+    /**
+     * @return string
+     */
+    public function getFilename()
+    {
+        return $this->filename;
+    }
+
+    /**
+     * Sets the filename for the SmartLink (default: smartlink.php)
+     * @param string $filename
+     */
+    public function setFilename($filename)
+    {
+        $this->filename = $filename;
+        $this->smart_link->setFilename($filename);
+    }
 
 }

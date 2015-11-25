@@ -27,6 +27,7 @@ class SmartLink
     private $device = array(); // Device information
     private $environment; // Target environment
     private $facebook = array(); // All available information about the facebook page the instance is embedded in
+    private $filename = "smartlink.php";
     private $i_id;
     private $lang; // Currently selected language
     private $meta = array(); // Meta data which should be rendered to the share HTML document
@@ -66,15 +67,13 @@ class SmartLink
         $this->cookie_key = 'aa_' . $this->i_id . '_smartlink';
 
         // Initialize Meta data using default values
-        $this->setMeta(
-            array(
-                'title' => '',
-                'desc' => '',
-                'image' => '',
-                'og_type' => 'website',
-                'schema_type' => 'WebApplication',
-            )
-        );
+        $this->setMeta(array(
+                           'title'       => '',
+                           'desc'        => '',
+                           'image'       => '',
+                           'og_type'     => 'website',
+                           'schema_type' => 'WebApplication',
+                       ));
 
         // Initializes all language related information
         $this->initLanguage();
@@ -141,13 +140,13 @@ class SmartLink
         }
 
         $this->meta = array(
-            'title' => $title,
-            'desc' => $desc,
-            'image' => str_replace("https://", "http://", $image),
+            'title'        => $title,
+            'desc'         => $desc,
+            'image'        => str_replace("https://", "http://", $image),
             'image_secure' => str_replace("http://", "https://", $image),
-            'og_type' => $og_type,
-            'schema_type' => $schema_type,
-            'url' => $this->getCurrentUrl()
+            'og_type'      => $og_type,
+            'schema_type'  => $schema_type,
+            'url'          => $this->getCurrentUrl()
         );
 
         // Add Open Graph OG meta-data attributes
@@ -219,13 +218,14 @@ class SmartLink
     /**
      * Initialize all environment related information (e.g. are we currently on Facebook, Website(iframe) or direct
      */
-    private function initEnvironment() {
+    private function initEnvironment()
+    {
 
         $environment = "direct"; // Initialize environment
 
         // If environment is Facebook, then use Facebook
         $facebook = $this->getFacebook();
-        if (isset($facebook['page_tab']) && $facebook['page_tab'] && $facebook['use_as_target']){
+        if (isset($facebook['page_tab']) && $facebook['page_tab'] && $facebook['use_as_target']) {
             $environment = "facebook";
         }
 
@@ -270,8 +270,7 @@ class SmartLink
             if (isset($_GET['fb_page_id'])) {
                 // ... from GET-Parameter
                 $fb_page_id  = $_GET['fb_page_id'];
-                $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $this->instance->getInfo
-                    ('fb_app_id');
+                $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $this->instance->getInfo('fb_app_id');
 
                 $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
                 $this->facebook['page_id']       = $fb_page_id;
@@ -283,8 +282,7 @@ class SmartLink
                 if (isset($facebook['page_id']) && $facebook['page_id'] && $facebook['use_as_target']) {
                     // ... from COOKIE-Parameter
                     $fb_page_id  = $facebook['page_id'];
-                    $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $this->instance->getInfo
-                        ('fb_app_id');
+                    $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $this->instance->getInfo('fb_app_id');
 
                     $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
                     $this->facebook['page_id']       = $fb_page_id;
@@ -295,8 +293,7 @@ class SmartLink
                     // ... from the Instance
                     if ($this->instance->getInfo('fb_page_url')) {
                         $fb_page_id  = $this->instance->getInfo('fb_page_id');
-                        $fb_page_url = $this->instance->getInfo('fb_page_url') . '/app/' . $this->instance->getInfo
-                            ('fb_app_id');
+                        $fb_page_url = $this->instance->getInfo('fb_page_url') . '/app/' . $this->instance->getInfo('fb_app_id');
 
                         $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
                         $this->facebook['page_id']  = $fb_page_id;
@@ -352,10 +349,10 @@ class SmartLink
         }
 
         $this->browser = array(
-            'ua' => $this->browser_php->getUserAgent(),
+            'ua'       => $this->browser_php->getUserAgent(),
             'platform' => $this->browser_php->getPlatform(),
-            'name' => $this->browser_php->getBrowser(),
-            'version' => $this->browser_php->getVersion()
+            'name'     => $this->browser_php->getBrowser(),
+            'version'  => $this->browser_php->getVersion()
         );
 
     }
@@ -426,10 +423,9 @@ class SmartLink
 
             // Validate the Website url
             $website_valid = true;
-            if (
-                strpos($this->website, 'www.facebook.com/') !== false ||
-                strpos($this->website, 'static.sk.facebook.com') !== false ||
-                strpos($this->website, '.js') !== false
+            if (strpos($this->website, 'www.facebook.com/') !== false || strpos($this->website,
+                                                                                'static.sk.facebook.com') !== false || strpos($this->website,
+                                                                                                                              '.js') !== false
             ) {
                 $this->reasons[] = 'ENV: Website target is not valid, so it cannot be used as target.';
                 $website_valid   = false;
@@ -445,6 +441,7 @@ class SmartLink
             // If Website is valid, then use it
             if ($website_valid) {
                 $this->setUrl($this->website);
+
                 return;
             }
         } else {
@@ -475,6 +472,7 @@ class SmartLink
             // If Facebook Environment is valid and the facebook should be used as target
             if ($facebook_valid && isset($facebook['use_as_target']) && $facebook['use_as_target']) {
                 $this->setUrl($facebook['page_tab']);
+
                 return;
             }
 
@@ -543,30 +541,39 @@ class SmartLink
             // Initialize mustache
             $loader         = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views');
             $partials       = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views/partials');
-            $this->mustache = new \Mustache_Engine(
-                array(
-                    'loader' => $loader,
-                    'partials_loader' => $partials,
-                )
-            );
+            $this->mustache = new \Mustache_Engine(array(
+                                                       'loader'          => $loader,
+                                                       'partials_loader' => $partials,
+                                                   ));
+        }
+
+        // Get image dimensions from sharing image (for performance reasons only do these kind of requests on the
+        // SmartLink page
+        $meta = $this->getMeta();
+        if (isset($meta['image'])) {
+            if (extension_loaded('gd') && function_exists('gd_info') && $meta['image']) {
+                list($width, $height) = getimagesize($meta['image']);
+                $this->meta['image_height'] = $height;
+                $this->meta['image_width']  = $width;
+            }
         }
 
         $data = array(
-            'browser' => $this->getBrowser(),
-            'cookies' => $this->prepareMustacheArray($_COOKIE),
-            'debug' => $debug,
-            'device' => $this->getDevice(),
-            'i_id' => $this->i_id,
-            'info' => $this->instance->getInfos(),
-            'lang' => $this->getLang(),
-            'meta' => $this->getMeta(),
-            'og_meta' => $this->prepareMustacheArray($this->meta['og']),
-            'params' => $this->prepareMustacheArray($this->getParams()),
+            'browser'        => $this->getBrowser(),
+            'cookies'        => $this->prepareMustacheArray($_COOKIE),
+            'debug'          => $debug,
+            'device'         => $this->getDevice(),
+            'i_id'           => $this->i_id,
+            'info'           => $this->instance->getInfos(),
+            'lang'           => $this->getLang(),
+            'meta'           => $this->getMeta(),
+            'og_meta'        => $this->prepareMustacheArray($this->meta['og']),
+            'params'         => $this->prepareMustacheArray($this->getParams()),
             'params_expired' => $this->prepareMustacheArray($this->paramsExpired),
-            'reasons' => $this->reasons,
-            'target' => $this->getEnvironment(),
-            'url' => $this->getUrl(),
-            'url_target' => $this->getUrlTarget()
+            'reasons'        => $this->reasons,
+            'target'         => $this->getEnvironment(),
+            'url'            => $this->getUrl(),
+            'url_target'     => $this->getUrlTarget()
         );
         echo $this->mustache->render('share', $data);
     }
@@ -669,7 +676,7 @@ class SmartLink
             return $this->url_short_array[$url];
         } else {
             // Try to get Short Links from Cache
-            $cache = $this->instance->api->getCache();
+            $cache                 = $this->instance->api->getCache();
             $this->url_short_array = $cache->load($url_short_cache_key);
         }
         if (count($this->url_short_array) > 0 && isset($this->url_short_array[$url])) {
@@ -691,11 +698,11 @@ class SmartLink
         curl_setopt($ch,
                     CURLOPT_POSTFIELDS,
                     array(     // Data to POST
-                        'url' => $url,
-                        'format' => 'json',
-                        'action' => 'shorturl',
-                        'timestamp' => $timestamp,
-                        'signature' => $signature
+                               'url'       => $url,
+                               'format'    => 'json',
+                               'action'    => 'shorturl',
+                               'timestamp' => $timestamp,
+                               'signature' => $signature
                     ));
 
         // Fetch and return content
@@ -729,7 +736,7 @@ class SmartLink
                 continue;
             }
             $response[] = array(
-                'key' => $key,
+                'key'   => $key,
                 'value' => $value
             );
         }
@@ -818,21 +825,143 @@ class SmartLink
     }
 
     /**
+     * Sets a new language for the app manager
+     * @param string $lang Language Code
+     */
+    public function setLang($lang)
+    {
+        $allowed = array(
+            'sq_AL',
+            'ar_DZ',
+            'ar_BH',
+            'ar_EG',
+            'ar_IQ',
+            'ar_JO',
+            'ar_KW',
+            'ar_LB',
+            'ar_LY',
+            'ar_MA',
+            'ar_OM',
+            'ar_QA',
+            'ar_SA',
+            'ar_SD',
+            'ar_SY',
+            'ar_TN',
+            'ar_AE',
+            'ar_YE',
+            'be_BY',
+            'bg_BG',
+            'ca_ES',
+            'zh_CN',
+            'zh_HK',
+            'zh_SG',
+            'hr_HR',
+            'cs_CZ',
+            'da_DK',
+            'nl_BE',
+            'nl_NL',
+            'en_AU',
+            'en_CA',
+            'en_IN',
+            'en_IE',
+            'en_MT',
+            'en_NZ',
+            'en_PH',
+            'en_SG',
+            'en_ZA',
+            'en_GB',
+            'en_US',
+            'et_EE',
+            'fi_FI',
+            'fr_BE',
+            'fr_CA',
+            'fr_FR',
+            'fr_LU',
+            'fr_CH',
+            'de_AT',
+            'de_DE',
+            'de_LU',
+            'de_CH',
+            'el_CY',
+            'el_GR',
+            'iw_IL',
+            'hi_IN',
+            'hu_HU',
+            'is_IS',
+            'in_ID',
+            'ga_IE',
+            'it_IT',
+            'it_CH',
+            'ja_JP',
+            'ja_JP',
+            'ko_KR',
+            'lv_LV',
+            'lt_LT',
+            'mk_MK',
+            'ms_MY',
+            'mt_MT',
+            'no_NO',
+            'no_NO',
+            'pl_PL',
+            'pt_BR',
+            'pt_PT',
+            'ro_RO',
+            'ru_RU',
+            'sr_BA',
+            'sr_ME',
+            'sr_CS',
+            'sr_RS',
+            'sk_SK',
+            'sl_SI',
+            'es_AR',
+            'es_BO',
+            'es_CL',
+            'es_CO',
+            'es_CR',
+            'es_DO',
+            'es_EC',
+            'es_SV',
+            'es_GT',
+            'es_HN',
+            'es_MX',
+            'es_NI',
+            'es_PA',
+            'es_PY',
+            'es_PE',
+            'es_PR',
+            'es_ES',
+            'es_US',
+            'es_UY',
+            'es_VE',
+            'sv_SE',
+            'th_TH',
+            'th_TH',
+            'tr_TR',
+            'uk_UA',
+            'vi_VN'
+        );
+        if (in_array($lang, $allowed)) {
+            $this->lang = $lang;
+        }
+
+    }
+
+    /**
      * Returns the most important smartlink information as array
      * @return array Most important smartlink information
      */
     public function toArray()
     {
         return array(
-            'browser' => $this->getBrowser(),
-            'device' => $this->getDevice(),
-            'facebook' => $this->getFacebook(),
-            'i_id' => $this->i_id,
-            'params' => $this->getParams(),
+            'browser'       => $this->getBrowser(),
+            'device'        => $this->getDevice(),
+            'facebook'      => $this->getFacebook(),
+            'i_id'          => $this->i_id,
+            'params'        => $this->getParams(),
             'paramsExpired' => $this->paramsExpired,
-            'lang' => $this->getLang(),
-            'm_id' => $this->instance->getMId(),
-            'website' => $this->getWebsite()
+            'lang'          => $this->getLang(),
+            'm_id'          => $this->instance->getMId(),
+            'website'       => $this->getWebsite()
         );
     }
 
@@ -933,29 +1062,29 @@ class SmartLink
         $os_platform = 'unknown';
 
         $os_array = array(
-            '/windows nt 10./i' => 'Windows 10',
-            '/windows nt 6.3/i' => 'Windows 8.1',
-            '/windows nt 6.2/i' => 'Windows 8',
-            '/windows nt 6.1/i' => 'Windows 7',
-            '/windows nt 6.0/i' => 'Windows Vista',
-            '/windows nt 5.2/i' => 'Windows Server 2003/XP x64',
-            '/windows nt 5.1/i' => 'Windows XP',
-            '/windows xp/i' => 'Windows XP',
-            '/windows nt 5.0/i' => 'Windows 2000',
-            '/windows me/i' => 'Windows ME',
-            '/win98/i' => 'Windows 98',
-            '/win95/i' => 'Windows 95',
-            '/win16/i' => 'Windows 3.11',
+            '/windows nt 10./i'     => 'Windows 10',
+            '/windows nt 6.3/i'     => 'Windows 8.1',
+            '/windows nt 6.2/i'     => 'Windows 8',
+            '/windows nt 6.1/i'     => 'Windows 7',
+            '/windows nt 6.0/i'     => 'Windows Vista',
+            '/windows nt 5.2/i'     => 'Windows Server 2003/XP x64',
+            '/windows nt 5.1/i'     => 'Windows XP',
+            '/windows xp/i'         => 'Windows XP',
+            '/windows nt 5.0/i'     => 'Windows 2000',
+            '/windows me/i'         => 'Windows ME',
+            '/win98/i'              => 'Windows 98',
+            '/win95/i'              => 'Windows 95',
+            '/win16/i'              => 'Windows 3.11',
             '/macintosh|mac os x/i' => 'Mac OS X',
-            '/mac_powerpc/i' => 'Mac OS 9',
-            '/linux/i' => 'Linux',
-            '/ubuntu/i' => 'Ubuntu',
-            '/iphone/i' => 'iPhone',
-            '/ipod/i' => 'iPod',
-            '/ipad/i' => 'iPad',
-            '/android/i' => 'Android',
-            '/blackberry/i' => 'BlackBerry',
-            '/webos/i' => 'Mobile'
+            '/mac_powerpc/i'        => 'Mac OS 9',
+            '/linux/i'              => 'Linux',
+            '/ubuntu/i'             => 'Ubuntu',
+            '/iphone/i'             => 'iPhone',
+            '/ipod/i'               => 'iPod',
+            '/ipad/i'               => 'iPad',
+            '/android/i'            => 'Android',
+            '/blackberry/i'         => 'BlackBerry',
+            '/webos/i'              => 'Mobile'
         );
 
         foreach ($os_array as $regex => $value) {
@@ -1001,8 +1130,7 @@ class SmartLink
      */
     private function setUrl($target_url, $shortenLink = false)
     {
-        $filename        = 'smartlink.php';
-        $share_url       = $this->getBaseUrl() . $filename;
+        $share_url       = $this->getBaseUrl() . $this->getFilename();
         $target_original = $target_url;
 
         $params = array();
@@ -1154,6 +1282,22 @@ class SmartLink
         }
 
         return $params;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFilename()
+    {
+        return $this->filename;
+    }
+
+    /**
+     * @param string $filename
+     */
+    public function setFilename($filename)
+    {
+        $this->filename = $filename;
     }
 
 }
