@@ -270,7 +270,8 @@ class SmartLink
             if (isset($_GET['fb_page_id'])) {
                 // ... from GET-Parameter
                 $fb_page_id  = $_GET['fb_page_id'];
-                $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '?sk=app_' . $this->instance->getInfo('fb_app_id');
+                $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $this->instance->getInfo
+                    ('fb_app_id');
 
                 $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
                 $this->facebook['page_id']       = $fb_page_id;
@@ -282,7 +283,8 @@ class SmartLink
                 if (isset($facebook['page_id']) && $facebook['page_id'] && $facebook['use_as_target']) {
                     // ... from COOKIE-Parameter
                     $fb_page_id  = $facebook['page_id'];
-                    $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '?sk=app_' . $this->instance->getInfo('fb_app_id');
+                    $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $this->instance->getInfo
+                        ('fb_app_id');
 
                     $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
                     $this->facebook['page_id']       = $fb_page_id;
@@ -293,7 +295,8 @@ class SmartLink
                     // ... from the Instance
                     if ($this->instance->getInfo('fb_page_url')) {
                         $fb_page_id  = $this->instance->getInfo('fb_page_id');
-                        $fb_page_url = $this->instance->getInfo('fb_page_url') . '?sk=app_' . $this->instance->getInfo('fb_app_id');
+                        $fb_page_url = $this->instance->getInfo('fb_page_url') . '/app/' . $this->instance->getInfo
+                            ('fb_app_id');
 
                         $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
                         $this->facebook['page_id']  = $fb_page_id;
@@ -1043,7 +1046,7 @@ class SmartLink
         }
 
         if ($this->getEnvironment() == 'facebook' && !in_array($this->getDeviceType(), array("mobile", "tablet"))) {
-            $target_url = $target_original . '&app_data=' . urlencode(json_encode($params));
+            $target_url = $target_original . '?app_data=' . urlencode(json_encode($params));
         }
 
         // Shorten Link, when the link changed...
