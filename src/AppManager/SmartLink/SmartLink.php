@@ -294,6 +294,7 @@ class SmartLink
                     if ($this->instance->getInfo('fb_page_url')) {
                         $fb_page_id  = $this->instance->getInfo('fb_page_id');
                         $fb_page_url = $this->instance->getInfo('fb_page_url') . '/app/' . $this->instance->getInfo('fb_app_id');
+                        $fb_page_url = str_replace("//app/", "/app/", $fb_page_url);
 
                         $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
                         $this->facebook['page_id']  = $fb_page_id;
