@@ -307,7 +307,7 @@ class Instance
     /**
      * Returns the translation for the submitted ID
      * @param String $translation_id Config identifier to get the data for
-     * @param Array  $args         Array of values to replace in the translation (@see
+     * @param String|array  $args         Array of values to replace in the translation (@see
      *                             http://php.net/manual/de/function.vsprintf.php)
      * @return String Translated value
      */
@@ -316,6 +316,10 @@ class Instance
         // Validate Input
         if (!is_string($translation_id) || !is_array($args)) {
             return '';
+        }
+
+        if (is_string($args)) {
+            $args = array($args);
         }
 
         $translate = $this->getTranslations();
