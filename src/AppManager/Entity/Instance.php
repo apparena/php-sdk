@@ -314,7 +314,7 @@ class Instance
     function getTranslation($translation_id, $args = array())
     {
         // Validate Input
-        if (!is_string($translation_id) || !is_array($args)) {
+        if (!is_string($translation_id) || (!is_array($args) && !is_string($args))) {
             return '';
         }
 
