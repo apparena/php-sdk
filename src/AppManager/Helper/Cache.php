@@ -17,7 +17,7 @@ namespace AppManager\Helper;
 
 class Cache
 {
-    protected $cache_dir = "";
+    public $cache_dir = "";
 
     /**
      * Initialization of the Caching object
@@ -98,10 +98,9 @@ class Cache
 
         $files = $this->getAllDirFiles($this->cache_dir);
 
-        //
         foreach ($files as $file)
         {
-            if (strpos($file, $this->cache_dir . '/' . $cache_key) === 0)
+            if (strpos($file, str_replace("\\", "/", $this->cache_dir) . '/' . $cache_key) === 0)
             {
                 unlink($file);
             }
