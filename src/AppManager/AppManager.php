@@ -374,7 +374,7 @@ class AppManager
      * clicks on the smartLink. The parameters will be available as GET parameters as well in the facebook page tab
      * or within an iframe
      *
-     * @param Array $params Array of parameters which should be passed through
+     * @param array $params Array of parameters which should be passed through
      */
     public function addParams($params)
     {
@@ -384,7 +384,7 @@ class AppManager
     /**
      * Resets all params for the SmartLink Url
      *
-     * @param Array $params Array of parameters which should be passed through
+     * @param array $params Array of parameters which should be passed through
      */
     public function setParams($params)
     {
