@@ -3,6 +3,7 @@ namespace AppManager;
 
 use AppManager\API\Api;
 use AppManager\Entity\Instance;
+use AppManager\Helper\Css;
 
 class AppManager
 {
@@ -77,9 +78,9 @@ class AppManager
 
         $this->instance = new Instance(
             $this->api, array(
-                          "i_id" => $i_id,
-                          "m_id" => $m_id
-                      )
+                "i_id" => $i_id,
+                "m_id" => $m_id
+            )
         );
 
         $instance = $this->getInstance();
@@ -487,11 +488,20 @@ class AppManager
 
     /**
      * Returns the CSS Helper object, which can be used to generate CSS files from Less or config value sources
-     * @return mixed
+     * @return Css Css helper
      */
     public function getCssHelper()
     {
         return $this->css_helper;
+    }
+
+    /**
+     * @param String $file_id Identifier for the file (in most cases defined css-config file)
+     * @return String returns the CSS filename of the
+     */
+    public function getCssFileName($file_id)
+    {
+        return $this->getCssHelper()->getCacheKey($file_id);
     }
 
     /**

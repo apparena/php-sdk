@@ -51,7 +51,7 @@ class Css
             )
         );
 
-        $this->cache_key = "instances_" . $this->instance->getId() . "_" . $this->lang . "_" . $this->file_id . ".css";
+        $this->cache_key = $this->getCacheKey();
     }
 
     /**
@@ -63,7 +63,7 @@ class Css
     {
         if (!$this->cache->exists($this->cache_key)) {
 
-
+            $css_compiled = "";
             try {
                 // Compile Less files
                 $options = array('compress' => true);
@@ -87,7 +87,7 @@ class Css
 
                 $css_compiled = $parser->getCss();
 
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $error_message = $e->getMessage();
             }
 
@@ -107,7 +107,7 @@ class Css
 
     /**
      * Key value pairs of variables and their values to be replaced in the original source file
-     * @param Array $variables Variables and their values
+     * @param array $variables Variables and their values
      */
     public function setVariables($variables)
     {
@@ -115,7 +115,7 @@ class Css
     }
 
     /**
-     * @param Array $files Array of absolute filepaths, which should be compiled
+     * @param array $files Array of absolute filepaths, which should be compiled
      */
     public function setFiles($files)
     {
@@ -151,7 +151,18 @@ class Css
         $this->replacements = $replacements;
     }
 
+    /**
+     * Returns the filename/cachekey of the submitted file-ID
+     * @param $file_id
+     * @return string
+     */
+    public function getCacheKey($file_id = false)
+    {
+        if (!$file_id) {
+            $file_id = $this->file_id;
+        }
 
-
+        return "instances_" . $this->instance->getId() . "_" . $this->lang . "_" . $file_id . ".css";
+    }
 
 }
