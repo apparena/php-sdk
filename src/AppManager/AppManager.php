@@ -393,6 +393,15 @@ class AppManager
     }
 
     /**
+     * Returns all parameters of the SmartLink as array
+     * @return array SmartLink Parameters
+     */
+    public function getParams()
+    {
+        return $this->smart_link->getParams();
+    }
+
+    /**
      * Returns user device information
      */
     public function getDevice()
