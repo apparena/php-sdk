@@ -782,7 +782,7 @@ class SmartLink
     /**
      * Overwrites all existing parameters
      *
-     * @param Array $params Array of parameters which should be passed through
+     * @param array $params Array of parameters which should be passed through
      */
     public function setParams($params)
     {
