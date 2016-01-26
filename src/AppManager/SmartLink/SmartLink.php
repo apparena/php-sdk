@@ -1269,16 +1269,20 @@ class SmartLink
 
     /**
      * Prepare the params.
-     * @return array
+     *
+     * @param bool $includeExpired Should the expired Parameters from the last request be included in the response?
+     * @return array All parameters currently set
      */
-    public function getParams()
+    public function getParams($includeExpired = false)
     {
         $params = array_merge($_GET, $this->paramsAdditional);
 
         // Remove expired params
-        foreach ($this->paramsExpired as $key => $value) {
-            if (isset($params[$key])) {
-                unset($params[$key]);
+        if (!$includeExpired) {
+            foreach ($this->paramsExpired as $key => $value) {
+                if (isset($params[$key])) {
+                    unset($params[$key]);
+                }
             }
         }
 

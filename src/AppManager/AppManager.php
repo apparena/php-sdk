@@ -398,7 +398,7 @@ class AppManager
      */
     public function getParams()
     {
-        return $this->smart_link->getParams();
+        return $this->smart_link->getParams(true);
     }
 
     /**
