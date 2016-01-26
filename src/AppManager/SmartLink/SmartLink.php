@@ -665,7 +665,7 @@ class SmartLink
 
     /**
      * Creates a Short Url using App-Arena Url Shortener
-     * @param Strin $url Long Url
+     * @param String $url Long Url
      *
      * @return String Short Url
      */
@@ -770,7 +770,7 @@ class SmartLink
      * This will add parameters to the smartLink. These parameters will be available as GET-Parameters, when a user
      * clicks on the smartLink. The parameters will be available as GET parameters as well in the facebook page tab
      *
-     * @param Array $params Array of parameters which should be passed through
+     * @param array $params Array of parameters which should be passed through
      */
     public function addParams($params)
     {
