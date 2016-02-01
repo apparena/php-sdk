@@ -452,7 +452,11 @@ class SmartLink
         // If there is no website defined, check if the device is tablet or mobile. If so, use direct access
         if (in_array($this->getDeviceType(), array('mobile', 'tablet'))) {
             $this->reasons[] = 'DEVICE: User is using a ' . $this->getDeviceType() . ' device. Direct Access.';
-            $this->setUrl($this->instance->getInfo('base_url'));
+            if ($this->getBaseUrl()) {
+                $this->setUrl($this->getBaseUrl());
+            } else {
+                $this->setUrl($this->instance->getInfo('base_url'));
+            }
 
             return;
         }
