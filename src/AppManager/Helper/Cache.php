@@ -135,7 +135,7 @@ class Cache
     }
 
     /**
-     * Tries to create the caching directory from the submitted path
+     * Tries to create the caching directory from the submitted path.
      * @path String Absolute path of the cache directory
      */
     private function createCacheDir($path){
