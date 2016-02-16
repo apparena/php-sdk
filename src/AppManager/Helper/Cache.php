@@ -31,14 +31,9 @@ class Cache
             $this->cache_dir = rtrim($params['cache_dir'], "/");
         }
 
-        if (file_exists($this->cache_dir) == false)
+        if (file_exists($this->cache_dir) == false || is_dir($this->cache_dir) == false)
         {
-            //throw new Exception("cache dir not exists"):
-        }
-
-        if (is_dir($this->cache_dir) == false)
-        {
-            //throw new Exception("cache dir not exists"):
+            $this->createCacheDir($this->cache_dir);
         }
     }
 
@@ -139,4 +134,28 @@ class Cache
         return $files;
     }
 
+    /**
+     * Tries to create the caching directory from the submitted path
+     * @path String Absolute path of the cache directory
+     */
+    private function createCacheDir($path){
+
+        $parts = explode("/", $path);
+
+        if (count($parts) > 1) {
+            $end = array_pop($parts);
+
+            $parentPath = substr($path, 0, (strlen($end)+1) * -1);
+            if (file_exists($parentPath) == false || is_dir($parentPath) == false)
+            {
+                // The parent folder does not exist neither... Call create function recursively
+                $this->createCacheDir($parentPath);
+            } else {
+                // Parent folder exists, so create the subfolder
+                if (!file_exists($path)) {
+                    mkdir($path, 0777, true);
+                }
+            }
+        }
+    }
 }
