@@ -15,6 +15,8 @@
  */
 namespace AppManager\Helper;
 
+use Leafo\ScssPhp\Compiler;
+
 class Css
 {
     private $i_id;
@@ -23,10 +25,12 @@ class Css
     private $cache_dir;
     private $root_path;
     private $file_id;
-    private $files = array(); // Array of less files to be included
+    private $files         = array(); // Array of less files to be included
     private $config_values = array(); // Array of Config value IDs (Type CSS) which will be included in the compilation
-    private $variables = array(); // Variables to be replaced in the source files
-    private $replacements = array(); // Key value pair of string replacements in the compiled file
+    private $variables     = array(); // Variables to be replaced in the source files
+    private $replacements  = array(); // Key value pair of string replacements in the compiled file
+    private $less_parser   = null;
+    private $scss_parser   = null;
 
     /**
      * Initializes the CSS compiler class
@@ -35,7 +39,7 @@ class Css
      * @param string                      $lang      Language to generate the CSS for (does not need to be necessarily
      *                                               different
      * @param string                      $file_id   File identifier, in case you want to compile more than one file
-     * @param string $root_path Absolute path to the project root
+     * @param string                      $root_path Absolute path to the project root
      */
     function __construct($cache_dir, $instance, $lang = "de_DE", $file_id = "style", $root_path = "")
     {
@@ -55,40 +59,61 @@ class Css
     }
 
     /**
-     * Returns the filepath to the compiled CSS file
-     * @return string
+     * (DEPRECATED) Will be replaced by function getCompiledCss()
+     * @return string Result of getCompiledCss
      * @throws \Exception
      */
     public function getFilePath()
+    {
+        return $this->getCompiledCss();
+    }
+
+    /**
+     * Compiles the current configuration
+     * @return string Relative file path to the compiled CSS file
+     * @throws \Exception
+     */
+    public function getCompiledCss()
     {
         if (!$this->cache->exists($this->cache_key)) {
 
             $css_compiled = "";
             try {
-                // Compile Less files
-                $options = array('compress' => true);
-                $parser  = new \Less_Parser($options);
-
                 // Add all files
                 foreach ($this->files as $file) {
-                    $parser->parseFile($file);
-                }
 
-                // Add CSS from config variables
-                foreach ($this->config_values as $config_id) {
-                    $value = $this->instance->getConfig($config_id, array("value", "type"));
-                    if ($value['type'] == "css") {
-                        $parser->parse($value['value']);
+                    // Get the file extension to decide which compiler to use
+                    $path_parts = pathinfo($file);
+                    $extension  = $path_parts['extension'];
+
+                    switch ($extension) {
+                        case "less":
+                            $css_compiled .= $this->compileLessFile($file);
+                            break;
+                        case "scss":
+                            $css_compiled .= $this->compileScssFile($file);
+                            break;
                     }
                 }
 
-                // Replace Variables
-                $parser->ModifyVars($this->variables);
-
-                $css_compiled = $parser->getCss();
-
             } catch (\Exception $e) {
                 $error_message = $e->getMessage();
+            }
+
+            // Attach all CSS/LESS/SCSS from config values
+            foreach ($this->config_values as $config_id) {
+                $value = $this->instance->getConfig($config_id, array("value", "type", "compiler"));
+
+                if ($value['type'] == "css") {
+                    switch ($value['compiler']) {
+                        case "scss":
+                            $css_compiled .= $this->compileScss($value['value']);
+                            break;
+                        default:
+                            $css_compiled .= $this->compileLess($value['value']);
+                            break;
+                    }
+                }
             }
 
             // Apply all replacements
@@ -100,9 +125,87 @@ class Css
         }
 
         $base_path = substr($this->cache_dir, strlen($this->root_path));
-        $url = $base_path . "/" . $this->cache_key;
+        $url       = $base_path . "/" . $this->cache_key;
 
         return $url;
+    }
+
+
+    /**
+     * Compiles a file using http://leafo.net/scssphp/
+     * @param $file string Path to the less file to compile
+     * @return String compiled
+     */
+    private function compileScssFile($file)
+    {
+        $this->scss_parser = new Compiler();
+        $this->scss_parser->setFormatter('Leafo\ScssPhp\Formatter\Compressed');
+        // Set the import path to the current files path
+        $path_parts  = pathinfo($file);
+        $import_path = $path_parts['dirname'];
+        $this->scss_parser->setImportPaths($import_path);
+
+        // Replace Variables
+        $this->scss_parser->setVariables($this->variables);
+
+        // Compile the files source
+        $file_content = file_get_contents($file);
+        $compiled_css = $this->scss_parser->compile($file_content);
+
+        return $compiled_css;
+    }
+
+    /**
+     * Compiles scss code using http://leafo.net/scssphp/
+     * @param $scss string Scss code to compile
+     * @return String compiled css
+     */
+    private function compileScss($scss)
+    {
+        $this->scss_parser = new Compiler();
+        $this->scss_parser->setFormatter('Leafo\ScssPhp\Formatter\Compressed');
+        $this->scss_parser->setVariables($this->variables);
+        $compiled_css = $this->scss_parser->compile($scss);
+
+        return $compiled_css;
+    }
+
+    /**
+     * Compiles a file using http://lessphp.gpeasy.com/
+     * @param $file string Path to the less file to compile
+     * @return String compiled
+     */
+    private function compileLessFile($file)
+    {
+        // Compile Less files
+        $options = array('compress' => true);
+        if (!$this->less_parser) {
+            $this->less_parser = new \Less_Parser($options);
+        }
+
+        $this->less_parser->parseFile($file);
+        $this->less_parser->ModifyVars($this->variables);
+
+        return $this->less_parser->getCss();
+    }
+
+    /**
+     * Compiles less code using http://lessphp.gpeasy.com/
+     * @param $less string Less code
+     * @return String compiled CSS
+     */
+    private function compileLess($less)
+    {
+        // Compile Less files
+        $options = array('compress' => true);
+        if (!$this->less_parser) {
+            $this->less_parser = new \Less_Parser($options);
+        }
+
+        $this->less_parser->parse($less);
+        $this->less_parser->ModifyVars($this->variables);
+
+        return $this->less_parser->getCss();
     }
 
     /**
@@ -137,7 +240,7 @@ class Css
      */
     public function setFileId($file_id)
     {
-        $this->file_id = $file_id;
+        $this->file_id   = $file_id;
         $this->cache_key = "instances_" . $this->instance->getId() . "_" . $this->lang . "_" . $this->file_id . ".css";
     }
 

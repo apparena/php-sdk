@@ -51,7 +51,12 @@ class AppManager
         }
 
         if (isset($params['cache_dir'])) {
-            $this->cache_dir = $this->root_path . $params['cache_dir'];
+            // If the cache_dir already contains the root_path
+            $cache_dir = $params['cache_dir'];
+            if (strpos($params['cache_dir'], $this->root_path) !== false) {
+                $cache_dir = substr($params['cache_dir'], strlen($this->root_path));
+            }
+            $this->cache_dir = $this->root_path . $cache_dir;
         }
 
         if (isset($params['filename'])) {
@@ -511,6 +516,44 @@ class AppManager
     public function getCssFileName($file_id)
     {
         return $this->getCssHelper()->getCacheKey($file_id);
+    }
+
+    /**
+     * Returns an array of compiled css files. You can submit a CSS config array regarding to the
+     * documentation, including CSS, Less, SCSS files. Furthermore you can define tring replacements
+     * and use config variables of the current instance.
+     * @see http://app-arena.readthedocs.org/en/latest/sdk/php/030-css.html
+     * @param $css_config array CSS Configuration array
+     * @return array Assocative array including all compiled CSS files
+     */
+    public function getCSSFiles($css_config)
+    {
+        $css_helper = $this->getCssHelper();
+        $compiled_files = array();
+        foreach ($css_config as $file_id => $css_file) {
+            $css_helper->setFileId($file_id);
+            // Reset settings
+            $css_helper->setConfigValues(array());
+            $css_helper->setFiles(array());
+            $css_helper->setVariables(array());
+            $css_helper->setReplacements(array());
+
+            if (isset($css_file['config_values'])) {
+                $css_helper->setConfigValues($css_file['config_values']);
+            }
+            if (isset($css_file['files'])) {
+                $css_helper->setFiles($css_file['files']);
+            }
+            if (isset($css_file['variables'])) {
+                $css_helper->setVariables($css_file['variables']);
+            }
+            if (isset($css_file['replacements'])) {
+                $css_helper->setReplacements($css_file['replacements']);
+            }
+
+            $compiled_files[] = $css_helper->getCompiledCss();
+        }
+        return $compiled_files;
     }
 
     /**
