@@ -93,6 +93,9 @@ class Css
                         case "scss":
                             $css_compiled .= $this->compileScssFile($file);
                             break;
+                        case "css":
+                            $css_compiled .= $this->compressCssFile($file);
+                            break;
                     }
                 }
 
@@ -185,6 +188,24 @@ class Css
 
         $this->less_parser->parseFile($file);
         $this->less_parser->ModifyVars($this->variables);
+
+        return $this->less_parser->getCss();
+    }
+
+    /**
+     * Compresses a CSS file using http://lessphp.gpeasy.com/
+     * @param $file string Path to the less file to compile
+     * @return String compiled
+     */
+    private function compressCssFile($file)
+    {
+        // Compile Less files
+        $options = array('compress' => true);
+        if (!$this->less_parser) {
+            $this->less_parser = new \Less_Parser($options);
+        }
+
+        $this->less_parser->parseFile($file);
 
         return $this->less_parser->getCss();
     }
