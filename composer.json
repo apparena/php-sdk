@@ -15,13 +15,14 @@
             "homepage": "http://www.app-arena.com"
         }
     ],
+    "minimum-stability": "dev",
     "require": {
         "php": ">=5.3.2",
         "ext-curl": "*",
         "ext-gd": "*",
         "mobiledetect/mobiledetectlib": "2.8.12",
         "mustache/mustache": ">=v2.8.0",
-        "cbschuld/browser.php": "dev-master",
+        "cbschuld/browser.php": "@dev",
         "oyejorge/less.php": "~1.7",
         "leafo/scssphp": "~0.6"
     },
