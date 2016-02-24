@@ -346,7 +346,7 @@ class SmartLink
     private function initBrowser()
     {
         if (!$this->browser_php) {
-            $this->browser_php = new Browser();
+            $this->browser_php = new \AppManager\Browser\Browser();
         }
 
         $this->browser = array(
