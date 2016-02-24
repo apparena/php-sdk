@@ -29,8 +29,6 @@ class Css
     private $config_values = array(); // Array of Config value IDs (Type CSS) which will be included in the compilation
     private $variables     = array(); // Variables to be replaced in the source files
     private $replacements  = array(); // Key value pair of string replacements in the compiled file
-    private $less_parser   = null;
-    private $scss_parser   = null;
 
     /**
      * Initializes the CSS compiler class
@@ -141,19 +139,19 @@ class Css
      */
     private function compileScssFile($file)
     {
-        $this->scss_parser = new Compiler();
-        $this->scss_parser->setFormatter('Leafo\ScssPhp\Formatter\Compressed');
+        $scss_parser = new Compiler();
+        $scss_parser->setFormatter('Leafo\ScssPhp\Formatter\Compressed');
         // Set the import path to the current files path
         $path_parts  = pathinfo($file);
         $import_path = $path_parts['dirname'];
-        $this->scss_parser->setImportPaths($import_path);
+        $scss_parser->setImportPaths($import_path);
 
         // Replace Variables
-        $this->scss_parser->setVariables($this->variables);
+        $scss_parser->setVariables($this->variables);
 
         // Compile the files source
         $file_content = file_get_contents($file);
-        $compiled_css = $this->scss_parser->compile($file_content);
+        $compiled_css = $scss_parser->compile($file_content);
 
         return $compiled_css;
     }
@@ -165,10 +163,10 @@ class Css
      */
     private function compileScss($scss)
     {
-        $this->scss_parser = new Compiler();
-        $this->scss_parser->setFormatter('Leafo\ScssPhp\Formatter\Compressed');
-        $this->scss_parser->setVariables($this->variables);
-        $compiled_css = $this->scss_parser->compile($scss);
+        $scss_parser = new Compiler();
+        $scss_parser->setFormatter('Leafo\ScssPhp\Formatter\Compressed');
+        $scss_parser->setVariables($this->variables);
+        $compiled_css = $scss_parser->compile($scss);
 
         return $compiled_css;
     }
@@ -182,14 +180,12 @@ class Css
     {
         // Compile Less files
         $options = array('compress' => true);
-        if (!$this->less_parser) {
-            $this->less_parser = new \Less_Parser($options);
-        }
+        $less_parser = new \Less_Parser($options);
 
-        $this->less_parser->parseFile($file);
-        $this->less_parser->ModifyVars($this->variables);
+        $less_parser->parseFile($file);
+        $less_parser->ModifyVars($this->variables);
 
-        return $this->less_parser->getCss();
+        return $less_parser->getCss();
     }
 
     /**
@@ -201,13 +197,11 @@ class Css
     {
         // Compile Less files
         $options = array('compress' => true);
-        if (!$this->less_parser) {
-            $this->less_parser = new \Less_Parser($options);
-        }
+        $less_parser = new \Less_Parser($options);
 
-        $this->less_parser->parseFile($file);
+        $less_parser->parseFile($file);
 
-        return $this->less_parser->getCss();
+        return $less_parser->getCss();
     }
 
     /**
@@ -219,14 +213,12 @@ class Css
     {
         // Compile Less files
         $options = array('compress' => true);
-        if (!$this->less_parser) {
-            $this->less_parser = new \Less_Parser($options);
-        }
+        $less_parser = new \Less_Parser($options);
 
-        $this->less_parser->parse($less);
-        $this->less_parser->ModifyVars($this->variables);
+        $less_parser->parse($less);
+        $less_parser->ModifyVars($this->variables);
 
-        return $this->less_parser->getCss();
+        return $less_parser->getCss();
     }
 
     /**
