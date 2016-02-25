@@ -347,8 +347,7 @@ class SmartLink
     private function initBrowser()
     {
         if (!$this->browscap) {
-            $cache = $this->instance->api->getCache();
-            $this->browscap = new Browscap($cache->cache_dir);
+            $this->browscap = new Browscap(realpath(dirname(__FILE__)) . "/../../../../asset");
         }
 
         // Get information about the current browser's user agent
