@@ -6,6 +6,7 @@ use AppManager\API\Api;
 use AppManager\Entity\Instance;
 use Browser;
 use Detection\MobileDetect;
+use phpbrowscap\Browscap;
 
 /**
  * SmartLink class which handles user redirects for the app
@@ -44,7 +45,7 @@ class SmartLink
 
     // Library objects
     private $mustache; // Mustache engine
-    private $browser_php; // Browser.php object
+    private $browscap; // Browser.php object
     private $mobile_detect; // MobileDetect object
 
     /**
@@ -68,12 +69,12 @@ class SmartLink
 
         // Initialize Meta data using default values
         $this->setMeta(array(
-                           'title'       => '',
-                           'desc'        => '',
-                           'image'       => '',
-                           'og_type'     => 'website',
-                           'schema_type' => 'WebApplication',
-                       ));
+            'title'       => '',
+            'desc'        => '',
+            'image'       => '',
+            'og_type'     => 'website',
+            'schema_type' => 'WebApplication',
+        ));
 
         // Initializes all language related information
         $this->initLanguage();
@@ -345,16 +346,19 @@ class SmartLink
      */
     private function initBrowser()
     {
-        if (!$this->browser_php) {
-            $this->browser_php = new \AppManager\Browser\Browser();
+        if (!$this->browscap) {
+            $cache = $this->instance->api->getCache();
+            $this->browscap = new Browscap($cache->cache_dir);
         }
 
-        $this->browser = array(
-            'ua'       => $this->browser_php->getUserAgent(),
-            'platform' => $this->browser_php->getPlatform(),
-            'name'     => $this->browser_php->getBrowser(),
-            'version'  => $this->browser_php->getVersion()
-        );
+        // Get information about the current browser's user agent
+        $browser = $this->browscap->getBrowser(null, true);
+
+        $this->browser = array_merge(array(
+            'ua'       => $browser['browser_name'],
+            'name'     => $browser['Browser'],
+            'version'  => $browser['MajorVer']
+        ), $browser );
 
     }
 
@@ -425,8 +429,8 @@ class SmartLink
             // Validate the Website url
             $website_valid = true;
             if (strpos($this->website, 'www.facebook.com/') !== false || strpos($this->website,
-                                                                                'static.sk.facebook.com') !== false || strpos($this->website,
-                                                                                                                              '.js') !== false
+                    'static.sk.facebook.com') !== false || strpos($this->website,
+                    '.js') !== false
             ) {
                 $this->reasons[] = 'ENV: Website target is not valid, so it cannot be used as target.';
                 $website_valid   = false;
@@ -547,9 +551,9 @@ class SmartLink
             $loader         = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views');
             $partials       = new \Mustache_Loader_FilesystemLoader(SMART_LIB_PATH . '/views/partials');
             $this->mustache = new \Mustache_Engine(array(
-                                                       'loader'          => $loader,
-                                                       'partials_loader' => $partials,
-                                                   ));
+                'loader'          => $loader,
+                'partials_loader' => $partials,
+            ));
         }
 
         // Get image dimensions from sharing image (for performance reasons only do these kind of requests on the
@@ -701,14 +705,14 @@ class SmartLink
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return, do not echo result
         curl_setopt($ch, CURLOPT_POST, 1);              // This is a POST request
         curl_setopt($ch,
-                    CURLOPT_POSTFIELDS,
-                    array(     // Data to POST
-                               'url'       => $url,
-                               'format'    => 'json',
-                               'action'    => 'shorturl',
-                               'timestamp' => $timestamp,
-                               'signature' => $signature
-                    ));
+            CURLOPT_POSTFIELDS,
+            array(     // Data to POST
+                       'url'       => $url,
+                       'format'    => 'json',
+                       'action'    => 'shorturl',
+                       'timestamp' => $timestamp,
+                       'signature' => $signature
+            ));
 
         // Fetch and return content
         $data = curl_exec($ch);
