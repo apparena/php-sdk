@@ -826,6 +826,22 @@ class SmartLink
     }
 
     /**
+     * Returns the user's browser name
+     */
+    public function getBrowserName()
+    {
+        return $this->browser['name'];
+    }
+
+    /**
+     * Returns the user's browser major version
+     */
+    public function getBrowserVersion()
+    {
+        return $this->browser['MajorVer'];
+    }
+
+    /**
      * @return mixed
      */
     public function getLang()

@@ -440,6 +440,22 @@ class AppManager
     }
 
     /**
+     * Returns the user's browser name
+     */
+    public function getBrowserName()
+    {
+        return $this->smart_link->getBrowserName();
+    }
+
+    /**
+     * Returns the user's browser major version
+     */
+    public function getBrowserVersion()
+    {
+        return $this->smart_link->getBrowserVersion();
+    }
+
+    /**
      * Returns if the app currently running on a 'website', 'facebook' or 'direct'
      * 'website' means the app is embedded via iframe to a website
      * 'facebook' means the app is embedded in a facebook page tab
