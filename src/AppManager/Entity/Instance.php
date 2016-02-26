@@ -97,6 +97,37 @@ class Instance
         foreach ($data as $v) {
             $config[$v['id']] = $v;
         }
+
+        $this->config = $config;
+
+        // Replace variables for text and html fields
+        foreach ($config as &$item) {
+            if (in_array($item['type'], array("text","textarea"))) {
+                $item['value'] = preg_replace_callback(
+                    "/{{\s*((?:config|translation)\.[a-zA-Z._0-9]+)\s*}}/",
+                    function ($hit) {
+                        // Now get the right value to replace the variable
+                        $configIdPattern = explode(".", $hit[1]);
+                        if (isset($configIdPattern[0])) {
+                            switch ($configIdPattern[0]) {
+                                case "config":
+                                    $attr = (isset($configIdPattern[2]))? $configIdPattern[2] :"value";
+                                    $value = $this->getConfig($configIdPattern[1], $attr);
+                                    return $value;
+                                    break;
+                                case "translation":
+                                    $value = $this->getTranslation($configIdPattern[1]);
+                                    return $value;
+                                    break;
+                            }
+                            //return strtolower($hit[0]);
+                        }
+                    },
+                    $item['value']
+                );
+            }
+        }
+
         $this->config = $config;
 
         return $this->config;
@@ -224,7 +255,7 @@ class Instance
 
             if ($fb_page_id && $this->m_id) {
                 $request_url = "https://manager.app-arena.com/api/v1/env/fb/pages/" . $fb_page_id .
-                               "/instances.json?m_id=" . $this->m_id . "&active=true";
+                    "/instances.json?m_id=" . $this->m_id . "&active=true";
                 $instances   = json_decode(file_get_contents($request_url), true);
                 foreach ($instances['data'] as $instance) {
                     if ($instance['activate'] == 1) {
