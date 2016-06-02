@@ -353,11 +353,11 @@ class SmartLink
         // Get information about the current browser's user agent
         $browser = $this->browscap->getBrowser(null, true);
 
-        $this->browser = array_merge(array(
+        $this->browser = array(
             'ua'       => $browser['browser_name'],
             'name'     => $browser['Browser'],
             'version'  => $browser['MajorVer']
-        ), $browser );
+        );
 
     }
 
@@ -837,7 +837,7 @@ class SmartLink
      */
     public function getBrowserVersion()
     {
-        return $this->browser['MajorVer'];
+        return $this->browser['version'];
     }
 
     /**
