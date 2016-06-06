@@ -189,6 +189,10 @@ class AppManager
      */
     public function getIId()
     {
+        if ($this->i_id) {
+            return $this->i_id;
+        }
+
         if ($this->instance) {
             return $this->instance->getId();
         }
