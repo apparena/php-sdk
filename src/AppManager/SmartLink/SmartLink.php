@@ -22,30 +22,31 @@ class SmartLink
     protected $instance; // Instance object
 
     private $base_url;
-    private $browser = array(); // Browser information
+    private $browser          = array(); // Browser information
     private $cookie_key; // SmartCookie key
     private $cookie_domain; // Domain to use for the cookie
-    private $device = array(); // Device information
+    private $device           = array(); // Device information
     private $environment; // Target environment
-    private $facebook = array(); // All available information about the facebook page the instance is embedded in
-    private $filename = "smartlink.php";
+    private $facebook         = array(); // All available information about the facebook page the instance is embedded in
+    private $filename         = "smartlink.php";
     private $i_id;
     private $lang; // Currently selected language
-    private $meta = array(); // Meta data which should be rendered to the share HTML document
+    private $meta             = array(); // Meta data which should be rendered to the share HTML document
     private $paramsAdditional = array(); // Additional parameters which will be passed through
-    private $paramsExpired = array(); // These expired params will not be set to the cookie any more
-    private $reasons = array(); // Array of reasons, why the SmartLink refers to a certain environment
+    private $paramsExpired    = array(); // These expired params will not be set to the cookie any more
+    private $reasons          = array(); // Array of reasons, why the SmartLink refers to a certain environment
     private $target; // If a target is defined, then this will be used as preferred redirect location
     private $url; // SmartLink Url (Url for sharing)
     private $url_long; // SmartLink Url in long form
     private $url_short; // ShartLink Url processed by an url shortener
-    private $url_short_array = array();
+    private $url_short_array  = array();
     private $url_target; // The url the user will be redirected to
     private $website; // All available information about the website the instance is embedded in
 
     // Library objects
     private $mustache; // Mustache engine
     private $browscap; // Browser.php object
+    /** @var  MobileDetect */
     private $mobile_detect; // MobileDetect object
 
     /**
@@ -354,9 +355,9 @@ class SmartLink
         $browser = $this->browscap->getBrowser(null, true);
 
         $this->browser = array(
-            'ua'       => $browser['browser_name'],
-            'name'     => $browser['Browser'],
-            'version'  => $browser['MajorVer']
+            'ua'      => $browser['browser_name'],
+            'name'    => $browser['Browser'],
+            'version' => $browser['MajorVer']
         );
 
     }
@@ -382,20 +383,7 @@ class SmartLink
         }
 
         // Get operating system
-        $device['os'] = 'other';
-        if ($device['type'] == 'desktop') {
-            $device['os'] = $this->getDesktopOs();
-        } else {
-            if ($this->mobile_detect->isiOS()) {
-                $device['os'] = 'ios';
-            }
-            if ($this->mobile_detect->isAndroidOS()) {
-                $device['os'] = 'android';
-            }
-            if ($this->mobile_detect->isWindowsMobileOS()) {
-                $device['os'] = 'windows';
-            }
-        }
+        $device['os'] = $this->getOperatingSystem();
 
         // If device-type is submitted via GET-Parameter
         if (isset($_GET['device']) && in_array($_GET['device'], array('mobile', 'tablet', 'desktop'))) {
@@ -1068,6 +1056,31 @@ class SmartLink
     public function getWebsite()
     {
         return $this->website;
+    }
+
+    /**
+     * Returns the operating system of the current device
+     * @return string Operating system
+     */
+    public function getOperatingSystem()
+    {
+        $os = 'other';
+
+        if ($this->getDeviceType() == 'desktop') {
+            $os = $this->getDesktopOs();
+        } else {
+            if ($this->mobile_detect->isiOS()) {
+                $os = 'ios';
+            }
+            if ($this->mobile_detect->isAndroidOS()) {
+                $os = 'android';
+            }
+            if ($this->mobile_detect->isWindowsMobileOS()) {
+                $os = 'windows';
+            }
+        }
+
+        return $os;
     }
 
 

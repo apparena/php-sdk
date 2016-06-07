@@ -200,6 +200,8 @@ class AppManager
         return false;
     }
 
+
+
     /**
      * Returns the currently used Language
      * @return string Language Code (e.g. de_DE, en_US, ...)
@@ -426,6 +428,13 @@ class AppManager
         return $this->smart_link->getDeviceType();
     }
 
+    /**
+     * Returns the operating system of the current device
+     */
+    public function getOperatingSystem()
+    {
+        return $this->smart_link->getOperatingSystem();
+    }
 
     /**
      * Returns all available Facebook information, like currently used fanpage and canvas information
