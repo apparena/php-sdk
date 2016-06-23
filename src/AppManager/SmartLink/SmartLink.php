@@ -349,6 +349,8 @@ class SmartLink
     {
         if (!$this->browscap) {
             $this->browscap = new Browscap(realpath(dirname(__FILE__)) . "/../../../asset");
+            // Use Normal instead of Full browscap.ini to save memory-usage
+            $this->browscap->remoteIniUrl = 'http://browscap.org/stream?q=PHP_BrowsCapINI';
         }
 
         // Get information about the current browser's user agent
