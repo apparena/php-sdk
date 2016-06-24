@@ -17,7 +17,8 @@ use AppManager\Helper\Cache;
  */
 class Api
 {
-    protected $base_url = 'https://v2.app-arena.com/api/v1/';
+    //protected $base_url = 'https://v2.app-arena.com/api/v1/';
+    protected $base_url = 'https://v25-stage.app-arena.com/api/v2/';
     protected $error_msg = ''; // Error message on failed soap call
 
     /**
@@ -29,6 +30,7 @@ class Api
 
     protected $auth_username = '';
     protected $auth_password = '';
+    protected $auth_apikey = '';
 
 
     /**
@@ -52,6 +54,12 @@ class Api
                 'cache_dir' => $cache_dir
             )
         );
+
+        // Initialize Authentication
+        if (isset($params['apikey']))
+        {
+            $this->auth_apikey = $params['apikey'];
+        }
 
     }
 
@@ -79,7 +87,7 @@ class Api
         }
         else
         {
-            $params['lang_id'] = $this->lang;
+            $params['lang'] = $this->lang;
             $response = $this->_get($route, $params);
             if ($response != false)
             {
@@ -114,16 +122,22 @@ class Api
 
         $username = $this->auth_username;
         $password = $this->auth_password;
+        $apikey = $this->auth_apikey;
         $ch       = curl_init();
+        $headers = array(
+            'Content-Type:application/json'
+        );
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        /*$headers = array(
-          'Content-Type:application/json',
-          'Authorization: Basic '. base64_encode("$username:$password") // <---
-        );
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);*/
+        if($apikey) {
+            $headers[] = 'Authorization: '.$apikey;
+        }
+        elseif ($username && $password) {
+            $headers[] = 'Authorization: Basic '. base64_encode("$username:$password");
+        }
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         $out = curl_exec($ch);
 
         if ($out == false)
@@ -136,6 +150,17 @@ class Api
         curl_close($ch);
 
         return $out;
+    }
+
+    /**
+     * Posts the data as array to the requested route.
+     * @param string $route  Requested route
+     * @param array $body Data for the post
+     * @param array $params Additional paramater for the request
+     * @return array API response
+     */
+    public function post($route, $body, $params = array()) {
+
     }
 
     /**

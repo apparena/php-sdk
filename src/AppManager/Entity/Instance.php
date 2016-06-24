@@ -24,6 +24,7 @@ class Instance
     protected $translation = array();
     protected $info = array();
     protected $lang = "de_DE";
+    protected $auth_apikey = null;
     private $cache_dir = false;
 
     /**
@@ -54,6 +55,12 @@ class Instance
             $this->recoverLangTag();
         }
 
+        // Initialize Authentication
+        if (isset($params['apikey']))
+        {
+            $this->auth_apikey = $params['apikey'];
+        }
+
     }
 
     /**
@@ -67,14 +74,14 @@ class Instance
         }
 
         // Update the language for the current request
-        $this->api->setLang($this->getLang());
-        $response = $this->api->get("instances/" . $this->id);
-        if ($response == false) {
+        $this->api->setLang(null);
+        $response = $this->api->get("apps/" . $this->id);
+        if (isset($response['_embedded']['data'][$this->id])) {
+            $this->info = $response['_embedded']['data'][$this->id];
+            return $this->info;
+        } else {
             return false;
         }
-        $this->info = $response;
-
-        return $this->info;
     }
 
     function getConfigs()
@@ -86,50 +93,22 @@ class Instance
 
         // Update the language for the current request
         $this->api->setLang($this->getLang());
-        $response = $this->api->get("instances/$this->id/configs", array('page_size' => 10000));
+        $response = $this->api->get("apps/$this->id/configs");
 
         if ($response == false) {
             return false;
         }
-        $data = $response['_embedded']['data'];
+        $config = $response['_embedded']['data'];
 
+        /* //not needed since am2?
+        $data = $response['_embedded']['data'];
         $config = array();
         foreach ($data as $v) {
-            $config[$v['id']] = $v;
+            $config[$v['configId']] = $v;
         }
+        */
 
         $this->config = $config;
-
-        // Replace variables for text and html fields
-        foreach ($config as &$item) {
-            if (in_array($item['type'], array("text","textarea"))) {
-                $item['value'] = preg_replace_callback(
-                    "/{{\s*((?:config|translation)\.[a-zA-Z._0-9]+)\s*}}/",
-                    function ($hit) {
-                        // Now get the right value to replace the variable
-                        $configIdPattern = explode(".", $hit[1]);
-                        if (isset($configIdPattern[0])) {
-                            switch ($configIdPattern[0]) {
-                                case "config":
-                                    $attr = (isset($configIdPattern[2]))? $configIdPattern[2] :"value";
-                                    $value = $this->getConfig($configIdPattern[1], $attr);
-                                    return $value;
-                                    break;
-                                case "translation":
-                                    $value = $this->getTranslation($configIdPattern[1]);
-                                    return $value;
-                                    break;
-                            }
-                            //return strtolower($hit[0]);
-                        }
-                    },
-                    $item['value']
-                );
-            }
-        }
-
-        $this->config = $config;
-
         return $this->config;
     }
 
@@ -143,13 +122,13 @@ class Instance
         $lang = $this->getLang();
         $this->api->setLang($lang);
         $response = $this->api->get(
-            "instances/$this->id/languages/$lang/translations",
-            array('page_size' => 10000)
+            "apps/$this->id/translations"
         );
         if ($response == false) {
             return false;
         }
 
+        /*
         $data = $response['_embedded']['data'];
 
         $translation = array();
@@ -157,6 +136,8 @@ class Instance
             $translation[$v['translation_id']] = $v['value'];
         }
         $this->translation = $translation;
+        */
+        $this->translation = $response['_embedded']['data'];
 
         return $this->translation;
     }

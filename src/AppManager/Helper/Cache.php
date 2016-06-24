@@ -58,7 +58,7 @@ class Cache
      */
     function save($cache_key, $content, $format = "json")
     {
-        $path = $this->cache_dir . "/" . $cache_key;;
+        $path = $this->cache_dir . "/" . $cache_key;
 
         if ($format == "json")
         {
@@ -68,16 +68,20 @@ class Cache
         return file_put_contents($path, $content);
     }
 
-    function load($cache_key)
+    function load($cache_key, $format = "json")
     {
-        $path = $this->cache_dir . "/" . $cache_key;;
+        $path = $this->cache_dir . "/" . $cache_key;
 
         if ($this->exists($cache_key))
         {
-            return json_decode(file_get_contents($path), true);
+            if ($format == "json") {
+                return json_decode(file_get_contents($path), true);
+            } else {
+                return file_get_contents($path);
+            }
         }
         else
-        {
+        {2
             return null;
         }
     }

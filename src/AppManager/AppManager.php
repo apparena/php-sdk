@@ -15,6 +15,7 @@ class AppManager
     protected $cache_dir = false; // E.g. ROOTPATH . /var/cache, When no path is set, then caching will be deactivated
     protected $root_path = false; // Absolute root path of the project on the server
     protected $filename = "smartlink.php"; // Absolute root path of the project on the server
+    protected $auth_apikey = null;
     private $browser;
     private $cookie; // The App-Manager Cookie for the current user
     private $css_helper; // Css Helper object
@@ -50,6 +51,12 @@ class AppManager
             $this->root_path = $params['root_path'];
         }
 
+        // Initialize Authentication
+        if (isset($params['apikey']))
+        {
+            $this->auth_apikey = $params['apikey'];
+        }
+
         if (isset($params['cache_dir'])) {
             // If the cache_dir already contains the root_path
             $cache_dir = $params['cache_dir'];
@@ -72,19 +79,22 @@ class AppManager
     private function init()
     {
 
-        $this->api = new Api(
-            array(
-                'cache_dir' => $this->cache_dir
-            )
-        );
-
         $i_id = $this->getIId();
         $m_id = $this->getMId();
+        $apikey = $this->auth_apikey;
+
+        $this->api = new Api(
+            array(
+                'cache_dir' => $this->cache_dir,
+                "apikey" => $apikey
+            )
+        );
 
         $this->instance = new Instance(
             $this->api, array(
                 "i_id" => $i_id,
-                "m_id" => $m_id
+                "m_id" => $m_id,
+                "apikey" => $apikey
             )
         );
 
