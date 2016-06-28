@@ -8,7 +8,7 @@ class AppManager
 {
 
     /**
-     * @var
+     * @var Api $api
      */
     protected $api; // API object
     protected $cache_dir = false; // E.g. ROOTPATH . /var/cache, When no path is set, then caching will be deactivated
@@ -119,8 +119,14 @@ class AppManager
      */
     function getApp($id = null) {
         if ($id) {
-            $this->id = $id;
-            return $this->getInstance();
+            $app_info = $this->api->get("apps/" . $id)['_embedded']['data'][$id];
+            $app = new Instance($id, $this->api);
+            $app->setName($app_info['name']);
+            $app->setTemplateId($app_info['templateId']);
+            $app->setLang($app_info['lang']);
+            $app->setExpiryDate($app_info['expiryDate']);
+            $app->setCompanyId($app_info['companyId']);
+            return $app;
         } else {
             $this->getInstance()->recoverId();
             return $this->getInstance();

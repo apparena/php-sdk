@@ -207,6 +207,54 @@ class Api
         return $out;
     }
 
+    public function put($route, $body = array(), $params = array()) {
+        $url = $this->base_url . $route;
+        $username = $this->auth_username;
+        $password = $this->auth_password;
+        $apikey = $this->auth_apikey;
+
+        $ch       = curl_init();
+        $headers = array(
+            'Content-Type: application/json'
+        );
+
+
+        if ($params != false)
+        {
+            $url .= "?" . http_build_query($params);
+        }
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        if($apikey) {
+            $headers[] = 'Authorization: '.$apikey;
+        }
+        elseif ($username && $password) {
+            $headers[] = 'Authorization: Basic '. base64_encode("$username:$password");
+        }
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        // This sets the number of fields to post
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+
+        // This is the fields to post in the form of an array.
+        curl_setopt($ch,CURLOPT_POSTFIELDS, json_encode($body));
+        $out = curl_exec($ch);
+
+
+        if ($out == false)
+        {
+            $error = curl_error($ch);
+        }
+
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return $out;
+    }
+
     /**
      * @param mixed $lang
      */

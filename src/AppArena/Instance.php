@@ -10,6 +10,7 @@
 namespace AppArena;
 
 use AppArena\API\Api;
+use AppArena\Helper\Cache;
 
 
 /**
@@ -20,6 +21,7 @@ class Instance
 
     protected $id = false; // Default instance ID (Demo), which should be overwritten...
     protected $m_id = false; // ID of this instances app model / Project
+    /** @var  integer $template_id */
     protected $template_id; // ID of this instances template
     protected $config = array();
     protected $translation = array();
@@ -282,10 +284,59 @@ class Instance
         }
     }
 
-    public function setConfig($key, $value, Api $api = null) {
+    /**
+     * setConfig
+     *
+     * Sets the config parameters of an existing config value and cleans the cache.
+     * Returns false on error
+     *
+     * @param string $key configId to be changed
+     * @param string $value new value to be used
+     * @param string|null $name new name to be used. Set to null if you don't want to change it
+     * @param string|null $type new type. Set to null if you don't want to change it
+     * @param string|null $description new description Set to null if you don't want to change it
+     * @param Api|null $api supply a custom Api object. Set to null to use the instance's Api object
+     * @return array|bool
+     */
+    public function setConfig($key, $value, $name = null, $type = null, $description = null, Api $api = null) {
         if ($api == null) {
             $api = $this->getApi();
         }
+
+        // Update the language for the current request
+        $this->api->setLang($this->getLang());
+        $response = $this->api->get("apps/$this->id/configs");
+        
+        if ($response == false) {
+            return false;
+        }
+        
+        $config = $response['_embedded']['data'];
+        
+        if (isset($config[$key])) {
+            $config[$key]['configId'] = $key;
+            $config[$key]['type'] = ($type != null)?$type : $config[$key]['type'];
+            $config[$key]['name'] = ($name != null)?$name : $config[$key]['name'];
+            $config[$key]['value'] = ($value != null)?$value : $config[$key]['value'];
+            $config[$key]['description'] = ($description != null)?$description : $config[$key]['description'];
+        }else {
+            return false;
+        }
+        
+        $this->config = $config;
+        $route = "apps/" . $this->getIId();
+        $response = json_decode($this->api->put($route . "/configs/" . $key, $config[$key]), true);
+        
+        if ($response['status'] != 200) {
+            return false;
+        }
+        
+        $cache_key = str_replace('/', '_', $route) . "_" . md5($route . '[]');
+        $api->cleanCache($cache_key);
+
+        $cache_key = str_replace('/', '_', $route . '/configs/' . $this->lang) . "_" . md5($route . '/configs[]');
+        $api->cleanCache($cache_key);
+        return $this->config;
     }
 
     /**
