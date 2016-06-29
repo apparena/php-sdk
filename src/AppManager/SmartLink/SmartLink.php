@@ -329,14 +329,14 @@ class SmartLink
     {
         $website = false;
 
-        // Try to get the website Url from the URL
-        if (isset($_GET['website'])) {
-            $website = $_GET['website'];
-        }
-
         // Try to get the website from the cookie
         if (!$website && $this->getCookieValue('website')) {
             $website = $this->getCookieValue('website');
+        }
+
+        // Try to get the website Url from the URL
+        if (isset($_GET['website'])) {
+            $website = $_GET['website'];
         }
 
         $this->setWebsite($website);
