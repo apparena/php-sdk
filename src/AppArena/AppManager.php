@@ -119,7 +119,7 @@ class AppManager
      */
     function getApp($id = null) {
         if ($id) {
-            $app_info = $this->api->get("apps/" . $id)['_embedded']['data'][$id];
+            $app_info = $this->api->get("apps/" . $id)['_embedded']['data'];
             $app = new Instance($id, $this->api);
             $app->setName($app_info['name']);
             $app->setTemplateId($app_info['templateId']);

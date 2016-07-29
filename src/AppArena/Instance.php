@@ -189,8 +189,8 @@ class Instance
         // Update the language for the current request
         $this->api->setLang(null);
         $response = $this->api->get("apps/" . $this->id);
-        if (isset($response['_embedded']['data'][$this->id])) {
-            $this->info = $response['_embedded']['data'][$this->id];
+        if (isset($response['_embedded']['data'])) {
+            $this->info = $response['_embedded']['data'];
             return $this->info;
         } else {
             return false;
