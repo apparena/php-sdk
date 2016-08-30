@@ -172,14 +172,14 @@
                         <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
                         Instance ID
                     </td>
-                    <td>{{app.aa.info.i_id}}</td>
+                    <td>{{app.aa.info.appId}}</td>
                 </tr>
                 <tr>
                     <td>
                         <span class="label label-success"><span class="glyphicon glyphicon-ok"></span></span>
                         Model ID
                     </td>
-                    <td>{{app.aa.info.m_id}}</td>
+                    <td>{{app.aa.info.projectId}}</td>
                 </tr>
                 <tr>
                     <td>
@@ -245,10 +245,10 @@
                         Instance ID (mod_auth_user table)
                     </td>
                     <td>
-                        {{ visitor.i_id }}
-                        {{^ visitor.i_id }}
+                        {{ visitor.appId }}
+                        {{^ visitor.appId }}
                             <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
-                        {{/ visitor.i_id }}
+                        {{/ visitor.appId }}
                     </td>
                 </tr>
                 <tr>
@@ -452,10 +452,10 @@
                         Instance ID
                     </td>
                     <td>
-                        {{ referrer.i_id }}
-                        {{^ referrer.i_id }}
+                        {{ referrer.appId }}
+                        {{^ referrer.appId }}
                             <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
-                        {{/ referrer.i_id }}
+                        {{/ referrer.appId }}
                     </td>
                 </tr>
                 <tr>

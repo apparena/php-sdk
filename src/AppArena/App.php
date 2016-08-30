@@ -16,13 +16,13 @@ use AppArena\Helper\Cache;
 /**
  * Class Instance Instance object
  */
-class Instance
+class App
 {
 
     protected $id = false; // Default instance ID (Demo), which should be overwritten...
-    protected $m_id = false; // ID of this instances app model / Project
-    /** @var  integer $template_id */
-    protected $template_id; // ID of this instances template
+    protected $projectId = false; // ID of this instances app model / Project
+    /** @var  integer $templateId */
+    protected $templateId; // ID of this instances template
     protected $config = array();
     protected $translation = array();
     protected $info = array();
@@ -40,17 +40,17 @@ class Instance
     /**
      * @return integer
      */
-    public function getIId()
+    public function getId()
     {
         return $this->id;
     }
 
     /**
-     * @param integer $i_id
+     * @param integer $appId
      */
-    public function setIId($i_id)
+    public function setId($appId)
     {
-        $this->id = $i_id;
+        $this->id = $appId;
     }
 
     /**
@@ -58,15 +58,15 @@ class Instance
      */
     public function getTemplateId()
     {
-        return $this->template_id;
+        return $this->templateId;
     }
 
     /**
-     * @param integer $template_id
+     * @param integer $templateId
      */
-    public function setTemplateId($template_id)
+    public function setTemplateId($templateId)
     {
-        $this->template_id = $template_id;
+        $this->templateId = $templateId;
     }
 
     /**
@@ -261,7 +261,7 @@ class Instance
         }
         $body = [
             "name" => $this->name,
-            "templateId" => $this->template_id,
+            "templateId" => $this->templateId,
             "lang" => $this->lang
         ];
         if ($this->expiryDate != null) {
@@ -273,7 +273,7 @@ class Instance
         $result = json_decode($api->post("apps", $body), true);
         if($result["data"]) {
             if ($appid = $result["data"]["appId"]) {
-                $this->setIId($appid);
+                $this->setId($appid);
             }
             if ($companyId = $result["data"]["companyId"]) {
                 $this->setCompanyId($companyId);
@@ -324,7 +324,7 @@ class Instance
         }
         
         $this->config = $config;
-        $route = "apps/" . $this->getIId();
+        $route = "apps/" . $this->getId();
         $response = json_decode($this->api->put($route . "/configs/" . $key, $config[$key]), true);
         
         if ($response['status'] != 200) {
@@ -348,23 +348,23 @@ class Instance
         $id = false;
 
         // Try to get the ID from the REQUEST
-        if (isset($_REQUEST['i_id'])) {
-            $id = $_REQUEST['i_id'];
+        if (isset($_REQUEST['appId'])) {
+            $id = $_REQUEST['appId'];
         } else {
-            if (isset($_SERVER['i_id'])) {
-                $id = $_SERVER['i_id'];
+            if (isset($_SERVER['appId'])) {
+                $id = $_SERVER['appId'];
             } else {
-                // Try to get the ID from the facebook fanpage tab and m_id (app model)
+                // Try to get the ID from the facebook fanpage tab and projectId (app model)
                 $id = $this->getIdFromFBRequest();
 
                 if (!$id) {
                     // Try to get the ID from a cookie
-                    if (isset($_COOKIE['aa_i_id'])) {
-                        $id = $_COOKIE['aa_i_id'];
+                    if (isset($_COOKIE['aa_appId'])) {
+                        $id = $_COOKIE['aa_appId'];
                     } else {
                         // Try to get the ID from the user session
-                        if (!empty($_SESSION['current_i_id'])) {
-                            $id = $_SESSION["current_i_id"];
+                        if (!empty($_SESSION['current_appId'])) {
+                            $id = $_SESSION["current_appId"];
                         }
                     }
                 }
@@ -373,7 +373,7 @@ class Instance
 
         // Set ID to the object and the users session and cookie
         if ($id) {
-            $_SESSION['current_i_id'] = intval($id);
+            $_SESSION['current_appId'] = intval($id);
             $this->id                 = intval($id);
         }
 
@@ -418,7 +418,7 @@ class Instance
     {
         $app_data   = array();
         $fb_page_id = false;
-        $i_id       = false;
+        $appId       = false;
 
         if (isset($_REQUEST['signed_request'])) {
             list($encoded_sig, $payload) = explode('.', $_REQUEST['signed_request'], 2);
@@ -431,19 +431,19 @@ class Instance
                 $fb_page_id = $signed_request['page']['id'];
             }
 
-            if ($fb_page_id && $this->m_id) {
+            if ($fb_page_id && $this->projectId) {
                 $request_url = "https://manager.app-arena.com/api/v1/env/fb/pages/" . $fb_page_id .
-                    "/instances.json?m_id=" . $this->m_id . "&active=true";
+                    "/instances.json?projectId=" . $this->projectId . "&active=true";
                 $instances   = json_decode(file_get_contents($request_url), true);
                 foreach ($instances['data'] as $instance) {
                     if ($instance['activate'] == 1) {
-                        $i_id = $instance['i_id'];
+                        $appId = $instance['appId'];
                     }
                 }
             }
         }
 
-        return $i_id;
+        return $appId;
     }
 
     /**
@@ -461,15 +461,6 @@ class Instance
     {
         $this->lang = $lang;
     }
-
-    /**
-     * @return boolean
-     */
-    public function getId()
-    {
-        return intval($this->id);
-    }
-
 
     /**
      * Returns the value of a config value
@@ -548,15 +539,15 @@ class Instance
     /**
      * @return boolean
      */
-    public function getMId()
+    public function getProjectId()
     {
-        if ($this->m_id) {
-            return $this->m_id;
+        if ($this->projectId) {
+            return $this->projectId;
         }
 
-        $this->m_id = $this->getInfo("m_id");
+        $this->projectId = $this->getInfo("projectId");
 
-        return $this->m_id;
+        return $this->projectId;
     }
 
     /**

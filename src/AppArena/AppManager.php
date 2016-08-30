@@ -15,17 +15,15 @@ class AppManager
     protected $root_path = false; // Absolute root path of the project on the server
     protected $filename = "smartlink.php"; // Absolute root path of the project on the server
     protected $auth_apikey = null;
-    private $browser;
     private $cookie; // The App-Manager Cookie for the current user
     private $css_helper; // Css Helper object
-    private $device;
-    private $i_id;
-    private $m_id;
+    private $appId;
+    private $projectId;
     private $lang = "de_DE"; // Language: e.g. de_DE, en_US, en_UK, ...
     /**
-     * @var Instance Instance object
+     * @var App App object
      */
-    private $instance;
+    private $app;
     /**
      * @var \AppArena\SmartLink\SmartLink SmartLink object
      */
@@ -35,8 +33,8 @@ class AppManager
     /**
      * Initialize the App-Manager object
      * @param array $options Parameter for the initialization
-     *                      'm_id' Project Id
-     *                      'i_id' App Id
+     *                      'projectId' Project Id
+     *                      'appId' App Id
      *                      'cache' Cache options
      *                      'root_path' Sets the Root path to the app, all path references will be relative to this path
      *                      'filename' Filename of the SmartLink-File (default: smartlink.php)
@@ -44,11 +42,11 @@ class AppManager
      */
     function __construct($options = array())
     {
-        if(isset($options["m_id"])) {
-            $this->m_id = $options["m_id"];
+        if(isset($options["projectId"])) {
+            $this->projectId = $options["projectId"];
         }
-        if(isset($options["i_id"])) {
-            $this->i_id = $options["i_id"];
+        if(isset($options["appId"])) {
+            $this->appId = $options["appId"];
         }
 
         if (isset($options['root_path'])) {
@@ -78,13 +76,13 @@ class AppManager
     }
 
     /**
-     * Establishes the API connection, current instance and the SmartLink object
+     * Establishes the API connection, current app and the SmartLink object
      */
     private function init()
     {
 
-        $i_id = $this->getIId();
-        $m_id = $this->getMId();
+        $appId = $this->getAppId();
+        $projectId = $this->getProjectId();
         $apikey = $this->auth_apikey;
 
         $this->api = new Api(
@@ -94,18 +92,18 @@ class AppManager
             )
         );
 
-        $this->instance = new \AppArena\Instance($i_id, $this->api);
+        $this->app = new \AppArena\App($appId, $this->api);
 
-        $instance = $this->getInstance();
-        if ($i_id) {
-            $smartLink        = new \AppArena\SmartLink\SmartLink($instance);
+        $app = $this->getApp();
+        if ($appId) {
+            $smartLink        = new \AppArena\SmartLink\SmartLink($app);
             $this->smart_link = $smartLink;
         }
 
         // Create CSS Helper object
         $this->css_helper = new Helper\Css(
             $this->cache_dir,
-            $this->instance,
+            $this->app,
             "de_DE",
             "style",
             $this->root_path
@@ -115,12 +113,12 @@ class AppManager
 
     /**
      * @param integer|null $id
-     * @return Instance
+     * @return App
      */
     function getApp($id = null) {
         if ($id) {
             $app_info = $this->api->get("apps/" . $id)['_embedded']['data'];
-            $app = new Instance($id, $this->api);
+            $app = new App($id, $this->api);
             $app->setName($app_info['name']);
             $app->setTemplateId($app_info['templateId']);
             $app->setLang($app_info['lang']);
@@ -128,16 +126,16 @@ class AppManager
             $app->setCompanyId($app_info['companyId']);
             return $app;
         } else {
-            $this->getInstance()->recoverId();
-            return $this->getInstance();
+            $this->getApp()->recoverId();
+            return $this->getApp();
         }
     }
 
     /**
-     * @returns Instance
+     * @returns App
      */
     public function createApp($name, $template_id, $lang, $expiryDate = null, $companyId = null) {
-        $app = new Instance(null, $this->api);
+        $app = new App(null, $this->api);
         $app->setName($name);
         $app->setTemplateId($template_id);
         $app->setLang($lang);
@@ -166,17 +164,17 @@ class AppManager
     }
 
     /**
-     * Returns the currently used Instance ID
+     * Returns the currently used App ID
      * @return mixed
      */
-    public function getIId()
+    public function getAppId()
     {
-        if ($this->i_id) {
-            return $this->i_id;
+        if ($this->appId) {
+            return $this->appId;
         }
 
-        if ($this->instance) {
-            return $this->instance->getId();
+        if ($this->app) {
+            return $this->app->getId();
         }
 
         return false;
@@ -311,29 +309,20 @@ class AppManager
         );
         if (in_array($lang, $allowed)) {
             $this->lang = $lang;
-            $this->instance->setLang($this->lang);
+            $this->app->setLang($this->lang);
             $this->smart_link->setLang($this->lang);
         }
 
     }
 
     /**
-     * Returns the model ID of the currently selected instance
-     * @return int Model ID
+     * Returns the project ID of the currently selected app
+     * @return int project ID
      */
-    public function getMId()
+    public function getProjectId()
     {
-        return $this->m_id;
+        return $this->projectId;
     }
-
-    /**
-     * @return mixed
-     */
-    private function getInstance()
-    {
-        return $this->instance;
-    }
-
 
     /**
      * Renders the complete smartlink.php page
@@ -508,7 +497,7 @@ class AppManager
      */
     public function cleanCache()
     {
-        $this->getApi()->cleanCache("instances/" . $this->getIId());
+        $this->getApi()->cleanCache("apps/" . $this->getAppId());
     }
 
     /**
@@ -532,7 +521,7 @@ class AppManager
     /**
      * Returns an array of compiled css files. You can submit a CSS config array regarding to the
      * documentation, including CSS, Less, SCSS files. Furthermore you can define tring replacements
-     * and use config variables of the current instance.
+     * and use config variables of the current app.
      * @see http://app-arena.readthedocs.org/en/latest/sdk/php/030-css.html
      * @param $css_config array CSS Configuration array
      * @return array Assocative array including all compiled CSS files

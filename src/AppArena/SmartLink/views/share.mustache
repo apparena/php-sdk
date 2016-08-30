@@ -27,7 +27,7 @@
             'os':   '{{ device.os }}',
             'type': '{{ device.type }}'
         },
-        'i_id':    '{{ i_id }}',
+        'appId':    '{{ appId }}',
         'lang':    '{{ lang }}',
         'target':  '{{ target }}',
         'url':     '{{ url }}'
@@ -35,7 +35,7 @@
 </script>
 <!-- Save data in localstorage -->
 <script>
-    var key = "aa_" + "{{i_id}}" + "_smartLink";
+    var key = "aa_" + "{{appId}}" + "_smartLink";
     localStorage.setItem(key, JSON.stringify(data));
 </script>
 

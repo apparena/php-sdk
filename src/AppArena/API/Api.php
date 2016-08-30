@@ -17,7 +17,6 @@ use AppArena\Helper\Cache;
  */
 class Api
 {
-    //protected $base_url = 'https://v2.app-arena.com/api/v1/';
     protected $base_url = 'https://my.app-arena.com/api/v2/';
     protected $error_msg = ''; // Error message on failed soap call
 

@@ -5,11 +5,11 @@
 define("ROOT_PATH", realpath(dirname(__FILE__)));
 require ROOT_PATH . '../../../../autoload.php';
 
-if (!isset($_GET['m_id'])) {
-    echo "No Model ID (m_id) available";
+if (!isset($_GET['projectId'])) {
+    echo "No Model ID (projectId) available";
     exit();
 }
-$am = new \AppArena\AppManager($_GET['m_id'], array("cache_dir" => ROOT_PATH . "/var/cache"));
+$am = new \AppArena\AppManager($_GET['projectId'], array("cache_dir" => ROOT_PATH . "/var/cache"));
 
 // Customize your sharing experience
 $am->setMeta(array(
