@@ -3,6 +3,7 @@ namespace AppArena;
 
 use AppArena\API\Api;
 use AppArena\Helper\Css;
+use AppArena\SmartLink\SmartLink;
 
 class AppManager {
 
@@ -13,7 +14,7 @@ class AppManager {
 	protected $cache_dir   = false; // E.g. ROOTPATH . /var/cache, When no path is set, then caching will be deactivated
 	protected $root_path   = false; // Absolute root path of the project on the server
 	protected $filename    = "smartlink.php"; // Absolute root path of the project on the server
-	protected $auth_apikey = null;
+	protected $apikey = null;
 	private   $cookie; // The App-Manager Cookie for the current user
 	private   $css_helper; // Css Helper object
 	private   $appId;
@@ -42,6 +43,8 @@ class AppManager {
 	 *                       'apikey' Api Key
 	 */
 	function __construct( $options = array() ) {
+
+		// Initialize parameters
 		if ( isset( $options["projectId"] ) ) {
 			$this->projectId = $options["projectId"];
 		}
@@ -55,9 +58,10 @@ class AppManager {
 
 		// Initialize Authentication
 		if ( isset( $options['apikey'] ) ) {
-			$this->auth_apikey = $options['apikey'];
+			$this->apikey = $options['apikey'];
 		}
 
+		// Initialize the cache folder and settings
 		if ( isset( $options["cache"] ) && isset( $options["cache"]['dir'] ) ) {
 			// If the cache_dir already contains the root_path
 			$cache_dir = $options["cache"]['dir'];
@@ -71,50 +75,46 @@ class AppManager {
 			$this->setFilename( $options['filename'] );
 		}
 
-		$this->init();
-	}
-
-	/**
-	 * Establishes the API connection, current app and the SmartLink object
-	 */
-	private function init() {
-
-		$appId     = $this->getAppId();
-		$projectId = $this->getProjectId();
-		$apikey    = $this->auth_apikey;
-
+		// Initialize the API connection
 		$this->api = new Api(
 			array(
 				'cache_dir' => $this->cache_dir,
-				"apikey"    => $apikey
+				"apikey"    => $this->apikey
 			)
-		);
-
-		$this->app = new \AppArena\App( $appId, $this->api );
-
-		$app = $this->getApp();
-		if ( $appId ) {
-			$smartLink        = new \AppArena\SmartLink\SmartLink( $app );
-			$this->smart_link = $smartLink;
-		}
-
-		// Create CSS Helper object
-		$this->css_helper = new Helper\Css(
-			$this->cache_dir,
-			$this->app,
-			"de_DE",
-			"style",
-			$this->root_path
 		);
 	}
 
+	/**
+	 * @return App
+	 */
+	public function getApp() {
+
+		if (!$this->app) {
+			// Initialize the current App instance if available
+			$this->app = new App( $this->appId, $this->api );
+
+			// Initialize the SmartLink object
+			$this->smart_link = new SmartLink( $this->app );
+
+			// Create CSS Helper object
+			$this->css_helper = new Css(
+				$this->cache_dir,
+				$this->app,
+				"de_DE",
+				"style",
+				$this->root_path
+			);
+		}
+
+		return $this->app;
+	}
 
 	/**
 	 * @param integer|null $id
 	 *
 	 * @return App
 	 */
-	function getApp( $id = null ) {
+	/*function getApp( $id = null ) {
 		if ( $id ) {
 			$app_info = $this->api->get( "apps/" . $id )['_embedded']['data'];
 			$app      = new App( $id, $this->api );
@@ -130,7 +130,7 @@ class AppManager {
 
 			return $this->getApp();
 		}
-	}
+	}*/
 
 	/**
 	 * @returns App
@@ -154,7 +154,7 @@ class AppManager {
 	 * @return mixed
 	 */
 	public function getUrl( $shortenLink = false ) {
-		return $this->smart_link->getUrl( $shortenLink );
+		return $this->getSmartLink()->getUrl( $shortenLink );
 	}
 
 	/**
@@ -162,7 +162,7 @@ class AppManager {
 	 * @return mixed
 	 */
 	public function getUrlLong() {
-		return $this->smart_link->getUrlLong();
+		return $this->getSmartLink()->getUrlLong();
 	}
 
 	/**
@@ -187,7 +187,7 @@ class AppManager {
 	 * @return string Language Code (e.g. de_DE, en_US, ...)
 	 */
 	public function getLang() {
-		return $this->smart_link->getLang();
+		return $this->getSmartLink()->getLang();
 	}
 
 	/**
@@ -309,7 +309,7 @@ class AppManager {
 		if ( in_array( $lang, $allowed ) ) {
 			$this->lang = $lang;
 			$this->app->setLang( $this->lang );
-			$this->smart_link->setLang( $this->lang );
+			$this->getSmartLink()->setLang( $this->lang );
 		}
 
 	}
@@ -328,7 +328,7 @@ class AppManager {
 	 * @param bool $debug Show debug information on the page?
 	 */
 	public function renderSharePage( $debug = false ) {
-		return $this->smart_link->renderSharePage( $debug );
+		return $this->getSmartLink()->renderSharePage( $debug );
 	}
 
 	/**
@@ -346,7 +346,7 @@ class AppManager {
 	 * @return array Returns meta data for the page
 	 */
 	public function setMeta( $meta ) {
-		return $this->smart_link->setMeta( $meta );
+		return $this->getSmartLink()->setMeta( $meta );
 	}
 
 	/**
@@ -357,7 +357,7 @@ class AppManager {
 	 * @param array $params Array of parameters which should be passed through
 	 */
 	public function addParams( $params ) {
-		$this->smart_link->addParams( $params );
+		$this->getSmartLink()->addParams( $params );
 	}
 
 	/**
@@ -366,7 +366,7 @@ class AppManager {
 	 * @param array $params Array of parameters which should be passed through
 	 */
 	public function setParams( $params ) {
-		$this->smart_link->setParams( $params );
+		$this->getSmartLink()->setParams( $params );
 	}
 
 	/**
@@ -374,56 +374,56 @@ class AppManager {
 	 * @return array SmartLink Parameters
 	 */
 	public function getParams() {
-		return $this->smart_link->getParams( true );
+		return $this->getSmartLink()->getParams( true );
 	}
 
 	/**
 	 * Returns user device information
 	 */
 	public function getDevice() {
-		return $this->smart_link->getDevice();
+		return $this->getSmartLink()->getDevice();
 	}
 
 	/**
 	 * Returns the device type of the current device 'mobile', 'tablet', 'desktop'
 	 */
 	public function getDeviceType() {
-		return $this->smart_link->getDeviceType();
+		return $this->getSmartLink()->getDeviceType();
 	}
 
 	/**
 	 * Returns the operating system of the current device
 	 */
 	public function getOperatingSystem() {
-		return $this->smart_link->getOperatingSystem();
+		return $this->getSmartLink()->getOperatingSystem();
 	}
 
 	/**
 	 * Returns all available Facebook information, like currently used fanpage and canvas information
 	 */
 	public function getFacebookInfo() {
-		return $this->smart_link->getFacebook();
+		return $this->getSmartLink()->getFacebook();
 	}
 
 	/**
 	 * Returns user browser information
 	 */
 	public function getBrowser() {
-		return $this->smart_link->getBrowser();
+		return $this->getSmartLink()->getBrowser();
 	}
 
 	/**
 	 * Returns the user's browser name
 	 */
 	public function getBrowserName() {
-		return $this->smart_link->getBrowserName();
+		return $this->getSmartLink()->getBrowserName();
 	}
 
 	/**
 	 * Returns the user's browser major version
 	 */
 	public function getBrowserVersion() {
-		return $this->smart_link->getBrowserVersion();
+		return $this->getSmartLink()->getBrowserVersion();
 	}
 
 	/**
@@ -433,7 +433,7 @@ class AppManager {
 	 * 'direct' means the app is being accessed directly without iframe embed
 	 */
 	public function getEnvironment() {
-		return $this->smart_link->getEnvironment();
+		return $this->getSmartLink()->getEnvironment();
 	}
 
 	/**
@@ -441,7 +441,7 @@ class AppManager {
 	 * @return string Base Url
 	 */
 	public function getBaseUrl() {
-		return $this->smart_link->getBaseUrl();
+		return $this->getSmartLink()->getBaseUrl();
 	}
 
 	/**
@@ -450,7 +450,7 @@ class AppManager {
 	 * @param string $base_url New base url
 	 */
 	public function setBaseUrl( $base_url ) {
-		$this->smart_link->setBaseUrl( $base_url );
+		$this->getSmartLink()->setBaseUrl( $base_url );
 	}
 
 	/**
@@ -486,6 +486,10 @@ class AppManager {
 	 * @return Css Css helper
 	 */
 	public function getCssHelper() {
+		if (!$this->css_helper) {
+			$this->getApp();
+		}
+
 		return $this->css_helper;
 	}
 
@@ -552,7 +556,21 @@ class AppManager {
 	 */
 	public function setFilename( $filename ) {
 		$this->filename = $filename;
-		$this->smart_link->setFilename( $filename );
+		$this->getSmartLink()->setFilename( $filename );
 	}
+
+	/**
+	 * @return SmartLink
+	 */
+	public function getSmartLink() {
+
+		if (!$this->smart_link) {
+			$this->getApp();
+		}
+
+		return $this->smart_link;
+	}
+
+
 
 }
