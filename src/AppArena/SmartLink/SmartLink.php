@@ -26,7 +26,7 @@ class SmartLink {
 	private $cookie_domain; // Domain to use for the cookie
 	private $device           = array(); // Device information
 	private $environment; // Target environment
-	private $facebook         = array(); // All available information about the facebook page the instance is embedded in
+	private $facebook         = array(); // All available information about the facebook page the app is embedded in
 	private $filename         = "smartlink.php";
 	private $appId;
 	private $lang; // Currently selected language
@@ -40,7 +40,7 @@ class SmartLink {
 	private $url_short; // ShartLink Url processed by an url shortener
 	private $url_short_array  = array();
 	private $url_target; // The url the user will be redirected to
-	private $website; // All available information about the website the instance is embedded in
+	private $website; // All available information about the website the app is embedded in
 
 	// Library objects
 	private $mustache; // Mustache engine
@@ -53,17 +53,17 @@ class SmartLink {
 	 *
 	 * @param App $app Instance object
 	 *
-	 * @throws \Exception When no instance ID is passed
+	 * @throws \Exception When no app ID is passed
 	 */
 	public function __construct( App &$app ) {
 		// Initialize the base url
 		$this->initBaseUrl();
 
-		// Initialize the instance information
+		// Initialize the app information
 		$this->app   = $app;
 		$this->appId = $this->app->getId();
 		if ( ! $this->appId ) {
-			throw( new \Exception( 'No instance id available' ) );
+			throw( new \Exception( 'No app id available' ) );
 		}
 		$this->cookie_key = 'aa_' . $this->appId . '_smartlink';
 
@@ -93,7 +93,7 @@ class SmartLink {
 	}
 
 	/**
-	 * Sets the meta information from the app instance config values
+	 * Sets the meta information from the app app config values
 	 *
 	 * meta array
 	 *      ['title']           String Config text identifier for the sharing title
@@ -128,7 +128,7 @@ class SmartLink {
 			$schema_type = $meta['schema_type'];
 		}
 
-		// Get values from the instance config values
+		// Get values from the app config values
 		if ( isset( $meta['title'] ) && $this->app->getConfig( $meta['title'] ) ) {
 			$title = $this->app->getConfig( $meta['title'] );
 		}
@@ -595,7 +595,7 @@ class SmartLink {
 	private function initCookies() {
 		$appId = $this->appId;
 
-		// Set cookie with the current instance ID
+		// Set cookie with the current app ID
 		setcookie( 'aa_appId', $appId, time() + 172600, '/', $this->cookie_domain );
 
 		// Iframe Parameter Passthrough
