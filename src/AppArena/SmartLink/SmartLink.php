@@ -263,13 +263,17 @@ class SmartLink {
 
 		// Initialize Facebook Information ... (and check if the SmartLink should redirect to Facebook)
 		$fb_page_id = false;
-		if ( $this->app->getInfo( 'fb_app_id' ) ) {
+		$fb_app_id = $this->app->getInfo( 'fb_app_id' );
+		if ($_GET['fb_app_id']) {
+			$fb_app_id = $_GET['fb_app_id'];
+		}
+		if ( $fb_app_id ) {
 			if ( isset( $_GET['fb_page_id'] ) ) {
 				// ... from GET-Parameter
 				$fb_page_id  = $_GET['fb_page_id'];
-				$fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $this->app->getInfo( 'fb_app_id' );
+				$fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $fb_app_id;
 
-				$this->facebook['app_id']        = $this->app->getInfo( 'fb_app_id' );
+				$this->facebook['app_id']        = $fb_app_id;
 				$this->facebook['page_id']       = $fb_page_id;
 				$this->facebook['page_url']      = "https://www.facebook.com/" . $fb_page_id;
 				$this->facebook['page_tab']      = $fb_page_url;
@@ -279,9 +283,9 @@ class SmartLink {
 				if ( isset( $facebook['page_id'] ) && $facebook['page_id'] && $facebook['use_as_target'] ) {
 					// ... from COOKIE-Parameter
 					$fb_page_id  = $facebook['page_id'];
-					$fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $this->app->getInfo( 'fb_app_id' );
+					$fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $fb_app_id;
 
-					$this->facebook['app_id']        = $this->app->getInfo( 'fb_app_id' );
+					$this->facebook['app_id']        = $fb_app_id;
 					$this->facebook['page_id']       = $fb_page_id;
 					$this->facebook['page_url']      = "https://www.facebook.com/" . $fb_page_id;
 					$this->facebook['page_tab']      = $fb_page_url;
@@ -290,10 +294,10 @@ class SmartLink {
 					// ... from the Instance
 					if ( $this->app->getInfo( 'fb_page_url' ) ) {
 						$fb_page_id  = $this->app->getInfo( 'fb_page_id' );
-						$fb_page_url = $this->app->getInfo( 'fb_page_url' ) . '/app/' . $this->app->getInfo( 'fb_app_id' );
+						$fb_page_url = $this->app->getInfo( 'fb_page_url' ) . '/app/' . $fb_app_id;
 						$fb_page_url = str_replace( "//app/", "/app/", $fb_page_url );
 
-						$this->facebook['app_id']   = $this->app->getInfo( 'fb_app_id' );
+						$this->facebook['app_id']   = $fb_app_id;
 						$this->facebook['page_id']  = $fb_page_id;
 						$this->facebook['page_url'] = $this->app->getInfo( 'fb_page_url' );
 						$this->facebook['page_tab'] = $fb_page_url;
@@ -309,9 +313,9 @@ class SmartLink {
 		}
 
 		// Initializes Facebook canvas information
-		if ( $this->app->getInfo( 'fb_app_id' ) && $this->app->getInfo( 'fb_app_namespace' ) ) {
+		if ( $fb_app_id && $this->app->getInfo( 'fb_app_namespace' ) ) {
 			$this->facebook['app_namespace'] = $this->app->getInfo( 'fb_app_namespace' );
-			$this->facebook['app_id']        = $this->app->getInfo( 'fb_app_id' );
+			$this->facebook['app_id']        = $fb_app_id;
 			$canvas_url                      = 'https://apps.facebook.com/' . $this->facebook['app_namespace'] . '/?appId=' . $this->appId;
 			$this->facebook['canvas_url']    = $canvas_url;
 		}
