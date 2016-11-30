@@ -266,58 +266,63 @@ class SmartLink
 
         // Initialize Facebook Information ... (and check if the SmartLink should redirect to Facebook)
         $fb_page_id = false;
-        if ($this->instance->getInfo('fb_app_id')) {
-            if (isset($_GET['fb_page_id'])) {
-                // ... from GET-Parameter
-                $fb_page_id  = $_GET['fb_page_id'];
-                $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $this->instance->getInfo('fb_app_id');
+	    $fb_app_id = $this->instance->getInfo('fb_app_id');
+	    if (isset($_GET['fb_app_id'])) {
+		    $fb_app_id = $_GET['fb_app_id'];
+	    }
 
-                $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
-                $this->facebook['page_id']       = $fb_page_id;
-                $this->facebook['page_url']      = "https://www.facebook.com/" . $fb_page_id;
-                $this->facebook['page_tab']      = $fb_page_url;
-                $this->facebook['use_as_target'] = true;
-            } else {
-                $facebook = $this->getCookieValue("facebook");
-                if (isset($facebook['page_id']) && $facebook['page_id'] && $facebook['use_as_target']) {
-                    // ... from COOKIE-Parameter
-                    $fb_page_id  = $facebook['page_id'];
-                    $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $this->instance->getInfo('fb_app_id');
+	    if ($fb_app_id) {
+		    if (isset($_GET['fb_page_id'])) {
+			    // ... from GET-Parameter
+			    $fb_page_id  = $_GET['fb_page_id'];
+			    $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $fb_app_id;
 
-                    $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
-                    $this->facebook['page_id']       = $fb_page_id;
-                    $this->facebook['page_url']      = "https://www.facebook.com/" . $fb_page_id;
-                    $this->facebook['page_tab']      = $fb_page_url;
-                    $this->facebook['use_as_target'] = true;
-                } else {
-                    // ... from the Instance
-                    if ($this->instance->getInfo('fb_page_url')) {
-                        $fb_page_id  = $this->instance->getInfo('fb_page_id');
-                        $fb_page_url = $this->instance->getInfo('fb_page_url') . '/app/' . $this->instance->getInfo('fb_app_id');
-                        $fb_page_url = str_replace("//app/", "/app/", $fb_page_url);
+			    $this->facebook['app_id']        = $fb_app_id;
+			    $this->facebook['page_id']       = $fb_page_id;
+			    $this->facebook['page_url']      = "https://www.facebook.com/" . $fb_page_id;
+			    $this->facebook['page_tab']      = $fb_page_url;
+			    $this->facebook['use_as_target'] = true;
+		    } else {
+			    $facebook = $this->getCookieValue("facebook");
+			    if (isset($facebook['page_id']) && $facebook['page_id'] && $facebook['use_as_target']) {
+				    // ... from COOKIE-Parameter
+				    $fb_page_id  = $facebook['page_id'];
+				    $fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $fb_app_id;
 
-                        $this->facebook['app_id']   = $this->instance->getInfo('fb_app_id');
-                        $this->facebook['page_id']  = $fb_page_id;
-                        $this->facebook['page_url'] = $this->instance->getInfo('fb_page_url');
-                        $this->facebook['page_tab'] = $fb_page_url;
-                        // Only use this information, when explicitly requested
-                        if (isset($_GET['ref_app_env']) && $_GET['ref_app_env'] == "fb") {
-                            $this->facebook['use_as_target'] = true;
-                        } else {
-                            $this->facebook['use_as_target'] = false;
-                        }
-                    }
-                }
-            }
-        }
+				    $this->facebook['app_id']        = $fb_app_id;
+				    $this->facebook['page_id']       = $fb_page_id;
+				    $this->facebook['page_url']      = "https://www.facebook.com/" . $fb_page_id;
+				    $this->facebook['page_tab']      = $fb_page_url;
+				    $this->facebook['use_as_target'] = true;
+			    } else {
+				    // ... from the Instance
+				    if ($this->instance->getInfo('fb_page_url')) {
+					    $fb_page_id  = $this->instance->getInfo('fb_page_id');
+					    $fb_page_url = $this->instance->getInfo('fb_page_url') . '/app/' . $fb_app_id;
+					    $fb_page_url = str_replace("//app/", "/app/", $fb_page_url);
 
-        // Initializes Facebook canvas information
-        if ($this->instance->getInfo('fb_app_id') && $this->instance->getInfo('fb_app_namespace')) {
-            $this->facebook['app_namespace'] = $this->instance->getInfo('fb_app_namespace');
-            $this->facebook['app_id']        = $this->instance->getInfo('fb_app_id');
-            $canvas_url                      = 'https://apps.facebook.com/' . $this->facebook['app_namespace'] . '/?i_id=' . $this->i_id;
-            $this->facebook['canvas_url']    = $canvas_url;
-        }
+					    $this->facebook['app_id']   = $fb_app_id;
+					    $this->facebook['page_id']  = $fb_page_id;
+					    $this->facebook['page_url'] = $this->instance->getInfo('fb_page_url');
+					    $this->facebook['page_tab'] = $fb_page_url;
+					    // Only use this information, when explicitly requested
+					    if (isset($_GET['ref_app_env']) && $_GET['ref_app_env'] == "fb") {
+						    $this->facebook['use_as_target'] = true;
+					    } else {
+						    $this->facebook['use_as_target'] = false;
+					    }
+				    }
+			    }
+		    }
+	    }
+
+	    // Initializes Facebook canvas information
+	    if ($fb_app_id && $this->instance->getInfo('fb_app_namespace')) {
+		    $this->facebook['app_namespace'] = $this->instance->getInfo('fb_app_namespace');
+		    $this->facebook['app_id']        = $fb_app_id;
+		    $canvas_url                      = 'https://apps.facebook.com/' . $this->facebook['app_namespace'] . '/?i_id=' . $this->i_id;
+		    $this->facebook['canvas_url']    = $canvas_url;
+	    }
     }
 
     /**
