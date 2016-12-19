@@ -174,8 +174,8 @@ class AppManager {
 			return $this->appId;
 		}
 
-		if ( $this->app ) {
-			return $this->app->getId();
+		if ( $this->getApp() ) {
+			return $this->getApp()->getId();
 		}
 
 		return false;
