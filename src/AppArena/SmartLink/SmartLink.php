@@ -264,7 +264,7 @@ class SmartLink {
 		// Initialize Facebook Information ... (and check if the SmartLink should redirect to Facebook)
 		$fb_page_id = false;
 		$fb_app_id = $this->app->getInfo( 'fb_app_id' );
-		if ($_GET['fb_app_id']) {
+		if (isset($_GET['fb_app_id']) && $_GET['fb_app_id']) {
 			$fb_app_id = $_GET['fb_app_id'];
 		}
 		if ( $fb_app_id ) {
