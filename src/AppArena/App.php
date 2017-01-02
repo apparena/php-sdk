@@ -289,6 +289,25 @@ class App
 		return $this->translation;
 	}
 
+	/**
+	 * Returns if the current request contains admin authentication information (GET-params)
+	 * @param String $projectSecret The project secret to validate the Hash
+	 * @return bool Returns if the current request contains admin authentication information
+	 */
+	public function isAdmin( $projectSecret ) {
+		// Try to get Hash and Timestamp from the request parameters
+		if (isset($_GET['hash'], $_GET['timestamp'])) {
+			$hash      = $_GET['hash'];
+			$timestamp = $_GET['timestamp'];
+			if ($hash === sha1($this->getId() . '_' . $projectSecret . '_' . $timestamp) && $timestamp >= strtotime('-1 hours')) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+
 	public function save(Api $api = null) {
 		if ($api == null) {
 			$api = $this->getApi();
