@@ -208,7 +208,7 @@ class App
 		}
 	}
 
-	function getConfigs()
+	public function getConfigs()
 	{
 		// Return array from Memory if already available
 		if ($this->config) {
@@ -234,6 +234,29 @@ class App
 
 		$this->config = $config;
 		return $this->config;
+	}
+
+	/**
+	 * Returns a list of all languages this app offers
+	 * @return array|bool
+	 */
+	public function getLanguages()
+	{
+		// Return array from Memory if already available
+		if ($this->languages) {
+			return $this->languages;
+		}
+
+		// Update the language for the current request
+		$this->api->setLang($this->getLang());
+		$response = $this->api->get("apps/$this->id/languages");
+
+		if ($response == false) {
+			return false;
+		}
+
+		$this->languages = $response;
+		return $this->languages;
 	}
 
 	function getTranslations()
