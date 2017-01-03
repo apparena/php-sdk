@@ -199,13 +199,31 @@ class App
 
 		// Update the language for the current request
 		$this->api->setLang(null);
-		$response = $this->api->get("apps/" . $this->id);
-		if (isset($response['_embedded']['data'])) {
-			$this->info = $response['_embedded']['data'];
-			return $this->info;
+
+		// App infos is a merged array of basic app information and additional app meta data
+		$info = $this->api->get('apps/' . $this->id);
+		$meta = $this->api->get('apps/' . $this->id . '/infos');
+
+		if (isset($info['_embedded']['data']) && is_array($info['_embedded']['data'])) {
+			$this->info = $info['_embedded']['data'];
 		} else {
 			return false;
 		}
+
+		if (isset($meta['_embedded']['data']) && is_array($meta['_embedded']['data'])) {
+			$values = array_map(function($item){
+				return $item['value'];
+			}, $meta['_embedded']['data']);
+
+			$this->info = array_merge($values, $this->info);
+		}
+		ksort($this->info);
+
+		if (!$this->info) {
+			return false;
+		}
+
+		return $this->info;
 	}
 
 	public function getConfigs()
