@@ -597,6 +597,9 @@ class App
 
 		// No replacements necessary, so just return the translation like it is
 		if (count($args) == 0 && isset($translate[$translation_id])) {
+			if (is_array($translate[$translation_id]) && isset($translate[$translation_id]['translation'])) {
+				return $translate[$translation_id]['translation'];
+			}
 			return $translate[$translation_id];
 		}
 
