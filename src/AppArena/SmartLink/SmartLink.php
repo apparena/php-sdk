@@ -135,7 +135,7 @@ class SmartLink {
 		if ( isset( $meta['desc'] ) && $this->app->getConfig( $meta['desc'] ) ) {
 			$desc = $this->app->getConfig( $meta['desc'] );
 		}
-		if ( isset( $meta['image'] ) && $this->app->getConfig( $meta['image'] ) ) {
+		if ( isset( $meta['image'] ) && $this->app->getConfig( $meta['image']) ) {
 			$image = $this->app->getConfig( $meta['image'] );
 		}
 
