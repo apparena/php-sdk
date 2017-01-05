@@ -607,7 +607,7 @@ class App
 		if (isset($translate[$translation_id])) {
 			if (is_array($translate[$translation_id]) && isset($translate[$translation_id]['translation'])) {
 				$translate[$translation_id]['translation'] = vsprintf($translate[$translation_id]['translation'], $args);
-				return $translate[$translation_id];
+				return $translate[$translation_id]['translation'];
 			}
 			return vsprintf($translate[$translation_id], $args);
 		}
