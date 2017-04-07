@@ -7,36 +7,17 @@
  * @license   2015 -
  */
 
-namespace AppArena;
-
-use AppArena\API\Api;
-use AppArena\Helper\Cache;
-
+namespace AppArena\Models;
 
 /**
  * Class Instance Instance object
  */
-class App
+class App extends AbstractEntity
 {
-
-	protected $id = false; // Default instance ID (Demo), which should be overwritten...
 	protected $projectId = false; // ID of this instances app model / Project
 	/** @var  integer $templateId */
 	protected $templateId; // ID of this instances template
-	protected $config = array();
-	protected $translation = array();
-	protected $info = array();
-	protected $lang = "de_DE";
-	protected $auth_apikey = null;
-	protected $name = null;
 	protected $expiryDate = null;
-	protected $companyId = null;
-	/**
-	 * @var Api | null $api
-	 */
-	private $api = null;
-	private $cache_dir = false;
-
 
 	/**
 	 * Initialize the App object from API
@@ -44,35 +25,16 @@ class App
 	 * @param Api $api Api object
 	 * @throws \InvalidArgumentException Throws an error, when no App ID available
 	 */
-	function __construct($id = null, Api $api)
+	public function __construct($id = null, Api $api)
 	{
+		$this->type = 'app';
+
 		// If no App ID available, then try to recover it
 		if (!$id) {
 			$id = $this->recoverId();
 		}
 
-		if (!$id) {
-			throw new \InvalidArgumentException("No appId available");
-		}
-
-		$this->id = $id;
-		$this->api = $api;
-	}
-
-	/**
-	 * @return integer
-	 */
-	public function getId()
-	{
-		return $this->id;
-	}
-
-	/**
-	 * @param integer $appId
-	 */
-	public function setId($appId)
-	{
-		$this->id = $appId;
+		parent::__construct($id, $api);
 	}
 
 	/**
@@ -91,37 +53,6 @@ class App
 		$this->templateId = $templateId;
 	}
 
-	/**
-	 * @return string | null
-	 */
-	public function getAuthApikey()
-	{
-		return $this->auth_apikey;
-	}
-
-	/**
-	 * @param string | null $auth_apikey
-	 */
-	public function setAuthApikey($auth_apikey)
-	{
-		$this->auth_apikey = $auth_apikey;
-	}
-
-	/**
-	 * @return string | null
-	 */
-	public function getName()
-	{
-		return $this->name;
-	}
-
-	/**
-	 * @param string | null $name
-	 */
-	public function setName($name)
-	{
-		$this->name = $name;
-	}
 
 	/**
 	 * @return mixed
@@ -139,173 +70,9 @@ class App
 		$this->expiryDate = $expiryDate;
 	}
 
-	/**
-	 * @return integer
-	 */
-	public function getCompanyId()
-	{
-		return $this->companyId;
-	}
 
-	/**
-	 * @param integer $companyId
-	 */
-	public function setCompanyId($companyId)
-	{
-		$this->companyId = $companyId;
-	}
 
-	/**
-	 * @return Api|null
-	 */
-	public function getApi()
-	{
-		return $this->api;
-	}
 
-	/**
-	 * @param Api|null $api
-	 */
-	public function setApi($api)
-	{
-		$this->api = $api;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getCacheDir()
-	{
-		return $this->cache_dir;
-	}
-
-	/**
-	 * @param string $cache_dir
-	 */
-	public function setCacheDir($cache_dir)
-	{
-		$this->cache_dir = $cache_dir;
-	}
-
-	/**
-	 * @return array
-	 */
-	public function getInfos()
-	{
-		// Return array from Memory if already available
-		if ($this->info) {
-			return $this->info;
-		}
-
-		// Update the language for the current request
-		$this->api->setLang(null);
-
-		// App infos is a merged array of basic app information and additional app meta data
-		$info = $this->api->get('apps/' . $this->id);
-		$meta = $this->api->get('apps/' . $this->id . '/infos');
-
-		if (isset($info['_embedded']['data']) && is_array($info['_embedded']['data'])) {
-			$this->info = $info['_embedded']['data'];
-		} else {
-			return false;
-		}
-
-		if (isset($meta['_embedded']['data']) && is_array($meta['_embedded']['data'])) {
-			$values = array_map(function($item){
-				return $item['value'];
-			}, $meta['_embedded']['data']);
-
-			$this->info = array_merge($values, $this->info);
-		}
-		ksort($this->info);
-
-		if (!$this->info) {
-			return false;
-		}
-
-		return $this->info;
-	}
-
-	public function getConfigs()
-	{
-		// Return array from Memory if already available
-		if ($this->config) {
-			return $this->config;
-		}
-
-		// Update the language for the current request
-		$this->api->setLang($this->getLang());
-		$response = $this->api->get("apps/$this->id/configs");
-
-		if ($response == false) {
-			return false;
-		}
-		$config = $response['_embedded']['data'];
-
-		/* //not needed since am2?
-		$data = $response['_embedded']['data'];
-		$config = array();
-		foreach ($data as $v) {
-			$config[$v['configId']] = $v;
-		}
-		*/
-
-		$this->config = $config;
-		return $this->config;
-	}
-
-	/**
-	 * Returns a list of all languages this app offers
-	 * @return array|bool
-	 */
-	public function getLanguages()
-	{
-		// Return array from Memory if already available
-		if ($this->languages) {
-			return $this->languages;
-		}
-
-		// Update the language for the current request
-		$this->api->setLang($this->getLang());
-		$response = $this->api->get("apps/$this->id/languages");
-
-		if ($response == false) {
-			return false;
-		}
-
-		$this->languages = $response;
-		return $this->languages;
-	}
-
-	function getTranslations()
-	{
-		// Return array from Memory if already available
-		if ($this->translation) {
-			return $this->translation;
-		}
-
-		$lang = $this->getLang();
-		$this->api->setLang($lang);
-		$response = $this->api->get(
-			"apps/$this->id/translations"
-		);
-		if ($response == false) {
-			return false;
-		}
-
-		/*
-		$data = $response['_embedded']['data'];
-
-		$translation = array();
-		foreach ($data as $v) {
-			$translation[$v['translation_id']] = $v['value'];
-		}
-		$this->translation = $translation;
-		*/
-		$this->translation = $response['_embedded']['data'];
-
-		return $this->translation;
-	}
 
 	/**
 	 * Returns if the current request contains admin authentication information (GET-params)
@@ -518,104 +285,6 @@ class App
 	}
 
 	/**
-	 * @return string
-	 */
-	public function getLang()
-	{
-		return $this->lang;
-	}
-
-	/**
-	 * @param string $lang
-	 */
-	public function setLang($lang)
-	{
-		$this->lang = $lang;
-	}
-
-	/**
-	 * Returns the value of a config value
-	 * @param String       $config_id Config identifier to get the data for
-	 * @param String|array $attr      Attribute or Attributes which should be returned
-	 * @return String|array Requested config value as String or an
-	 */
-	function getConfig($config_id, $attr = "value")
-	{
-		// Validate Input
-		if (!is_string($config_id) || !$config_id) {
-			return null;
-		}
-
-		// Get all config values
-		$config = $this->getConfigs();
-
-		// Return the value as string
-		if (is_string($attr) && isset($config[$config_id][$attr])) {
-			return $config[$config_id][$attr];
-		}
-
-		// Return certain attributes of a config value
-		if (is_array($attr) && isset($config[$config_id])) {
-			$result = array();
-			// Initialize all required attributes with null
-			foreach ($attr as $attribute) {
-				$result[$attribute] = null;
-			}
-
-			// Add attributes from config value
-			foreach ($config[$config_id] as $attribute => $value) {
-				if (in_array($attribute, $attr)) {
-					$result[$attribute] = $value;
-				}
-			}
-
-			return $result;
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the translation for the submitted ID
-	 * @param String $translation_id Config identifier to get the data for
-	 * @param String|array  $args         Array of values to replace in the translation (@see
-	 *                             http://php.net/manual/de/function.vsprintf.php)
-	 * @return String Translated value
-	 */
-	function getTranslation($translation_id, $args = array())
-	{
-		// Validate Input
-		if (!is_string($translation_id) || (!is_array($args) && !is_string($args))) {
-			return '';
-		}
-
-		if (is_string($args)) {
-			$args = array($args);
-		}
-
-		$translate = $this->getTranslations();
-
-		// No replacements necessary, so just return the translation like it is
-		if (count($args) == 0 && isset($translate[$translation_id])) {
-			if (is_array($translate[$translation_id]) && isset($translate[$translation_id]['translation'])) {
-				return $translate[$translation_id]['translation'];
-			}
-			return $translate[$translation_id];
-		}
-
-		// Replace arguements in string
-		if (isset($translate[$translation_id])) {
-			if (is_array($translate[$translation_id]) && isset($translate[$translation_id]['translation'])) {
-				$translate[$translation_id]['translation'] = vsprintf($translate[$translation_id]['translation'], $args);
-				return $translate[$translation_id]['translation'];
-			}
-			return vsprintf($translate[$translation_id], $args);
-		}
-
-		return $translation_id;
-	}
-
-	/**
 	 * @return boolean
 	 */
 	public function getProjectId()
@@ -627,22 +296,6 @@ class App
 		$this->projectId = $this->getInfo("projectId");
 
 		return $this->projectId;
-	}
-
-	/**
-	 * Returns only the requested info attribute
-	 * @param String $key Key of the attribute
-	 * @return String Value of the requested attribute
-	 */
-	public function getInfo($key)
-	{
-		$infos = $this->getInfos();
-
-		if (isset($infos[$key])) {
-			return $infos[$key];
-		}
-
-		return false;
 	}
 
 }

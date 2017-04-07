@@ -13,7 +13,7 @@
  * @author      "Marcus Merchel" <kontakt@marcusmerchel.de>
  * @version     1.0.0 (28.02.14 - 14:58)
  */
-namespace AppArena\Helper;
+namespace AppArena\Models;
 
 class Cache
 {

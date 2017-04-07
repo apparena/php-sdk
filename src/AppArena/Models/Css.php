@@ -13,9 +13,8 @@
  * @author      "Sebastian Buckpesch" <s.buckpesch@app-arena.com>
  * @version     1.0.0 (28.02.15 - 14:58)
  */
-namespace AppArena\Helper;
+namespace AppArena\Models;
 
-use AppArena\App;
 use Leafo\ScssPhp\Compiler;
 
 class Css {
@@ -33,7 +32,7 @@ class Css {
 	 * Initializes the CSS compiler class
 	 *
 	 * @param string        $cache_dir               Directory for the compiled CSS files
-	 * @param \AppArena\App $app                     App object
+	 * @param App $app                     App object
 	 * @param string        $lang                    Language to generate the CSS for (does not need to be necessarily
 	 *                                               different
 	 * @param string        $file_id                 File identifier, in case you want to compile more than one file
