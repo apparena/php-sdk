@@ -605,5 +605,13 @@ class AppManager {
 		return $this->smartLink;
 	}
 
+	/**
+	 * Invalidate the cache of a submitted entity. See parameter settings in cache section of the documentation
+	 * @param string $action Can be 'all', 'configs', 'infos', 'languages', 'translations', 'apps' or 'templates'
+	 */
+	public function cacheInvalidate( $action = 'all' ) {
+		$this->cache->cacheInvalidate($action);
+	}
+
 
 }
