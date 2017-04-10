@@ -19,7 +19,7 @@ $am = new \AppArena\AppManager(
 				'port' => 6379
 			]
 		], // Writable folder for file cache. Check the cache section for more options
-		'apikey'    => 'qtbWCZVEzsPeFxqE7fLdJGybEgiEdawxNZEdkFny' // Add you API key here
+		'apikey'    => '' // Add you API key here
 	]
 );
 // Get config values, translations and infos from the current app, template or version
