@@ -48,6 +48,7 @@ class AppManager {
 	 *                       ['path']
 	 *                       ['projectId'] Project ID
 	 *                       ['root_path'] Sets the Root path to the app, all path references will be relative to this
+	 * @throws \Exception Any error occuring.
 	 */
 	public function __construct( array $options = [] ) {
 		try {
@@ -58,7 +59,8 @@ class AppManager {
 			// Initialize the cache using the primary entity as cache key
 			$cacheOptions = isset( $options['cache'] ) ? $options['cache'] : [];
 			$this->cache  = new Cache( array_merge_recursive( $cacheOptions, [
-				'namespace' => $this->getPrimaryEntity()->getEntityType() . '_' . $this->getPrimaryEntity()->getId()
+				'entityType' => $this->getPrimaryEntity()->getEntityType(),
+				'entityId'   => $this->getPrimaryEntity()->getId()
 			] ) );
 
 			// Initialize the API connection and set it to the primary entity
@@ -195,74 +197,11 @@ class AppManager {
 		}
 
 		// If not even an app ID could be instantiated, then throw an exception
-		if (!$this->app->getId()) {
-			throw new \InvalidArgumentException('No versionId, templateId or appId available. Please submit any of those IDs to establish the App-Manager connection');
+		if ( ! $this->app->getId() ) {
+			throw new \InvalidArgumentException( 'No versionId, templateId or appId available. Please submit any of those IDs to establish the App-Manager connection' );
 		}
 
 		return $this->app;
-	}
-
-
-	/**
-	 * @return App
-	 */
-	public function getApp() {
-
-		if ( ! $this->app ) {
-			// Initialize the current App instance if available
-			$this->app = new App( $this->appId, $this->api );
-
-			// Initialize the SmartLink object
-			$this->smartLink = new SmartLink( $this->app );
-
-			// Create CSS Helper object
-			$this->css_helper = new Css(
-				$this->cache_dir,
-				$this->app,
-				"de_DE",
-				"style",
-				$this->root_path
-			);
-		}
-
-		return $this->app;
-	}
-
-	/**
-	 * @param integer|null $id
-	 *
-	 * @return App
-	 */
-	/*function getApp( $id = null ) {
-		if ( $id ) {
-			$app_info = $this->api->get( "apps/" . $id )['_embedded']['data'];
-			$app      = new App( $id, $this->api );
-			$app->setName( $app_info['name'] );
-			$app->setTemplateId( $app_info['templateId'] );
-			$app->setLang( $app_info['lang'] );
-			$app->setExpiryDate( $app_info['expiryDate'] );
-			$app->setCompanyId( $app_info['companyId'] );
-
-			return $app;
-		} else {
-			$this->getApp()->recoverId();
-
-			return $this->getApp();
-		}
-	}*/
-
-	/**
-	 * @returns App
-	 */
-	public function createApp( $name, $template_id, $lang, $expiryDate = null, $companyId = null ) {
-		$app = new App( null, $this->api );
-		$app->setName( $name );
-		$app->setTemplateId( $template_id );
-		$app->setLang( $lang );
-		$app->setExpiryDate( $expiryDate );
-		$app->setCompanyId( $companyId );
-
-		return $app;
 	}
 
 	/**
@@ -283,23 +222,6 @@ class AppManager {
 	public function getUrlLong() {
 		return $this->getSmartLink()->getUrlLong();
 	}
-
-	/**
-	 * Returns the currently used App ID
-	 * @return mixed
-	 */
-	public function getAppId() {
-		if ( $this->appId ) {
-			return $this->appId;
-		}
-
-		if ( $this->getApp() ) {
-			return $this->getApp()->getId();
-		}
-
-		return false;
-	}
-
 
 	/**
 	 * Returns the currently used Language
@@ -591,13 +513,6 @@ class AppManager {
 	 */
 	private function getApi() {
 		return $this->api;
-	}
-
-	/**
-	 * Cleans the cache
-	 */
-	public function cleanCache() {
-		$this->getApi()->cleanCache( "apps/" . $this->getAppId() );
 	}
 
 	/**

@@ -50,7 +50,8 @@ class Api {
 	 * @param string $route  Requested route
 	 * @param array  $params Additional paramater for the request
 	 *
-	 * @return array API response
+	 * @return array|bool API response
+	 * @throws \Exception Authorization failed exception
 	 */
 	public function get( $route, $params = [] ) {
 
@@ -69,9 +70,11 @@ class Api {
 			$response       = $this->_get( $route, $params );
 
 			if ( $response['status'] === 200 && $response !== false ) {
-				// Set tags
-				$value->tag($route);
 				$value->set( $response );
+				$cache->save( $value );
+
+				// Set tags (important to do this after saving, to avoid a loop)
+				$value->tag( $this->getTags( $route ) );
 				$cache->save( $value );
 			}
 
@@ -251,6 +254,114 @@ class Api {
 	 */
 	public function setLang( $lang ) {
 		$this->lang = $lang;
+	}
+
+	/**
+	 * Returns tags for the current route
+	 *
+	 * @param String $route The requested route
+	 *
+	 * @return array List of tags for the current API request
+	 */
+	private function getTags( $route ) {
+		$tags       = [];
+		$routeParts = explode( '/', $route );
+
+		if ( count( $routeParts ) > 1 && in_array( $routeParts[0], [ 'apps', 'templates', 'versions' ] ) ) {
+			switch ( $routeParts[0] ) {
+				case 'apps':
+					// If the request is an app request, then add templateId tag
+					$tags = $this->getTagsForApp( $routeParts );
+					break;
+				case 'templates':
+					// if the request is a template request, then add versionId and parent templateId tags
+					$tags = $this->getTagsForTemplate( $routeParts );
+					break;
+				case 'versions':
+					$tags = $this->getTagsForVersion( $routeParts );
+					break;
+			}
+		}
+
+		return $tags;
+	}
+
+	/**
+	 * Add a tags for the currently requested app
+	 *
+	 * @param array $routeParts
+	 *
+	 * @return array List all of tags for the app
+	 */
+	private function getTagsForApp( $routeParts ) {
+		$tags = [ 'app.' . $routeParts[1] ];
+
+		// Get App Infos
+		$infos = $this->get( 'apps/' . $routeParts[1] );
+		if ( isset( $infos['_embedded']['data']['templateId'] ) ) {
+			$tags[] = 'appTemplate.' . $infos['_embedded']['data']['templateId'];
+		}
+
+		// Add second level tags if available
+		if (count($routeParts) === 2) {
+			$tags[] = 'app.' . $routeParts[1] . '.infos';
+		}
+		if ( isset( $routeParts[2] ) && in_array( $routeParts[2], [ 'configs', 'infos', 'translations', 'languages' ] )
+		) {
+			$tags[] = 'app.' . $routeParts[1] . '.' . $routeParts[2];
+		}
+
+		return $tags;
+	}
+
+	/**
+	 * Add a tags for the currently requested template
+	 *
+	 * @param array $routeParts
+	 *
+	 * @return array List all of tags for the template
+	 */
+	private function getTagsForTemplate( $routeParts ) {
+		$tags = [ 'template.' . $routeParts[1] ];
+
+		// Get App Infos
+		$infos = $this->get( 'templates/' . $routeParts[1] );
+		if ( isset( $infos['_embedded']['data']['templateId'] ) && $infos['_embedded']['data']['templateId'] != $routeParts[1] ) {
+			$tags[] = 'templateTemplate.' . $infos['_embedded']['data']['templateId'];
+		}
+
+		// Add second level tags if available
+		if (count($routeParts) === 2) {
+			$tags[] = 'template.' . $routeParts[1] . '.infos';
+		}
+		if ( isset( $routeParts[2] ) && in_array( $routeParts[2], [ 'configs', 'infos', 'translations', 'languages' ] )
+		) {
+			$tags[] = 'template.' . $routeParts[1] . '.' . $routeParts[2];
+		}
+
+		return $tags;
+	}
+
+	/**
+	 * Add a tags for the currently requested version
+	 *
+	 * @param array $routeParts
+	 *
+	 * @return array List all of tags for the version
+	 */
+	private function getTagsForVersion( $routeParts ) {
+		$tags = [ 'version.' . $routeParts[1] ];
+
+		// Add second level tags if available
+		if (count($routeParts) === 2) {
+			$tags[] = 'version.' . $routeParts[1] . '.infos';
+		}
+		if ( isset( $routeParts[2] ) && in_array( $routeParts[2], [ 'configs', 'infos', 'translations', 'languages' ] )
+		) {
+			$tags[] = 'version.' . $routeParts[1] . '.' . $routeParts[2];
+		}
+
+		return $tags;
 	}
 
 }

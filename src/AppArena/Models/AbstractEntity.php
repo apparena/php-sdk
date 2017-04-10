@@ -244,7 +244,9 @@ abstract class AbstractEntity implements EntityInterface {
 		}
 
 		// Update the language for the current request
-		$this->api->setLang( null );
+		if ($this->getLang()) {
+			$this->api->setLang( $this->getLang() );
+		}
 
 		// App infos is a merged array of basic app information and additional app meta data
 		$info = $this->api->get( $this->getEntityType() . 's/' . $this->id );
@@ -344,7 +346,6 @@ abstract class AbstractEntity implements EntityInterface {
 		}
 
 		// Update the language for the current request
-		$this->api->setLang( $this->getLang() );
 		$response = $this->api->get( $this->getEntityType() . "s/$this->id/languages" );
 
 		if ( $response == false ) {
@@ -403,8 +404,11 @@ abstract class AbstractEntity implements EntityInterface {
 			return $this->translations;
 		}
 
-		$lang = $this->getLang();
-		$this->api->setLang( $lang );
+		// Update the language for the current request
+		if ($this->getLang()) {
+			$this->api->setLang( $this->getLang() );
+		}
+
 		$response = $this->api->get( $this->getEntityType() . "s/$this->id/translations" );
 		if ( $response == false ) {
 			return false;
