@@ -1,165 +1,73 @@
 <?php
-/**
- * Cache
- *
- * handle all caches in different types (File, Memcache, APC)
- *
- * @category    AppManager
- * @package     Helper
- * @subpackage  Cache
- *
- * @see         http://www.appalizr.com/
- *
- * @author      "Marcus Merchel" <kontakt@marcusmerchel.de>
- * @version     1.0.0 (28.02.14 - 14:58)
- */
+
 namespace AppArena\Models;
 
-class Cache
-{
-    public $cache_dir = "";
+use Cache\Namespaced\NamespacedCachePool;
+use Symfony\Component\Cache\Adapter\AbstractAdapter;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 
-    /**
-     * Initialization of the Caching object
-     * @param array $params Initialization parameter
-     */
-    public function __construct($params)
-    {
-        // Initialize Cache object
-        if (isset($params['cache_dir']))
-        {
-            $this->cache_dir = rtrim($params['cache_dir'], "/");
-        }
+class Cache {
 
-        if (file_exists($this->cache_dir) == false || is_dir($this->cache_dir) == false)
-        {
-            $this->createCacheDir($this->cache_dir);
-        }
-    }
+	private $namespace = '';
 
-    /**
-     * Checks if the requested Key does exist
-     * @param $cache_key
-     * @return bool
-     */
-    function exists($cache_key)
-    {
-        $path = $this->cache_dir . "/" . $cache_key;;
+	/** @var AbstractAdapter */
+	private $adapter;
 
-        return file_exists($path);
-    }
+	/**
+	 * Initialization of the Caching object
+	 *
+	 * @param array $options Cache options
+	 */
+	public function __construct( $options ) {
+		$namespace       = $options['namespace'];
+		$defaultLifetime = 0;
+		$directory       = null; // the main cache directory (the application needs read-write permissions on it). if none is specified, a directory is created inside the system temporary directory
+		if (isset($options['directory'])) {
+			if (!file_exists($options['directory'])) {
+				mkdir($options['directory'], 0755, true);
+			}
+			if (!is_writeable($options['directory'])) {
+				throw new \Exception($options['directory'] . ' is not writeable for the webserver.');
+			}
+			$directory = $options['directory'];
+		}
 
-    /**
-     * Saves something to the cache
-     * @param string $cache_key
-     * @param string $content
-     * @param string $format
-     * @return bool|int
-     */
-    function save($cache_key, $content, $format = "json")
-    {
-        $path = $this->cache_dir . "/" . $cache_key;
+		if ( isset( $options['adapter'] ) && $options['adapter'] instanceof AbstractAdapter ) {
+			$this->adapter = $options['adapter'];
+		} else {
 
-        if ($format == "json")
-        {
-            $content = json_encode($content);
-        }
+			// Initialize the file cache as fallback or primary option @see http://symfony.com/doc/current/components/cache/cache_pools.html
+			$adapter = new FilesystemAdapter( $namespace, $defaultLifetime, $directory );
 
-        return file_put_contents($path, $content);
-    }
+			// Check if redis configuration is available
+			if ( isset( $options['redis'], $options['redis']['host'] ) ) {
+				$port            = isset( $options['redis']['port'] ) ? $options['redis']['port'] : 6379;
+				$redisConnection = RedisAdapter::createConnection( 'redis://' . $options['redis']['host'] . ':' . $port );
+				$adapter         = new RedisAdapter( $redisConnection, $namespace, $defaultLifetime );
+			}
 
-    function load($cache_key, $format = "json")
-    {
-        $path = $this->cache_dir . "/" . $cache_key;
+			$this->adapter = $adapter;
+		}
+		
+		// Process cache cleaning parameters
+		$this->processCleanParameters();
 
-        if ($this->exists($cache_key))
-        {
-            if ($format == "json") {
-                return json_decode(file_get_contents($path), true);
-            } else {
-                return file_get_contents($path);
-            }
-        }
-        else
-        {
-            return null;
-        }
-    }
+	}
 
-    /**
-     * Cleans the whole cache for a certain key
-     * @param $cache_key
-     * @throws \Exception
-     */
-    function clean($cache_key)
-    {
-        $cache_key = str_replace('/', '_', $cache_key);
+	/**
+	 * @return AbstractAdapter
+	 */
+	public function getAdapter() {
+		return $this->adapter;
+	}
 
-        $files = $this->getAllDirFiles($this->cache_dir);
+	/**
+	 * Reads cache query parameters for cleaning the cache. Read the cache section in the documentation to understand
+	 * the behaviour.
+	 */
+	private function processCleanParameters( ) {
 
-        foreach ($files as $file)
-        {
-            if (strpos($file, str_replace("\\", "/", $this->cache_dir) . '/' . $cache_key) === 0)
-            {
-                unlink($file);
-            }
-        }
-    }
+	}
 
-    /**
-     * Returns a list of all files
-     * @param $dir
-     * @return array
-     * @throws \Exception
-     */
-    public function getAllDirFiles($dir)
-    {
-        $files = array();
-
-        if (is_dir($dir) == false)
-        {
-            throw new \Exception("$dir is not a directory");
-        }
-
-        $dir = new \DirectoryIterator($dir);
-        foreach ($dir as $fileinfo)
-        {
-            if (!$fileinfo->isDot() && !$fileinfo->isFile())
-            {
-                continue;
-            }
-
-            if (!$fileinfo->isDot() && $fileinfo->isFile())
-            {
-                $files[] = str_replace("\\", "/", $fileinfo->getPathname());
-            }
-        }
-
-        return $files;
-    }
-
-    /**
-     * Tries to create the caching directory from the submitted path.
-     * @path String Absolute path of the cache directory
-     */
-    private function createCacheDir($path){
-
-        $parts = explode("/", $path);
-
-        if (count($parts) > 1) {
-            $end = array_pop($parts);
-
-            $parentPath = substr($path, 0, (strlen($end)+1) * -1);
-            if (file_exists($parentPath) == false || is_dir($parentPath) == false)
-            {
-                // The parent folder does not exist neither... Call create function recursively
-                $this->createCacheDir($parentPath);
-            } else {
-                // Parent folder exists, so create the subfolder
-                if (!file_exists($path)) {
-                    mkdir($path, 0777, true);
-                }
-            }
-        }
-    }
 }

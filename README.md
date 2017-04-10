@@ -26,14 +26,17 @@ $am = new \AppArena\AppManager(
     array(
         'versionId' => 123, // Add the version ID of your project here
         'root_path' => __DIR__,
-        'cache' => ['files' => '/var/cache'], // Writable folder for file cache. Check the cache section for more options
-        'apikey' => 'ABCDEFGHIJKLMNOPQRSTUVW' // Add you API key here
+        'cache' => [
+            'directory' => __DIR__ . '/var/cache', // Writable folder for file cache. Check the cache section for more options
+        ],'apikey' => 'ABCDEFGHIJKLMNOPQRSTUVW' // Add you API key here
     )
 );
-// Get config values, translations and infos from the current app, template or version
+// Get config values, languages, translations and infos from the current app, template or version
 $configs      = $am->getConfigs();
+$infos        = $am->getInfos();
+$languages    = $am->getLanguages();
 $translations = $am->getTranslations();
-$info         = $am->getInfos();
+
 ```
 
 Now the connection is setup up and you can receive content from the

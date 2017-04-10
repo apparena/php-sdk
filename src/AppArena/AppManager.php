@@ -6,13 +6,11 @@ use AppArena\Models\AbstractEntity;
 use AppArena\Models\Api;
 use AppArena\Models\App;
 use AppArena\Models\Cache;
-use AppArena\Models\EntityInterface;
 use AppArena\Models\SmartLink;
 use AppArena\Models\Template;
 use AppArena\Models\Version;
-use phpbrowscap\Exception;
 
-class AppManager implements EntityInterface {
+class AppManager {
 
 	protected $root_path = false; // Absolute root path of the project on the server
 	private   $cookie; // The App-Manager Cookie for the current user
@@ -53,42 +51,32 @@ class AppManager implements EntityInterface {
 	 */
 	public function __construct( array $options = [] ) {
 		try {
-			// Initialize the cache
-			if ( isset( $options["cache"] ) ) {
-				$this->cache = $this->initCacheObject( $options["cache"] );
 
-				// If the cache_dir already contains the root_path
-				/*$cache_dir = $options["cache"]['dir'];
-				if ( strpos( $cache_dir, $this->root_path ) !== false ) {
-					$cache_dir = substr( $cache_dir, strlen( $this->root_path ) );
-				}
-				$this->cache_dir = $this->root_path . $cache_dir;*/
-			}
+			// Get primary Entity to get information for (version, template or app)
+			$this->primaryEntity = $this->getPrimaryEntity();
 
-			// Initialize the API connection
+			// Initialize the cache using the primary entity as cache key
+			$cacheOptions = isset( $options['cache'] ) ? $options['cache'] : [];
+			$this->cache  = new Cache( array_merge_recursive( $cacheOptions, [
+				'namespace' => $this->getPrimaryEntity()->getEntityType() . '_' . $this->getPrimaryEntity()->getId()
+			] ) );
+
+			// Initialize the API connection and set it to the primary entity
 			$apiKey    = isset( $options['apikey'] ) ? $options['apikey'] : null;
 			$this->api = new Api( [
 				'cache'  => $this->cache,
 				'apikey' => $apiKey
 			] );
-
-			// Initializes all necessary objects
-			if ( ! isset( $options['versionId'] ) ) {
-				throw new Exception( 'No versionId submitted. Please read https://github.com/apparena/php-sdk for further information' );
-			}
-			$this->version = new Version( $options['versionId'], $this->api );
-
-			// Get primary Entity to get information for (version, template or app)
-			$this->primaryEntity = $this->getPrimaryEntity();
+			$this->getPrimaryEntity()->setApi( $this->api );
 
 
 		} catch ( \Exception $e ) {
-
+			throw $e;
 		}
 
 
 		// Initialize parameters
-		if ( isset( $options["projectId"] ) ) {
+		/*if ( isset( $options["projectId"] ) ) {
 			$this->projectId = $options["projectId"];
 		}
 		if ( isset( $options["appId"] ) ) {
@@ -109,15 +97,8 @@ class AppManager implements EntityInterface {
 
 		if ( isset( $options['filename'] ) ) {
 			$this->setFilename( $options['filename'] );
-		}
+		}*/
 
-
-	}
-
-	/**
-	 * @param array $options Options to initialize the cache object. @see
-	 */
-	private function initCacheObject( array $options ) {
 
 	}
 
@@ -182,20 +163,42 @@ class AppManager implements EntityInterface {
 	 * request.
 	 *
 	 * @return AbstractEntity Entity object to get information for
+	 * @throws \InvalidArgumentException Throws an exception, when now Entity ID is available
 	 */
 	private function getPrimaryEntity() {
 
 		// If a versionId GET or POST param is set, then the primary Entity is the Version object
-		if ( isset( $_GET['versionId'], $_POST['versionId'] ) ) {
+		if ( isset( $_GET['versionId'] ) || isset( $_POST['versionId'] ) ) {
+			if ( ! $this->version ) {
+				$versionId     = isset( $_GET['versionId'] ) ? $_GET['versionId'] : false;
+				$versionId     = $versionId ? $versionId : $_POST['versionId'];
+				$this->version = new Version( $versionId );
+			}
+
 			return $this->version;
 		}
 
 		// If a templateId GET or POST param is set, then the primary Entity is the Template object
-		if ( isset( $_GET['templateId'], $_POST['templateId'] ) ) {
+		if ( isset( $_GET['templateId'] ) || isset( $_POST['templateId'] ) ) {
+			if ( ! $this->template ) {
+				$templateId     = isset( $_GET['templateId'] ) ? $_GET['templateId'] : false;
+				$templateId     = $templateId ? $templateId : $_POST['templateId'];
+				$this->template = new Template( $templateId );
+			}
+
 			return $this->template;
 		}
 
 		// Else the app is the primary object
+		if ( ! $this->app ) {
+			$this->app = new App();
+		}
+
+		// If not even an app ID could be instantiated, then throw an exception
+		if (!$this->app->getId()) {
+			throw new \InvalidArgumentException('No versionId, templateId or appId available. Please submit any of those IDs to establish the App-Manager connection');
+		}
+
 		return $this->app;
 	}
 

@@ -12,13 +12,11 @@ namespace AppArena\Models;
 class Template extends AbstractEntity {
 
 	/**
-	 * Template constructor.
-	 *
-	 * @param Api $api
+	 * @inheritdoc
 	 */
-	public function __construct(Api $api) {
+	public function __construct( $id ) {
 		$this->type = 'template';
 
-		parent::__construct($api);
+		parent::__construct( $id );
 	}
 }

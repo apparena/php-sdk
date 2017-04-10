@@ -9,36 +9,38 @@
 
 namespace AppArena\Models;
 
+use Symfony\Component\Cache\CacheItem;
+
 /**
  * Class Api App-Arena App-Manager API object responsible for the communication with the App-Manager REST API
  * @package AppManager\API
  */
 class Api {
 
-	protected $auth_username = '';
-	protected $auth_password = '';
-	protected $auth_apikey   = '';
+	protected $apikey   = '';
 	protected $base_url = 'https://my.app-arena.com/api/v2/';
 
-	/** @var Cache|bool */
-	protected $cache = false;
+	/** @var Cache */
+	protected $cache;
+	private   $lang;
 
 	/**
 	 * @param array $params Parameter to control the initialization
-	 *                      bool 'cache_reset' Reset the cache on initialization?
+	 *
+	 * @throws \InvalidArgumentException When no cache object is available
 	 */
-	function __construct( $params = [] ) {
+	public function __construct( $params = [] ) {
 
 		// Initialize Cache object
-		if ( isset( $params['cache'] ) ) {
-			$this->cache = $params['cache'];
+		if ( ! isset( $params['cache'] ) || ! $params['cache'] instanceof Cache ) {
+			throw new \InvalidArgumentException( 'No valid cache object available. Please read the documentation on how to init the cache' );
 		}
+		$this->cache = $params['cache'];
 
 		// Initialize Authentication
 		if ( isset( $params['apikey'] ) ) {
-			$this->auth_apikey = $params['apikey'];
+			$this->apikey = $params['apikey'];
 		}
-
 	}
 
 
@@ -50,59 +52,71 @@ class Api {
 	 *
 	 * @return array API response
 	 */
-	function get( $route, $params = [] ) {
-		if ( $this->lang ) {
-			$cache_key = str_replace( '/', '_', $route ) . "_" . $this->lang . "_" . md5( $route . json_encode( $params ) );
-		} else {
-			$cache_key = str_replace( '/', '_', $route ) . "_" . md5( $route . json_encode( $params ) );
-		}
+	public function get( $route, $params = [] ) {
 
-		if ( ! $this->cache_reset && $this->cache->exists( $cache_key ) ) {
-			$response = $this->cache->load( $cache_key );
+		// Try to get request from the cache
+		$cache = $this->getCache()->getAdapter();
+		if ( $this->lang ) {
+			$cache_key = $this->lang . '_' . str_replace( '/', '_', $route ) . '_' . md5( $route . json_encode( $params ) );
+		} else {
+			$cache_key = str_replace( '/', '_', $route ) . '_' . md5( $route . json_encode( $params ) );
+		}
+		$value = $cache->getItem( $cache_key );
+		if ( $value->isHit() ) {
+			$response = $value->get();
 		} else {
 			$params['lang'] = $this->lang;
 			$response       = $this->_get( $route, $params );
-			if ( $response != false ) {
-				$this->cache->save( $cache_key, $response );
+
+			if ( $response['status'] === 200 && $response !== false ) {
+				// Set tags
+				$value->tag($route);
+				$value->set( $response );
+				$cache->save( $value );
+			}
+
+			if ( $response['status'] == 401 ) {
+				throw new \Exception( 'Unauthorized request. Please use a valid API Key to send API requests.' );
 			}
 		}
 
-		$response = json_decode( $response, true );
-
-		if ( $response == false ) {
-			return false;
+		if ( $response['status'] === 200 ) {
+			$response = json_decode( $response['body'], true );
+			if ( $response !== false ) {
+				return $response;
+			}
 		}
 
-		if ( isset( $response['status'] ) ) {
-			return false;
-		}
-
-		return $response;
+		return false;
 	}
 
 
+	/**
+	 * Run a GET request against the API
+	 *
+	 * @param       $path
+	 * @param array $params
+	 *
+	 * @return mixed
+	 */
 	protected function _get( $path, $params = [] ) {
 		$url = $this->base_url . $path;
 
-		if ( $params != false ) {
+		if ( $params !== false ) {
 			$url .= "?" . http_build_query( $params );
 		}
 
-		$username = $this->auth_username;
-		$password = $this->auth_password;
-		$apikey   = $this->auth_apikey;
-		$ch       = curl_init();
-		$headers  = [
+		$apikey  = $this->apikey;
+		$ch      = curl_init();
+		$headers = [
 			'Content-Type:application/json'
 		];
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
-		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		if ( $apikey ) {
 			$headers[] = 'Authorization: ' . $apikey;
-		} elseif ( $username && $password ) {
-			$headers[] = 'Authorization: Basic ' . base64_encode( "$username:$password" );
 		}
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
 		$out = curl_exec( $ch );
@@ -112,10 +126,12 @@ class Api {
 		}
 
 		$httpcode = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-		//var_dump($httpcode);exit();
 		curl_close( $ch );
 
-		return $out;
+		return [
+			'body'   => $out,
+			'status' => $httpcode
+		];
 	}
 
 	/**
@@ -128,16 +144,13 @@ class Api {
 	 * @return array API response
 	 */
 	public function post( $route, $body = [], $params = [] ) {
-		$url      = $this->base_url . $route;
-		$username = $this->auth_username;
-		$password = $this->auth_password;
-		$apikey   = $this->auth_apikey;
+		$url    = $this->base_url . $route;
+		$apikey = $this->apikey;
 
 		$ch      = curl_init();
 		$headers = [
 			'Content-Type: application/json'
 		];
-
 
 		if ( $params != false ) {
 			$url .= "?" . http_build_query( $params );
@@ -146,11 +159,9 @@ class Api {
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
-		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		if ( $apikey ) {
 			$headers[] = 'Authorization: ' . $apikey;
-		} elseif ( $username && $password ) {
-			$headers[] = 'Authorization: Basic ' . base64_encode( "$username:$password" );
 		}
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
 
@@ -173,10 +184,8 @@ class Api {
 	}
 
 	public function put( $route, $body = [], $params = [] ) {
-		$url      = $this->base_url . $route;
-		$username = $this->auth_username;
-		$password = $this->auth_password;
-		$apikey   = $this->auth_apikey;
+		$url    = $this->base_url . $route;
+		$apikey = $this->apikey;
 
 		$ch      = curl_init();
 		$headers = [
@@ -191,11 +200,9 @@ class Api {
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
-		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		if ( $apikey ) {
 			$headers[] = 'Authorization: ' . $apikey;
-		} elseif ( $username && $password ) {
-			$headers[] = 'Authorization: Basic ' . base64_encode( "$username:$password" );
 		}
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
 
@@ -218,13 +225,6 @@ class Api {
 	}
 
 	/**
-	 * @param mixed $lang
-	 */
-	public function setLang( $lang ) {
-		$this->lang = $lang;
-	}
-
-	/**
 	 * Returns the caching object
 	 * @return Cache|bool
 	 */
@@ -239,5 +239,18 @@ class Api {
 		$this->getCache()->clean( $cache_key );
 	}
 
+	/**
+	 * @return string
+	 */
+	public function getLang() {
+		return $this->lang;
+	}
+
+	/**
+	 * @param string $lang
+	 */
+	public function setLang( $lang ) {
+		$this->lang = $lang;
+	}
 
 }

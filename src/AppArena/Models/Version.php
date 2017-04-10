@@ -10,13 +10,11 @@ namespace AppArena\Models;
 class Version extends AbstractEntity {
 
 	/**
-	 * Version constructor.
-	 *
-	 * @param Api $api
+	 * @inheritdoc
 	 */
-	public function __construct( int $id, Api $api ) {
+	public function __construct( $id ) {
 		$this->type = 'version';
 
-		parent::__construct($api);
+		parent::__construct( $id );
 	}
 }
