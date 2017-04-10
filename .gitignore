@@ -2,3 +2,6 @@
 vendor
 
 composer.lock
+tests/_output/*
+/tmp/
+/tests/testme.php

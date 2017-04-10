@@ -1,51 +1,84 @@
 <?php
+
 namespace AppArena;
 
-use AppArena\API\Api;
-use AppArena\Helper\Css;
-use AppArena\SmartLink\SmartLink;
+use AppArena\Models\AbstractEntity;
+use AppArena\Models\Api;
+use AppArena\Models\App;
+use AppArena\Models\Cache;
+use AppArena\Models\SmartLink;
+use AppArena\Models\Template;
+use AppArena\Models\Version;
 
 class AppManager {
 
-	/**
-	 * @var Api $api
-	 */
-	protected $api; // API object
-	protected $cache_dir   = false; // E.g. ROOTPATH . /var/cache, When no path is set, then caching will be deactivated
-	protected $root_path   = false; // Absolute root path of the project on the server
-	protected $filename    = "smartlink.php"; // Absolute root path of the project on the server
-	protected $apikey = null;
+	protected $root_path = false; // Absolute root path of the project on the server
 	private   $cookie; // The App-Manager Cookie for the current user
 	private   $css_helper; // Css Helper object
-	private   $appId;
-	private   $projectId;
-	private   $lang        = "de_DE"; // Language: e.g. de_DE, en_US, en_UK, ...
-	/**
-	 * @var App App object
-	 */
+	private   $lang      = 'de_DE'; // Language: e.g. de_DE, en_US, en_UK, ...
+
+
+	/** @var Api */
+	private $api;
+
+	/** @var  App */
 	private $app;
-	/**
-	 * @var \AppArena\SmartLink\SmartLink SmartLink object
-	 */
-	private $smart_link;
-	private $url;
+
+	/** @var  Cache */
+	private $cache;
+
+	/** @var AbstractEntity */
+	private $primaryEntity;
+
+	/** @var  SmartLink */
+	private $smartLink;
+
+	/** @var  Template */
+	private $template;
+
+	/** @var Version */
+	private $version;
 
 	/**
 	 * Initialize the App-Manager object
 	 *
-	 * @param array $options Parameter for the initialization
-	 *                       'projectId' Project Id
-	 *                       'appId' App Id
-	 *                       'cache' Cache options
-	 *                       'root_path' Sets the Root path to the app, all path references will be relative to this
-	 *                       path
-	 *                       'filename' Filename of the SmartLink-File (default: smartlink.php)
-	 *                       'apikey' Api Key
+	 * @param array $options ['apikey'] App-Arena Api Key to authenticate against the API
+	 *                       ['appId'] App Id
+	 *                       ['cache'] Cache options
+	 *                       ['path']
+	 *                       ['projectId'] Project ID
+	 *                       ['root_path'] Sets the Root path to the app, all path references will be relative to this
+	 * @throws \Exception Any error occuring.
 	 */
-	function __construct( $options = array() ) {
+	public function __construct( array $options = [] ) {
+		try {
+
+			// Get primary Entity to get information for (version, template or app)
+			$this->primaryEntity = $this->getPrimaryEntity();
+
+			// Initialize the cache using the primary entity as cache key
+			$cacheOptions = isset( $options['cache'] ) ? $options['cache'] : [];
+			$this->cache  = new Cache( array_merge_recursive( $cacheOptions, [
+				'entityType' => $this->getPrimaryEntity()->getEntityType(),
+				'entityId'   => $this->getPrimaryEntity()->getId()
+			] ) );
+
+			// Initialize the API connection and set it to the primary entity
+			$apiKey    = isset( $options['apikey'] ) ? $options['apikey'] : null;
+			$this->api = new Api( [
+				'cache'  => $this->cache,
+				'apikey' => $apiKey
+			] );
+			$this->getPrimaryEntity()->setApi( $this->api );
+
+
+		} catch ( \Exception $e ) {
+			throw $e;
+		}
+
 
 		// Initialize parameters
-		if ( isset( $options["projectId"] ) ) {
+		/*if ( isset( $options["projectId"] ) ) {
 			$this->projectId = $options["projectId"];
 		}
 		if ( isset( $options["appId"] ) ) {
@@ -62,88 +95,113 @@ class AppManager {
 		}
 
 		// Initialize the cache folder and settings
-		if ( isset( $options["cache"] ) && isset( $options["cache"]['dir'] ) ) {
-			// If the cache_dir already contains the root_path
-			$cache_dir = $options["cache"]['dir'];
-			if ( strpos( $cache_dir, $this->root_path ) !== false ) {
-				$cache_dir = substr( $cache_dir, strlen( $this->root_path ) );
-			}
-			$this->cache_dir = $this->root_path . $cache_dir;
-		}
+
 
 		if ( isset( $options['filename'] ) ) {
 			$this->setFilename( $options['filename'] );
-		}
+		}*/
 
-		// Initialize the API connection
-		$this->api = new Api(
-			array(
-				'cache_dir' => $this->cache_dir,
-				"apikey"    => $this->apikey
-			)
-		);
+
 	}
 
 	/**
-	 * @return App
+	 * @inheritdoc
 	 */
-	public function getApp() {
+	public function getConfig( $configKey, $attr = 'value' ) {
+		return $this->primaryEntity->getConfig( $configKey, $attr );
+	}
 
-		if (!$this->app) {
-			// Initialize the current App instance if available
-			$this->app = new App( $this->appId, $this->api );
+	/**
+	 * @inheritdoc
+	 */
+	public function getConfigs() {
+		return $this->primaryEntity->getConfigs();
+	}
 
-			// Initialize the SmartLink object
-			$this->smart_link = new SmartLink( $this->app );
+	/**
+	 * @inheritdoc
+	 */
+	public function getId() {
+		return $this->primaryEntity->getId();
+	}
 
-			// Create CSS Helper object
-			$this->css_helper = new Css(
-				$this->cache_dir,
-				$this->app,
-				"de_DE",
-				"style",
-				$this->root_path
-			);
+	/**
+	 * @inheritdoc
+	 */
+	public function getInfo( $infoKey ) {
+		return $this->primaryEntity->getInfo( $infoKey );
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getInfos() {
+		return $this->primaryEntity->getInfos();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getLanguages() {
+		return $this->primaryEntity->getLanguages();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getTranslation( $translationKey, array $args = [] ) {
+		return $this->primaryEntity->getTranslation( $translationKey, $args );
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getTranslations() {
+		return $this->primaryEntity->getTranslations();
+	}
+
+	/**
+	 * Returns an implementation of the AbstractEntity object, depending on the Query params available for the current
+	 * request.
+	 *
+	 * @return AbstractEntity Entity object to get information for
+	 * @throws \InvalidArgumentException Throws an exception, when now Entity ID is available
+	 */
+	private function getPrimaryEntity() {
+
+		// If a versionId GET or POST param is set, then the primary Entity is the Version object
+		if ( isset( $_GET['versionId'] ) || isset( $_POST['versionId'] ) ) {
+			if ( ! $this->version ) {
+				$versionId     = isset( $_GET['versionId'] ) ? $_GET['versionId'] : false;
+				$versionId     = $versionId ? $versionId : $_POST['versionId'];
+				$this->version = new Version( $versionId );
+			}
+
+			return $this->version;
+		}
+
+		// If a templateId GET or POST param is set, then the primary Entity is the Template object
+		if ( isset( $_GET['templateId'] ) || isset( $_POST['templateId'] ) ) {
+			if ( ! $this->template ) {
+				$templateId     = isset( $_GET['templateId'] ) ? $_GET['templateId'] : false;
+				$templateId     = $templateId ? $templateId : $_POST['templateId'];
+				$this->template = new Template( $templateId );
+			}
+
+			return $this->template;
+		}
+
+		// Else the app is the primary object
+		if ( ! $this->app ) {
+			$this->app = new App();
+		}
+
+		// If not even an app ID could be instantiated, then throw an exception
+		if ( ! $this->app->getId() ) {
+			throw new \InvalidArgumentException( 'No versionId, templateId or appId available. Please submit any of those IDs to establish the App-Manager connection' );
 		}
 
 		return $this->app;
-	}
-
-	/**
-	 * @param integer|null $id
-	 *
-	 * @return App
-	 */
-	/*function getApp( $id = null ) {
-		if ( $id ) {
-			$app_info = $this->api->get( "apps/" . $id )['_embedded']['data'];
-			$app      = new App( $id, $this->api );
-			$app->setName( $app_info['name'] );
-			$app->setTemplateId( $app_info['templateId'] );
-			$app->setLang( $app_info['lang'] );
-			$app->setExpiryDate( $app_info['expiryDate'] );
-			$app->setCompanyId( $app_info['companyId'] );
-
-			return $app;
-		} else {
-			$this->getApp()->recoverId();
-
-			return $this->getApp();
-		}
-	}*/
-
-	/**
-	 * @returns App
-	 */
-	public function createApp( $name, $template_id, $lang, $expiryDate = null, $companyId = null ) {
-		$app = new App( null, $this->api );
-		$app->setName( $name );
-		$app->setTemplateId( $template_id );
-		$app->setLang( $lang );
-		$app->setExpiryDate( $expiryDate );
-		$app->setCompanyId( $companyId );
-
-		return $app;
 	}
 
 	/**
@@ -166,23 +224,6 @@ class AppManager {
 	}
 
 	/**
-	 * Returns the currently used App ID
-	 * @return mixed
-	 */
-	public function getAppId() {
-		if ( $this->appId ) {
-			return $this->appId;
-		}
-
-		if ( $this->getApp() ) {
-			return $this->getApp()->getId();
-		}
-
-		return false;
-	}
-
-
-	/**
 	 * Returns the currently used Language
 	 * @return string Language Code (e.g. de_DE, en_US, ...)
 	 */
@@ -196,7 +237,7 @@ class AppManager {
 	 * @param string $lang Language Code
 	 */
 	public function setLang( $lang ) {
-		$allowed = array(
+		$allowed = [
 			'sq_AL',
 			'ar_DZ',
 			'ar_BH',
@@ -305,7 +346,7 @@ class AppManager {
 			'tr_TR',
 			'uk_UA',
 			'vi_VN'
-		);
+		];
 		if ( in_array( $lang, $allowed ) ) {
 			$this->lang = $lang;
 			$this->app->setLang( $this->lang );
@@ -475,18 +516,11 @@ class AppManager {
 	}
 
 	/**
-	 * Cleans the cache
-	 */
-	public function cleanCache() {
-		$this->getApi()->cleanCache( "apps/" . $this->getAppId() );
-	}
-
-	/**
 	 * Returns the CSS Helper object, which can be used to generate CSS files from Less or config value sources
 	 * @return Css Css helper
 	 */
 	public function getCssHelper() {
-		if (!$this->css_helper) {
+		if ( ! $this->css_helper ) {
 			$this->getApp();
 		}
 
@@ -514,14 +548,14 @@ class AppManager {
 	 */
 	public function getCSSFiles( $css_config ) {
 		$css_helper     = $this->getCssHelper();
-		$compiled_files = array();
+		$compiled_files = [];
 		foreach ( $css_config as $file_id => $css_file ) {
 			$css_helper->setFileId( $file_id );
 			// Reset settings
-			$css_helper->setConfigValues( array() );
-			$css_helper->setFiles( array() );
-			$css_helper->setVariables( array() );
-			$css_helper->setReplacements( array() );
+			$css_helper->setConfigValues( [] );
+			$css_helper->setFiles( [] );
+			$css_helper->setVariables( [] );
+			$css_helper->setReplacements( [] );
 
 			if ( isset( $css_file['config_values'] ) ) {
 				$css_helper->setConfigValues( $css_file['config_values'] );
@@ -564,13 +598,12 @@ class AppManager {
 	 */
 	public function getSmartLink() {
 
-		if (!$this->smart_link) {
+		if ( ! $this->smartLink ) {
 			$this->getApp();
 		}
 
-		return $this->smart_link;
+		return $this->smartLink;
 	}
-
 
 
 }

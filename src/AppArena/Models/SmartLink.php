@@ -1,10 +1,7 @@
 <?php
 
-namespace AppArena\SmartLink;
+namespace AppArena\Models;
 
-use AppArena\API\Api;
-use AppArena\App;
-use AppArena\Instance;
 use Detection\MobileDetect;
 use phpbrowscap\Browscap;
 
@@ -14,10 +11,7 @@ use phpbrowscap\Browscap;
  * Date: 21.05.14
  */
 class SmartLink {
-	/**
-	 * @var Api $api Api object
-	 */
-	protected $api; // API object
+
 	protected $app; // Instance object
 
 	private $base_url;
