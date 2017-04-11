@@ -67,7 +67,7 @@ before_script:
 
 # Run main commands
 script:
-  - php codecept run cli,unit # self tests
+  - php codecept run unit # self tests
   - 'php codecept run coverage'  # run coverage tests on php only
   - php codecept run functional -c frameworks-yii-basic # Yii2 tests
 

@@ -36,6 +36,14 @@
   "require-dev": {
     "codeception/codeception": "^2.2"
   },
+  "scripts": {
+    "test": "./vendor/bin/codecept run --no-interaction"
+  },
+  "config": {
+    "preferred-install": "dist",
+    "optimize-autoloader": true
+  },
+  "prefer-stable": true,
   "autoload": {
     "psr-0": {
       "AppArena\\": "src/"
