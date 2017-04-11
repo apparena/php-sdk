@@ -4,16 +4,6 @@
 # Tell Travis CI we are using PHP.
 language: php
 
-# The platforms you wants to test on
-os:
-  - linux
-
-#addons
-
-# git configs
-git:
-  depth: 1
-
 # Define the php versions against we want to test our code
 php:
     - 5.6
@@ -25,6 +15,32 @@ matrix:
   allow_failures:
     - php: 7.0
 
+# The platforms you wants to test on
+os:
+  - linux
+
+#addons
+
+# Tell Travis CI to monitor only 'master' branch
+#branches:
+#  only: master
+
+# Cache folder, you can delete cache from Travis CI web interface
+cache:
+    directories:
+        - vendor
+        - $HOME/.composer/cache
+
+# Run services while deploying
+services:
+  #- mongodb
+  #- rabbitmq
+  #- postgresql
+  - redis
+
+# git configs
+git:
+  depth: 1
 
 # We don't want to run linux commands as super user
 #false means Travis will run this in a container
@@ -51,21 +67,12 @@ before_script:
 
 # Run main commands
 script:
-  - composer test
+  - php codecept run cli,unit # self tests
+  - 'php codecept run coverage'  # run coverage tests on php only
+  - php codecept run functional -c frameworks-yii-basic # Yii2 tests
 
 #after_script:
 
 #after_success:
 
 #after_failure:
-
-
-# Tell Travis CI to monitor only 'master' branch
-branches:
-  only: master
-
-# Cache folder, you can delete cache from Travis CI web interface
-cache:
-    directories:
-        - vendor
-        - $HOME/.composer/cache
