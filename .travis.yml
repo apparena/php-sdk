@@ -1,7 +1,7 @@
 # Config file for https://travis-ci.org/
 # Validate this file here - http://lint.travis-ci.org/
 
-# Tell Travis CI we are using PHP
+# Tell Travis CI we are using PHP.
 language: php
 
 # The platforms you wants to test on
