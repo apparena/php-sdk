@@ -67,8 +67,7 @@ before_script:
 
 # Run main commands
 script:
-  - ./vendor/bin/codecept run
-  - './vendor/bin/codecept run coverage'  # run coverage tests on php only
+  - composer test
 
 #after_script:
 
