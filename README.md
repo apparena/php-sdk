@@ -15,7 +15,7 @@ Install the latest version of the SDK using
 composer require app-arena/php-sdk
 ```
 
-Initialize the SDK within our index.php or similar:
+Initialize the SDK within our index.php or similar
 
 ```php
 // In your index.php
