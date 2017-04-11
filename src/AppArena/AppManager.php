@@ -2,13 +2,13 @@
 
 namespace AppArena;
 
-use AppArena\Models\AbstractEntity;
+use AppArena\Models\Entities\AbstractEntity;
 use AppArena\Models\Api;
-use AppArena\Models\App;
+use AppArena\Models\Entities\App;
 use AppArena\Models\Cache;
 use AppArena\Models\SmartLink;
-use AppArena\Models\Template;
-use AppArena\Models\Version;
+use AppArena\Models\Entities\Template;
+use AppArena\Models\Entities\Version;
 
 class AppManager {
 

@@ -89,6 +89,10 @@ class Cache {
 				// Invalidates all caches of the currently requested entity
 				$this->invalidateAll();
 				break;
+			case 'channels':
+				// Invalidates the channels cache of the currently requested entity and language
+				$this->invalidateChannels();
+				break;
 			case 'configs':
 				// Invalidates the config cache of the currently requested entity and language
 				$this->invalidateConfigs();
@@ -131,6 +135,17 @@ class Cache {
 		$cache = $this->getAdapter();
 		$tags  = [
 			$this->entityType . '.' . $this->entityId
+		];
+		$cache->invalidateTags( $tags );
+	}
+
+	/**
+	 * Invalidates the config cache of the currently requested entity and language
+	 */
+	private function invalidateChannels() {
+		$cache = $this->getAdapter();
+		$tags  = [
+			$this->entityType . '.' . $this->entityId . '.channels',
 		];
 		$cache->invalidateTags( $tags );
 	}

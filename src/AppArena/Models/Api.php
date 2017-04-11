@@ -1,15 +1,5 @@
 <?php
-/**
- * App-Manager (http://app-arena.readthedocs.org/en/latest/)
- *
- * @link      http://app-arena.readthedocs.org/en/latest/ for complete API and developer documentation
- * @copyright App-Arena.com - iConsultants GmbH (http://www.app-arena.com)
- * @license   -
- */
-
 namespace AppArena\Models;
-
-use Symfony\Component\Cache\CacheItem;
 
 /**
  * Class Api App-Arena App-Manager API object responsible for the communication with the App-Manager REST API
@@ -303,10 +293,10 @@ class Api {
 		}
 
 		// Add second level tags if available
-		if (count($routeParts) === 2) {
+		if ( count( $routeParts ) === 2 ) {
 			$tags[] = 'app.' . $routeParts[1] . '.infos';
 		}
-		if ( isset( $routeParts[2] ) && in_array( $routeParts[2], [ 'configs', 'infos', 'translations', 'languages' ] )
+		if ( isset( $routeParts[2] ) && in_array( $routeParts[2], [ 'configs', 'infos', 'translations', 'languages', 'channels' ] )
 		) {
 			$tags[] = 'app.' . $routeParts[1] . '.' . $routeParts[2];
 		}
@@ -331,10 +321,10 @@ class Api {
 		}
 
 		// Add second level tags if available
-		if (count($routeParts) === 2) {
+		if ( count( $routeParts ) === 2 ) {
 			$tags[] = 'template.' . $routeParts[1] . '.infos';
 		}
-		if ( isset( $routeParts[2] ) && in_array( $routeParts[2], [ 'configs', 'infos', 'translations', 'languages' ] )
+		if ( isset( $routeParts[2] ) && in_array( $routeParts[2], [ 'configs', 'infos', 'translations', 'languages', 'channels' ] )
 		) {
 			$tags[] = 'template.' . $routeParts[1] . '.' . $routeParts[2];
 		}
@@ -353,10 +343,10 @@ class Api {
 		$tags = [ 'version.' . $routeParts[1] ];
 
 		// Add second level tags if available
-		if (count($routeParts) === 2) {
+		if ( count( $routeParts ) === 2 ) {
 			$tags[] = 'version.' . $routeParts[1] . '.infos';
 		}
-		if ( isset( $routeParts[2] ) && in_array( $routeParts[2], [ 'configs', 'infos', 'translations', 'languages' ] )
+		if ( isset( $routeParts[2] ) && in_array( $routeParts[2], [ 'configs', 'infos', 'translations', 'languages', 'channels' ] )
 		) {
 			$tags[] = 'version.' . $routeParts[1] . '.' . $routeParts[2];
 		}

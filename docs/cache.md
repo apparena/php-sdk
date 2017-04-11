@@ -38,7 +38,8 @@ To invalidate the cache you can use a number of GET parameters:
 | Query parameter | Valid for    | Options      | Description                                                                       |
 |:----------------|:-------------|:-------------|:----------------------------------------------------------------------------------|
 | cacheInvalidate | All entities | all          | Invalidates all caches of the currently requested entity                          |
-| cacheInvalidate | All entities | configs       | Invalidates the config cache of the currently requested entity and language       |
+| cacheInvalidate | All entities | channels     | Invalidates the channels cache of the currently requested entity and language     |
+| cacheInvalidate | All entities | configs      | Invalidates the config cache of the currently requested entity and language       |
 | cacheInvalidate | All entities | infos        | Invalidates the basic information of the currently requested entity and language  |
 | cacheInvalidate | All entities | languages    | Invalidates the languages cache of the currently requested entity                 |
 | cacheInvalidate | All entities | translations | Invalidates the translations cache of the currently requested entity and language |
@@ -47,10 +48,10 @@ To invalidate the cache you can use a number of GET parameters:
 
 **Examples:**
 
-1. To reset all config caches for the french language of template with ID
-1234, you have to call your templates Base Url including these
-parameters:
-`https://www.templateBaseUrl.com/?templateId=1234&lang=fr_FR&cacheInvalidate=config`
+1. To reset all config caches for the french language of template with
+   ID 1234, you have to call your templates Base Url including these
+   parameters:
+   `https://www.templateBaseUrl.com/?templateId=1234&lang=fr_FR&cacheInvalidate=config`
 2. To reset all caches of all apps created from template 1234, you have
    to call this Url:
    `https://www.templateBaseUrl.com/?templateId=1234&cacheInvalidate=apps`
