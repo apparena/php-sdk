@@ -1,6 +1,8 @@
 <?php
 namespace AppArena\Models\Environment;
 
+use AppArena\Models\Entities\AbstractEntity;
+
 /**
  * All functionality related to website embedded iframes
  * Class Facebook
@@ -9,5 +11,28 @@ namespace AppArena\Models\Environment;
 class Website extends AbstractEnvironment {
 
 
+	/**
+	 * Facebook constructor.
+	 *
+	 * @param AbstractEntity $entity
+	 */
+	public function __construct(AbstractEntity $entity) {
 
+		$this->priority = 20;
+
+		$website = false;
+
+		// Try to get the website Url from the URL
+		if ( isset( $_GET['website'] ) ) {
+			$website = $_GET['website'];
+		}
+
+		// Try to get the website from the cookie
+		if ( ! $website && $this->getCookieValue( 'website' ) ) {
+			$website = $this->getCookieValue( 'website' );
+		}
+
+		$this->setWebsite( $website );
+
+	}
 }

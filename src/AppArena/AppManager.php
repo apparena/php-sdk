@@ -509,7 +509,7 @@ class AppManager {
 	}
 
 	/**
-	 * @return mixed
+	 * @return Api
 	 */
 	private function getApi() {
 		return $this->api;
@@ -594,12 +594,14 @@ class AppManager {
 	}
 
 	/**
-	 * @return SmartLink
+	 * @return SmartLink Smartlink object
+	 *
+	 * @throws \Exception
 	 */
 	public function getSmartLink() {
 
 		if ( ! $this->smartLink ) {
-			$this->getApp();
+			$this->smartLink = new SmartLink($this->getPrimaryEntity(), $this->getApi()->getCache());
 		}
 
 		return $this->smartLink;
