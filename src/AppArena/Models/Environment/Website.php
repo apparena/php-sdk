@@ -1,4 +1,5 @@
 <?php
+
 namespace AppArena\Models\Environment;
 
 use AppArena\Models\Entities\AbstractEntity;
@@ -11,16 +12,19 @@ use AppArena\Models\Entities\AbstractEntity;
 class Website extends AbstractEnvironment {
 
 
+	private $url;
+
 	/**
 	 * Facebook constructor.
 	 *
 	 * @param AbstractEntity $entity
 	 */
-	public function __construct(AbstractEntity $entity) {
+	public function __construct( AbstractEntity $entity ) {
 
+		parent::__construct( $entity );
+		$this->type     = 'website';
 		$this->priority = 20;
-
-		$website = false;
+		$website        = false;
 
 		// Try to get the website Url from the URL
 		if ( isset( $_GET['website'] ) ) {
@@ -32,7 +36,15 @@ class Website extends AbstractEnvironment {
 			$website = $this->getCookieValue( 'website' );
 		}
 
-		$this->setWebsite( $website );
-
+		$this->url = $website;
 	}
+
+	/**
+	 * @return bool|mixed
+	 */
+	public function getUrl() {
+		return $this->url;
+	}
+
+
 }

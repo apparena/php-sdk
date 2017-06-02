@@ -25,13 +25,13 @@
   "require": {
     "ext-curl": "*",
     "ext-gd": "*",
-    "garetjax/phpbrowscap": "^2.0",
     "leafo/scssphp": "^0.6",
     "mobiledetect/mobiledetectlib": "^2.8.12",
     "mustache/mustache": "v2.8.0",
     "oyejorge/less.php": "^1.7",
     "php": ">=5.6",
-    "symfony/cache": "^3.2"
+    "symfony/cache": "^3.2",
+    "thadafinser/user-agent-parser":"^v2.0.0"
   },
   "require-dev": {
     "codeception/codeception": "^2.2"

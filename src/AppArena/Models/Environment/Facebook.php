@@ -1,5 +1,7 @@
 <?php
+
 namespace AppArena\Models\Environment;
+
 use AppArena\Models\Entities\AbstractEntity;
 
 /**
@@ -7,15 +9,12 @@ use AppArena\Models\Entities\AbstractEntity;
  * Class Facebook
  * @package AppArena\Models
  */
-class Facebook extends AbstractEnvironment  {
+class Facebook extends AbstractEnvironment {
 
 	private $appId;
 	private $pageId;
 	private $pageUrl;
 	private $pageTab;
-
-	/** @var  AbstractEntity */
-	protected $entity;
 	private $signedRequest;
 
 	/**
@@ -23,14 +22,16 @@ class Facebook extends AbstractEnvironment  {
 	 *
 	 * @param AbstractEntity $entity
 	 */
-	public function __construct(AbstractEntity $entity) {
+	public function __construct( AbstractEntity $entity ) {
 
+		parent::__construct( $entity );
+		$this->type     = 'facebook';
 		$this->priority = 10;
 
 		// Get Facebook page tab parameters and write them to GET parameters
 		if ( isset( $_REQUEST['signed_request'] ) ) {
 			$this->signedRequest = $_REQUEST['signed_request'];
-			$fb_signed_request                = $this->parse_signed_request( $_REQUEST['signed_request'] );
+			$fb_signed_request   = $this->parse_signed_request( $_REQUEST['signed_request'] );
 			// So use the current Facebook page for sharing, if no fb_page_id is defined via GET
 			if ( isset( $fb_signed_request['page']['id'] ) && ! isset( $_GET['fb_page_id'] ) ) {
 				$_GET['fb_page_id'] = $fb_signed_request['page']['id'];
@@ -57,42 +58,28 @@ class Facebook extends AbstractEnvironment  {
 		if ( $fb_app_id ) {
 			if ( isset( $_GET['fb_page_id'] ) ) {
 				// ... from GET-Parameter
-				$fb_page_id  = $_GET['fb_page_id'];
-				$fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $fb_app_id;
-
-				$this->appId        = $fb_app_id;
-				$this->pageId       = $fb_page_id;
-				$this->pageUrl      = "https://www.facebook.com/" . $fb_page_id;
-				$this->pageTab      = $fb_page_url;
-				$this->facebook['use_as_target'] = true;
+				$this->appId   = $fb_app_id;
+				$this->pageId  = $_GET['fb_page_id'];
+				$this->pageUrl = 'https://www.facebook.com/' . $this->pageId;
+				$this->pageTab = $this->pageUrl . '/app/' . $this->appId;
 			} else {
 				$facebook = $this->getCookieValue( "facebook" );
-				if ( isset( $facebook['page_id'] ) && $facebook['page_id'] && $facebook['use_as_target'] ) {
+				if ( $facebook['page_id'] ?? false ) {
 					// ... from COOKIE-Parameter
-					$fb_page_id  = $facebook['page_id'];
-					$fb_page_url = "https://www.facebook.com/" . $fb_page_id . '/app/' . $fb_app_id;
-
-					$this->appId        = $fb_app_id;
-					$this->pageId       = $fb_page_id;
-					$this->pageUrl      = "https://www.facebook.com/" . $fb_page_id;
-					$this->pageTab      = $fb_page_url;
-					$this->facebook['use_as_target'] = true;
+					$this->appId   = $fb_app_id;
+					$this->pageId  = $facebook['page_id'];
+					$this->pageUrl = 'https://www.facebook.com/' . $this->pageId;
+					$this->pageTab = $this->pageUrl . '/app/' . $this->appId;
 				} else {
-					// ... from the Instance
-					if ( $this->entity->getInfo( 'fb_page_url' ) ) {
-						$fb_page_id  = $this->entity->getInfo( 'fb_page_id' );
-						$fb_page_url = $this->entity->getInfo( 'fb_page_url' ) . '/app/' . $fb_app_id;
-						$fb_page_url = str_replace( "//app/", "/app/", $fb_page_url );
-
-						$this->appId   = $fb_app_id;
-						$this->pageId  = $fb_page_id;
-						$this->pageUrl = $this->entity->getInfo( 'fb_page_url' );
-						$this->pageTab = $fb_page_url;
-						// Only use this information, when explicitly requested
-						if ( isset( $_GET['ref_app_env'] ) && $_GET['ref_app_env'] == "fb" ) {
-							$this->facebook['use_as_target'] = true;
-						} else {
-							$this->facebook['use_as_target'] = false;
+					// ... from the App Channels
+					$channels = $this->entity->getChannels();
+					foreach ( $channels as $channel ) {
+						if ( $channel['type'] === 'facebook' && isset( $channel['meta'] ) ) {
+							$this->appId   = $fb_app_id;
+							$this->pageId  = $channel['value'];
+							$this->pageUrl = 'https://www.facebook.com/' . $this->pageId;
+							$this->pageTab = $this->pageUrl . '/app/' . $this->appId;
+							break;
 						}
 					}
 				}
@@ -100,12 +87,42 @@ class Facebook extends AbstractEnvironment  {
 		}
 
 		// Initializes Facebook canvas information
-		if ( $fb_app_id && $this->entity->getInfo( 'fb_app_namespace' ) ) {
+		/*if ( $fb_app_id && $this->entity->getInfo( 'fb_app_namespace' ) ) {
 			$this->facebook['app_namespace'] = $this->entity->getInfo( 'fb_app_namespace' );
-			$this->appId        = $fb_app_id;
+			$this->appId                     = $fb_app_id;
 			$canvas_url                      = 'https://apps.facebook.com/' . $this->facebook['app_namespace'] . '/?entityId=' . $this->entityId;
 			$this->facebook['canvas_url']    = $canvas_url;
-		}
+		}*/
 
 	}
+
+	/**
+	 * @return array|bool|String
+	 */
+	public function getAppId() {
+		return $this->appId;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getPageId() {
+		return $this->pageId;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getPageUrl() {
+		return $this->pageUrl;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getPageTab() {
+		return $this->pageTab;
+	}
+
+
 }

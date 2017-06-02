@@ -8,7 +8,7 @@ To get the app-object call
 
 ```php
 // In your index.php
-$app = $am->getApp();
+$app = $am->getEntity();
 $appId = $app->getId();
 $appConfigs = $app->getConfigs();
 $appTranslations = $app->getTranslations();

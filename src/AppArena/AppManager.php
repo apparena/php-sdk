@@ -6,11 +6,14 @@ use AppArena\Models\Entities\AbstractEntity;
 use AppArena\Models\Api;
 use AppArena\Models\Entities\App;
 use AppArena\Models\Cache;
+use AppArena\Models\Environment;
 use AppArena\Models\SmartLink;
 use AppArena\Models\Entities\Template;
 use AppArena\Models\Entities\Version;
 
 class AppManager {
+
+	const COOKIE_KEY = 'aa_smartlink_'; // The entity ID should be attached to the key
 
 	protected $root_path = false; // Absolute root path of the project on the server
 	private   $cookie; // The App-Manager Cookie for the current user
@@ -26,6 +29,9 @@ class AppManager {
 
 	/** @var  Cache */
 	private $cache;
+
+	/** @var  Environment */
+	private $environment;
 
 	/** @var AbstractEntity */
 	private $primaryEntity;
@@ -71,36 +77,12 @@ class AppManager {
 			] );
 			$this->getPrimaryEntity()->setApi( $this->api );
 
+			// Initialize the Environment
+			$this->environment = new Models\Environment($this->primaryEntity);
 
 		} catch ( \Exception $e ) {
 			throw $e;
 		}
-
-
-		// Initialize parameters
-		/*if ( isset( $options["projectId"] ) ) {
-			$this->projectId = $options["projectId"];
-		}
-		if ( isset( $options["appId"] ) ) {
-			$this->appId = $options["appId"];
-		}
-
-		if ( isset( $options['root_path'] ) ) {
-			$this->root_path = $options['root_path'];
-		}
-
-		// Initialize Authentication
-		if ( isset( $options['apikey'] ) ) {
-			$this->apikey = $options['apikey'];
-		}
-
-		// Initialize the cache folder and settings
-
-
-		if ( isset( $options['filename'] ) ) {
-			$this->setFilename( $options['filename'] );
-		}*/
-
 
 	}
 
@@ -228,7 +210,7 @@ class AppManager {
 	 * @return string Language Code (e.g. de_DE, en_US, ...)
 	 */
 	public function getLang() {
-		return $this->getSmartLink()->getLang();
+		return $this->getPrimaryEntity()->getLang();
 	}
 
 	/**
@@ -356,14 +338,6 @@ class AppManager {
 	}
 
 	/**
-	 * Returns the project ID of the currently selected app
-	 * @return int project ID
-	 */
-	public function getProjectId() {
-		return $this->projectId;
-	}
-
-	/**
 	 * Renders the complete smartlink.php page
 	 *
 	 * @param bool $debug Show debug information on the page?
@@ -422,59 +396,43 @@ class AppManager {
 	 * Returns user device information
 	 */
 	public function getDevice() {
-		return $this->getSmartLink()->getDevice();
+		return $this->getEnvironment()->getDevice();
 	}
 
 	/**
 	 * Returns the device type of the current device 'mobile', 'tablet', 'desktop'
 	 */
 	public function getDeviceType() {
-		return $this->getSmartLink()->getDeviceType();
+		return $this->getDevice()->getDeviceType();
 	}
 
 	/**
 	 * Returns the operating system of the current device
 	 */
 	public function getOperatingSystem() {
-		return $this->getSmartLink()->getOperatingSystem();
+		return $this->getEnvironment();
 	}
 
 	/**
 	 * Returns all available Facebook information, like currently used fanpage and canvas information
 	 */
-	public function getFacebookInfo() {
-		return $this->getSmartLink()->getFacebook();
+	public function getFacebook() {
+		return $this->getEnvironment()->getFacebook();
 	}
 
 	/**
 	 * Returns user browser information
+	 * @return Environment\Browser
 	 */
 	public function getBrowser() {
-		return $this->getSmartLink()->getBrowser();
+		return $this->getEnvironment()->getBrowser();
 	}
 
 	/**
-	 * Returns the user's browser name
-	 */
-	public function getBrowserName() {
-		return $this->getSmartLink()->getBrowserName();
-	}
-
-	/**
-	 * Returns the user's browser major version
-	 */
-	public function getBrowserVersion() {
-		return $this->getSmartLink()->getBrowserVersion();
-	}
-
-	/**
-	 * Returns if the app currently running on a 'website', 'facebook' or 'direct'
-	 * 'website' means the app is embedded via iframe to a website
-	 * 'facebook' means the app is embedded in a facebook page tab
-	 * 'direct' means the app is being accessed directly without iframe embed
+	 * @return Environment
 	 */
 	public function getEnvironment() {
-		return $this->getSmartLink()->getEnvironment();
+		return $this->environment;
 	}
 
 	/**
@@ -520,6 +478,7 @@ class AppManager {
 	 * @return Css Css helper
 	 */
 	public function getCssHelper() {
+		throw new \Exception('Not implemented yet');
 		if ( ! $this->css_helper ) {
 			$this->getApp();
 		}
@@ -601,7 +560,7 @@ class AppManager {
 	public function getSmartLink() {
 
 		if ( ! $this->smartLink ) {
-			$this->smartLink = new SmartLink($this->getPrimaryEntity(), $this->getApi()->getCache());
+			$this->smartLink = new SmartLink($this->getPrimaryEntity(), $this->getEnvironment() , $this->getApi()->getCache());
 		}
 
 		return $this->smartLink;

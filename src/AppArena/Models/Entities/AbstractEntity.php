@@ -26,7 +26,7 @@ abstract class AbstractEntity implements EntityInterface {
 	protected $translations;
 	protected $type;
 
-	const VALID_LANGUAGES = array(
+	const VALID_LANGUAGES = [
 		//"aa_DJ" => ["language" => "Afar", "country" => "Djibouti"],
 		//"aa_ER" => ["language" => "Afar", "country" => "Eritrea"],
 		//"aa_ET" => ["language" => "Afar", "country" => "Ethiopia"],
@@ -34,7 +34,7 @@ abstract class AbstractEntity implements EntityInterface {
 		//"ak_GH" => ["language" => "Akan", "country" => "Ghana"],
 		//"am_ET" => ["language" => "Amharic", "country" => "Ethiopia"],
 		//"an_ES" => ["language" => "Aragonese", "country" => "Spain"],
-		"ar_AE" => ["language" => "Arabic", "country" => "United Arab Emirates"],
+		"ar_AE" => [ "language" => "Arabic", "country" => "United Arab Emirates" ],
 		/*"ar_BH" => ["language" => "Arabic", "country" => "Bahrain"],
 		"ar_DZ" => ["language" => "Arabic", "country" => "Algeria"],
 		"ar_EG" => ["language" => "Arabic", "country" => "Egypt"],
@@ -56,7 +56,7 @@ abstract class AbstractEntity implements EntityInterface {
 		"as_IN" => ["language" => "Assamese", "country" => "India"],
 		"az_AZ" => ["language" => "Azerbaijani", "country" => "Azerbaijan"],
 		"be_BY" => ["language" => "Belarusian", "country" => "Belarus"],*/
-		"bg_BG" => ["language" => "Bulgarian", "country" => "Bulgaria"],
+		"bg_BG" => [ "language" => "Bulgarian", "country" => "Bulgaria" ],
 		/*"bn_BD" => ["language" => "Bengali", "country" => "Bangladesh"],
 		"bn_IN" => ["language" => "Bengali", "country" => "India"],
 		"bo_CN" => ["language" => "Tibetan", "country" => "China"],
@@ -68,14 +68,14 @@ abstract class AbstractEntity implements EntityInterface {
 		"ca_FR" => ["language" => "Catalan", "country" => "France"],
 		"ca_IT" => ["language" => "Catalan", "country" => "Italy"],
 		"ce_RU" => ["language" => "Chechen", "country" => "Russian Federation"],*/
-		"cs_CZ" => ["language" => "Czech", "country" => "Czech Republic"],
+		"cs_CZ" => [ "language" => "Czech", "country" => "Czech Republic" ],
 		/*"cv_RU" => ["language" => "Chuvash", "country" => "Russian Federation"],
 		"cy_GB" => ["language" => "Welsh", "country" => "United Kingdom"],*/
-		"da_DK" => ["language" => "Danish", "country" => "Denmark"],
+		"da_DK" => [ "language" => "Danish", "country" => "Denmark" ],
 		/*"de_AT" => ["language" => "German", "country" => "Austria"],
 		"de_BE" => ["language" => "German", "country" => "Belgium"],
 		"de_CH" => ["language" => "German", "country" => "Switzerland"],*/
-		"de_DE" => ["language" => "German", "country" => "Germany"],
+		"de_DE" => [ "language" => "German", "country" => "Germany" ],
 		/*"de_IT" => ["language" => "German", "country" => "Italy"],
 		"de_LU" => ["language" => "German", "country" => "Luxembourg"],
 		"en_AG" => ["language" => "English", "country" => "Antigua And Barbuda"],
@@ -91,7 +91,7 @@ abstract class AbstractEntity implements EntityInterface {
 		"en_NZ" => ["language" => "English", "country" => "New Zealand"],
 		"en_PH" => ["language" => "English", "country" => "Philippines"],
 		"en_SG" => ["language" => "English", "country" => "Singapore"],*/
-		"en_US" => ["language" => "English", "country" => "United States"],
+		"en_US" => [ "language" => "English", "country" => "United States" ],
 		/*"en_ZA" => ["language" => "English", "country" => "South Africa"],
 		"en_ZM" => ["language" => "English", "country" => "Zambia"],
 		"en_ZW" => ["language" => "English", "country" => "Zimbabwe"],
@@ -103,7 +103,7 @@ abstract class AbstractEntity implements EntityInterface {
 		"es_CU" => ["language" => "Spanish", "country" => "Cuba"],
 		"es_DO" => ["language" => "Spanish", "country" => "Dominican Republic"],
 		"es_EC" => ["language" => "Spanish", "country" => "Ecuador"],*/
-		"es_ES" => ["language" => "Spanish", "country" => "Spain"],
+		"es_ES" => [ "language" => "Spanish", "country" => "Spain" ],
 		/*"es_GT" => ["language" => "Spanish", "country" => "Guatemala"],
 		"es_HN" => ["language" => "Spanish", "country" => "Honduras"],
 		"es_MX" => ["language" => "Spanish", "country" => "Mexico"],
@@ -119,23 +119,23 @@ abstract class AbstractEntity implements EntityInterface {
 		"et_EE" => ["language" => "Estonian", "country" => "Estonia"],
 		"eu_ES" => ["language" => "Basque", "country" => "Spain"],
 		"fa_IR" => ["language" => "Persian", "country" => "Iran, Islamic Republic Of"],*/
-		"fi_FI" => ["language" => "Finnish", "country" => "Finland"],
+		"fi_FI" => [ "language" => "Finnish", "country" => "Finland" ],
 		/*"fr_BE" => ["language" => "French", "country" => "Belgium"],
 		"fr_CA" => ["language" => "French", "country" => "Canada"],
 		"fr_CH" => ["language" => "French", "country" => "Switzerland"],*/
-		"fr_FR" => ["language" => "French", "country" => "France"],
+		"fr_FR" => [ "language" => "French", "country" => "France" ],
 		/*"fr_LU" => ["language" => "French", "country" => "Luxembourg"],
 		"he_IL" => ["language" => "Hebrew", "country" => "Israel"],
 		"hi_IN" => ["language" => "Hindi", "country" => "India"],
 		"hr_HR" => ["language" => "Croatian", "country" => "Croatia"],
 		"ht_HT" => ["language" => "Haitian", "country" => "Haiti"],*/
-		"hu_HU" => ["language" => "Hungarian", "country" => "Hungary"],
+		"hu_HU" => [ "language" => "Hungarian", "country" => "Hungary" ],
 		/*"hy_AM" => ["language" => "Armenian", "country" => "Armenia"],
 		"id_ID" => ["language" => "Indonesian", "country" => "Indonesia"],
 		"is_IS" => ["language" => "Icelandic", "country" => "Iceland"],
 		"it_CH" => ["language" => "Italian", "country" => "Switzerland"],*/
-		"it_IT" => ["language" => "Italian", "country" => "Italy"],
-		"ja_JP" => ["language" => "Japanese", "country" => "Japan"],
+		"it_IT" => [ "language" => "Italian", "country" => "Italy" ],
+		"ja_JP" => [ "language" => "Japanese", "country" => "Japan" ],
 		/*"ka_GE" => ["language" => "Georgian", "country" => "Georgia"],
 		"kk_KZ" => ["language" => "Kazakh", "country" => "Kazakhstan"],
 		"ko_KR" => ["language" => "Korean", "country" => "Korea, Republic Of"],
@@ -149,25 +149,25 @@ abstract class AbstractEntity implements EntityInterface {
 		"ne_NP" => ["language" => "Nepali", "country" => "Nepal"],
 		"nl_AW" => ["language" => "Dutch", "country" => "Aruba"],
 		"nl_BE" => ["language" => "Dutch", "country" => "Belgium"],*/
-		"nl_NL" => ["language" => "Dutch", "country" => "Netherlands"],
-		"no_NO" => ["language" => "Norwegian", "country" => "Norway"],
+		"nl_NL" => [ "language" => "Dutch", "country" => "Netherlands" ],
+		"no_NO" => [ "language" => "Norwegian", "country" => "Norway" ],
 		/*"om_ET" => ["language" => "Oromo", "country" => "Ethiopia"],
 		"om_KE" => ["language" => "Oromo", "country" => "Kenya"],
 		"pa_IN" => ["language" => "Panjabi", "country" => "India"],
 		"pa_PK" => ["language" => "Panjabi", "country" => "Pakistan"],*/
-		"pl_PL" => ["language" => "Polish", "country" => "Poland"],
+		"pl_PL" => [ "language" => "Polish", "country" => "Poland" ],
 		/*"ps_AF" => ["language" => "Pushto", "country" => "Afghanistan"],
 		"pt_BR" => ["language" => "Portuguese", "country" => "Brazil"],*/
-		"pt_PT" => ["language" => "Portuguese", "country" => "Portugal"],
-		"ro_RO" => ["language" => "Romanian", "country" => "Romania"],
-		"ru_RU" => ["language" => "Russian", "country" => "Russian Federation"],
+		"pt_PT" => [ "language" => "Portuguese", "country" => "Portugal" ],
+		"ro_RO" => [ "language" => "Romanian", "country" => "Romania" ],
+		"ru_RU" => [ "language" => "Russian", "country" => "Russian Federation" ],
 		/*"ru_UA" => ["language" => "Russian", "country" => "Ukraine"],
 		"rw_RW" => ["language" => "Kinyarwanda", "country" => "Rwanda"],
 		"sc_IT" => ["language" => "Sardinian", "country" => "Italy"],
 		"sd_IN" => ["language" => "Sindhi", "country" => "India"],
 		"si_LK" => ["language" => "Sinhala", "country" => "Sri Lanka"],*/
-		"sk_SK" => ["language" => "Slovak", "country" => "Slovakia"],
-		"sl_SI" => ["language" => "Slovenian", "country" => "Slovenia"],
+		"sk_SK" => [ "language" => "Slovak", "country" => "Slovakia" ],
+		"sl_SI" => [ "language" => "Slovenian", "country" => "Slovenia" ],
 		/*"so_DJ" => ["language" => "Somali", "country" => "Djibouti"],
 		"so_ET" => ["language" => "Somali", "country" => "Ethiopia"],
 		"so_KE" => ["language" => "Somali", "country" => "Kenya"],
@@ -177,22 +177,22 @@ abstract class AbstractEntity implements EntityInterface {
 		"sr_ME" => ["language" => "Serbian", "country" => "Montenegro"],
 		"sr_RS" => ["language" => "Serbian", "country" => "Serbia"],
 		"sv_FI" => ["language" => "Swedish", "country" => "Finland"],*/
-		"sv_SE" => ["language" => "Swedish", "country" => "Sweden"],
+		"sv_SE" => [ "language" => "Swedish", "country" => "Sweden" ],
 		/*"ta_IN" => ["language" => "Tamil", "country" => "India"],
 		"ta_LK" => ["language" => "Tamil", "country" => "Sri Lanka"],
 		"tk_TM" => ["language" => "Turkmen", "country" => "Turkmenistan"],
 		"tl_PH" => ["language" => "Tagalog", "country" => "Philippines"],
 		"tn_ZA" => ["language" => "Tswana", "country" => "South Africa"],
 		"tr_CY" => ["language" => "Turkish", "country" => "Cyprus"],*/
-		"tr_TR" => ["language" => "Turkish", "country" => "Turkey"],
-		"uk_UA" => ["language" => "Ukrainian", "country" => "Ukraine"],
+		"tr_TR" => [ "language" => "Turkish", "country" => "Turkey" ],
+		"uk_UA" => [ "language" => "Ukrainian", "country" => "Ukraine" ],
 		/*"vi_VN" => ["language" => "Vietnamese", "country" => "Viet Nam"],
 		"yo_NG" => ["language" => "Yoruba", "country" => "Nigeria"],*/
-		"zh_CN" => ["language" => "Chinese", "country" => "China"],
+		"zh_CN" => [ "language" => "Chinese", "country" => "China" ],
 		/*"zh_HK" => ["language" => "Chinese", "country" => "Hong Kong"],
 		"zh_SG" => ["language" => "Chinese", "country" => "Singapore"],
 		"zh_TW" => ["language" => "Chinese", "country" => "Taiwan"],*/
-	);
+	];
 
 	/**
 	 * Initialize entity related information
@@ -254,13 +254,14 @@ abstract class AbstractEntity implements EntityInterface {
 		}
 
 		// Update the language for the current request
-		if ($this->getLang()) {
+		if ( $this->getLang() ) {
 			$this->api->setLang( $this->getLang() );
 		}
 
 		// App infos is a merged array of basic app information and additional app meta data
-		$info = $this->api->get( $this->getEntityType() . 's/' . $this->id );
-		$meta = $this->api->get( $this->getEntityType() . 's/' . $this->id . '/infos' );
+		$key  = $this->getEntityType() . 's/' . $this->id;
+		$info = $this->api->get( $key );
+		$meta = $this->api->get( $key . '/infos' );
 
 		if ( isset( $info['_embedded']['data'] ) && is_array( $info['_embedded']['data'] ) ) {
 			$this->infos = $info['_embedded']['data'];
@@ -332,7 +333,7 @@ abstract class AbstractEntity implements EntityInterface {
 		}
 
 		// Update the language for the current request
-		if ($this->getLang()) {
+		if ( $this->getLang() ) {
 			$this->api->setLang( $this->getLang() );
 		}
 		$response = $this->api->get( $this->getEntityType() . "s/$this->id/configs" );
@@ -415,7 +416,7 @@ abstract class AbstractEntity implements EntityInterface {
 		}
 
 		// Update the language for the current request
-		if ($this->getLang()) {
+		if ( $this->getLang() ) {
 			$this->api->setLang( $this->getLang() );
 		}
 
@@ -441,7 +442,7 @@ abstract class AbstractEntity implements EntityInterface {
 	 * @return string
 	 */
 	public function getLang() {
-		if (!$this->lang) {
+		if ( ! $this->lang ) {
 			// Try to recover language from Request
 			$lang = false;
 			if ( isset( $_GET['lang'] ) ) {
@@ -470,8 +471,8 @@ abstract class AbstractEntity implements EntityInterface {
 	public function setLang( $lang ) {
 		// Validate language code
 		$languages = self::VALID_LANGUAGES;
-		if (!isset($languages[$lang])) {
-			throw new \InvalidArgumentException($lang . ' is not a valid language code');
+		if ( ! isset( $languages[ $lang ] ) ) {
+			throw new \InvalidArgumentException( $lang . ' is not a valid language code' );
 		}
 
 		$this->lang = $lang;

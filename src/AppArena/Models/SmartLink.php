@@ -2,6 +2,7 @@
 
 namespace AppArena\Models;
 
+use AppArena\AppManager;
 use AppArena\Models\Entities\AbstractEntity;
 use AppArena\Models\Environment\AbstractEnvironment;
 use AppArena\Models\Environment\Facebook;
@@ -17,26 +18,25 @@ use phpbrowscap\Browscap;
 class SmartLink {
 
 	protected $entity; // Instance object
+	protected $environment;
 
 	private $base_path;
 	private $base_url;
-	private $browser          = []; // Browser information
 	/** @var  Cache */
 	private $cache;
 	private $cookie_key; // SmartCookie key
 	private $cookie_domain; // Domain to use for the cookie
-	private $device           = []; // Device information
 
-	/** @var  AbstractEnvironment */
-	private $primaryEnvironment; // Target environment
 	/** @var  Facebook */
 	private $facebook;
 	/** @var Website */
 	private $website; // All available information about the website the app is embedded in
-
+	/** @var Environment\Device */
+	private $device;
+	/** @var Environment\Browser */
+	private $browser;
 
 	private $filename         = "smartlink.php";
-	private $entityId;
 	private $lang; // Currently selected language
 	private $meta             = []; // Meta data which should be rendered to the share HTML document
 	private $paramsAdditional = []; // Additional parameters which will be passed through
@@ -51,29 +51,27 @@ class SmartLink {
 
 	// Library objects
 	private $mustache; // Mustache engine
-	private $browscap; // Browser.php object
-	/** @var  MobileDetect */
-	private $mobile_detect; // MobileDetect object
 
 	/**
 	 * Initializes the SmartLink class with visitor, referrer and environment information
 	 *
-	 * @param AbstractEntity $entity Instance object
-	 * @param Cache $cache Cache adapter for managing the link shortener
+	 * @param AbstractEntity      $entity      Instance object
+	 * @param AbstractEnvironment $environment Environment the app is currently running in
+	 * @param Cache               $cache       Cache adapter for managing the link shortener
 	 *
 	 * @throws \Exception When no app ID is passed
 	 */
-	public function __construct( AbstractEntity $entity, Cache $cache ) {
+	public function __construct( AbstractEntity $entity, Environment $environment, Cache $cache ) {
 		// Initialize the base url
 		$this->initBaseUrl();
 
 		// Initialize the app information
-		$this->entity   = $entity;
-		$this->entityId = $this->entity->getId();
-		if ( ! $this->entityId ) {
+		$this->environment = $environment;
+		$this->entity      = $entity;
+		if ( ! $this->entity ) {
 			throw( new \Exception( 'No app id available' ) );
 		}
-		$this->cookie_key = 'aa_' . $this->entityId . '_smartlink';
+		$this->cookie_key = AppManager::COOKIE_KEY . $this->getEntity()->getId();
 
 		// Init cache object
 		$this->cache = $cache;
@@ -87,17 +85,11 @@ class SmartLink {
 			'schema_type' => 'WebApplication',
 		] );
 
-		// Initializes all language related information
-		$this->initLanguage();
-
 		// Initialize the environment information
-		$this->facebook = new Facebook($this->getEntity());
-		$this->website = new Website($this->getEntity());
-		//$this->primaryEnvironment = $this->getEnvironment();
-
-		// Collect and prepare the Browser and device information of the current user
-		$this->initBrowser();
-		$this->initDevice();
+		$this->facebook = $this->getEnvironment()->getFacebook();
+		$this->website  = $this->getEnvironment()->getWebsite();
+		$this->browser  = $this->getEnvironment()->getBrowser();
+		$this->device   = $this->getEnvironment()->getDevice();
 
 		// Initializes the SmartCookie
 		$this->initCookies();
@@ -225,27 +217,6 @@ class SmartLink {
 		}
 	}
 
-	/**
-	 * Initialize all environment related information (e.g. are we currently on Facebook, Website(iframe) or direct
-	 */
-	private function initEnvironment() {
-
-		$environment = "direct"; // Initialize environment
-
-		// If environment is Facebook, then use Facebook
-		$facebook = $this->getFacebook();
-		if ( isset( $facebook['page_tab'] ) && $facebook['page_tab'] && $facebook['use_as_target'] ) {
-			$environment = "facebook";
-		}
-
-		// If environment is website, then set and prefer website over facebook
-		if ( $this->getWebsite() ) {
-			$environment = "website";
-		}
-
-		$this->setEnvironment( $environment );
-
-	}
 
 	/**
 	 * Initializes all available information about the users Browser
@@ -266,36 +237,6 @@ class SmartLink {
 			'version' => $browser['MajorVer']
 		];
 
-	}
-
-	/**
-	 * Initializes all available information about the users device
-	 */
-	private function initDevice() {
-		$device = [];
-
-		if ( ! $this->mobile_detect ) {
-			$this->mobile_detect = new MobileDetect();
-		}
-
-		// Get device type
-		$device['type'] = 'desktop';
-		if ( $this->mobile_detect->isMobile() ) {
-			$device['type'] = 'mobile';
-		}
-		if ( $this->mobile_detect->isTablet() ) {
-			$device['type'] = 'tablet';
-		}
-
-		// Get operating system
-		$device['os'] = $this->getOperatingSystem();
-
-		// If device-type is submitted via GET-Parameter
-		if ( isset( $_GET['device'] ) && in_array( $_GET['device'], [ 'mobile', 'tablet', 'desktop' ] ) ) {
-			$device['type'] = $_GET['device'];
-		}
-
-		$this->device = $device;
 	}
 
 	/**
@@ -390,41 +331,6 @@ class SmartLink {
 
 	}
 
-	/**
-	 * Initializes the best language for the user
-	 * @return bool
-	 */
-	private function initLanguage() {
-		$lang = false;
-
-		// Try to get the language from the REQUEST
-		if ( isset( $_REQUEST['lang'] ) ) {
-			$lang            = $_REQUEST['lang'];
-			$this->reasons[] = "LANGUAGE: REQUEST['lang']-Parameter available: " . $lang;
-		} else {
-			// Check if the language is configured in the VirtualHost
-			if ( isset( $_SERVER['lang'] ) ) {
-				$lang            = $_SERVER['lang'];
-				$this->reasons[] = "LANGUAGE: GET['lang']-Parameter available: " . $lang;
-			} else {
-				// Check if language cookie is available
-				if ( $this->getCookieValue( 'lang' ) ) {
-					$lang            = $this->getCookieValue( 'lang' );
-					$this->reasons[] = "LANGUAGE: COOKIE['aa_' . $this->entityId . '_lang']-Parameter available: " . $lang;
-				} else {
-					// If no language selected yet, then use the apps default language
-					$this->reasons[] = 'LANGUAGE: No language preference defined or applicable. Use the default app language.';
-					$lang            = $this->entity->getLang();
-				}
-			}
-		}
-
-		$this->lang = $lang;
-		$this->entity->setLang( $lang );
-
-		return $this->lang;
-	}
-
 
 	/**
 	 * Renders the SmartLink Redirect Share Page
@@ -457,19 +363,19 @@ class SmartLink {
 		}
 
 		$data = [
-			'browser'        => $this->getBrowser(),
+			'browser'        => $this->getEnvironment()->getBrowser(),
 			'cookies'        => $this->prepareMustacheArray( $_COOKIE ),
 			'debug'          => $debug,
-			'device'         => $this->getDevice(),
-			'entityId'       => $this->entityId,
-			'info'           => $this->entity->getInfos(),
-			'lang'           => $this->getLang(),
+			'device'         => $this->getEnvironment()->getDevice(),
+			'entityId'       => $this->getEntity()->getId(),
+			'info'           => $this->getEntity()->getInfos(),
+			'lang'           => $this->getEntity()->getLang(),
 			'meta'           => $this->getMeta(),
 			'og_meta'        => $this->prepareMustacheArray( $this->meta['og'] ),
 			'params'         => $this->prepareMustacheArray( $this->getParams() ),
 			'params_expired' => $this->prepareMustacheArray( $this->paramsExpired ),
 			'reasons'        => $this->reasons,
-			'target'         => $this->getEnvironment(),
+			'target'         => $this->getEnvironment()->getPrimaryEnvironment()->getType(),
 			'url'            => $this->getUrl(),
 			'url_target'     => $this->getUrlTarget()
 		];
@@ -504,10 +410,8 @@ class SmartLink {
 	 * Set all relevant information as json object (stringified) in a cookie on the visitors computer
 	 */
 	private function initCookies() {
-		$entityId = $this->entityId;
-
 		// Set cookie with the current app ID
-		setcookie( 'aa_entityId', $entityId, time() + 172600, '/', $this->cookie_domain );
+		setcookie( 'aa_entityId', $this->getEntity()->getId(), time() + 172600, '/', $this->cookie_domain );
 
 		// Iframe Parameter Passthrough
 		// 1. Get parameters from Cookie
@@ -688,188 +592,19 @@ class SmartLink {
 	}
 
 	/**
-	 * Returns user device information
-	 */
-	public function getDevice() {
-		return $this->device;
-	}
-
-	/**
-	 * Returns the device type of the current device 'mobile', 'tablet', 'desktop'
-	 */
-	public function getDeviceType() {
-		if ( isset( $this->device['type'] ) ) {
-			return $this->device['type'];
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns user browser information
-	 */
-	public function getBrowser() {
-		return $this->browser;
-	}
-
-	/**
-	 * Returns the user's browser name
-	 */
-	public function getBrowserName() {
-		return $this->browser['name'];
-	}
-
-	/**
-	 * Returns the user's browser major version
-	 */
-	public function getBrowserVersion() {
-		return $this->browser['version'];
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getLang() {
-		return $this->lang;
-	}
-
-	/**
-	 * Sets a new language for the app manager
-	 *
-	 * @param string $lang Language Code
-	 */
-	public function setLang( $lang ) {
-		$allowed = [
-			'sq_AL',
-			'ar_DZ',
-			'ar_BH',
-			'ar_EG',
-			'ar_IQ',
-			'ar_JO',
-			'ar_KW',
-			'ar_LB',
-			'ar_LY',
-			'ar_MA',
-			'ar_OM',
-			'ar_QA',
-			'ar_SA',
-			'ar_SD',
-			'ar_SY',
-			'ar_TN',
-			'ar_AE',
-			'ar_YE',
-			'be_BY',
-			'bg_BG',
-			'ca_ES',
-			'zh_CN',
-			'zh_HK',
-			'zh_SG',
-			'hr_HR',
-			'cs_CZ',
-			'da_DK',
-			'nl_BE',
-			'nl_NL',
-			'en_AU',
-			'en_CA',
-			'en_IN',
-			'en_IE',
-			'en_MT',
-			'en_NZ',
-			'en_PH',
-			'en_SG',
-			'en_ZA',
-			'en_GB',
-			'en_US',
-			'et_EE',
-			'fi_FI',
-			'fr_BE',
-			'fr_CA',
-			'fr_FR',
-			'fr_LU',
-			'fr_CH',
-			'de_AT',
-			'de_DE',
-			'de_LU',
-			'de_CH',
-			'el_CY',
-			'el_GR',
-			'iw_IL',
-			'hi_IN',
-			'hu_HU',
-			'is_IS',
-			'in_ID',
-			'ga_IE',
-			'it_IT',
-			'it_CH',
-			'ja_JP',
-			'ja_JP',
-			'ko_KR',
-			'lv_LV',
-			'lt_LT',
-			'mk_MK',
-			'ms_MY',
-			'mt_MT',
-			'no_NO',
-			'no_NO',
-			'pl_PL',
-			'pt_BR',
-			'pt_PT',
-			'ro_RO',
-			'ru_RU',
-			'sr_BA',
-			'sr_ME',
-			'sr_CS',
-			'sr_RS',
-			'sk_SK',
-			'sl_SI',
-			'es_AR',
-			'es_BO',
-			'es_CL',
-			'es_CO',
-			'es_CR',
-			'es_DO',
-			'es_EC',
-			'es_SV',
-			'es_GT',
-			'es_HN',
-			'es_MX',
-			'es_NI',
-			'es_PA',
-			'es_PY',
-			'es_PE',
-			'es_PR',
-			'es_ES',
-			'es_US',
-			'es_UY',
-			'es_VE',
-			'sv_SE',
-			'th_TH',
-			'th_TH',
-			'tr_TR',
-			'uk_UA',
-			'vi_VN'
-		];
-		if ( in_array( $lang, $allowed ) ) {
-			$this->lang = $lang;
-		}
-
-	}
-
-	/**
 	 * Returns the most important smartlink information as array
 	 * @return array Most important smartlink information
 	 */
 	public function toArray() {
 		return [
-			'browser'       => $this->getBrowser(),
-			'device'        => $this->getDevice(),
-			'facebook'      => $this->getFacebook(),
-			'entityId'      => $this->entityId,
+			'browser'       => $this->getEnvironment()->getBrowser(),
+			'device'        => $this->getEnvironment()->getDevice(),
+			'facebook'      => $this->getEnvironment()->getFacebook(),
+			'entityId'      => $this->getEntity()->getId(),
 			'params'        => $this->getParams(),
 			'paramsExpired' => $this->paramsExpired,
-			'lang'          => $this->getLang(),
-			'projectId'     => $this->entity->getProjectId(),
-			'website'       => $this->getWebsite()
+			'lang'          => $this->getEntity()->getLang(),
+			'website'       => $this->getEnvironment()->getWebsite()->getUrl(),
 		];
 	}
 
@@ -928,7 +663,7 @@ class SmartLink {
 
 
 	/**
-	 * @return mixed
+	 * @return Facebook
 	 */
 	public function getFacebook() {
 		return $this->facebook;
@@ -948,87 +683,10 @@ class SmartLink {
 
 	/**
 	 * Returns the Url of the website, this app is embedded in
-	 * @return mixed
+	 * @return Website
 	 */
 	public function getWebsite() {
 		return $this->website;
-	}
-
-	/**
-	 * Returns the operating system of the current device
-	 * @return string Operating system
-	 */
-	public function getOperatingSystem() {
-		$os = 'other';
-
-		if ( $this->getDeviceType() == 'desktop' ) {
-			$os = $this->getDesktopOs();
-		} else {
-			if ( $this->mobile_detect->isiOS() ) {
-				$os = 'ios';
-			}
-			if ( $this->mobile_detect->isAndroidOS() ) {
-				$os = 'android';
-			}
-			if ( $this->mobile_detect->isWindowsMobileOS() ) {
-				$os = 'windows';
-			}
-		}
-
-		return $os;
-	}
-
-
-	/**
-	 * Returns the Desktop OS from the UA string
-	 * @return string
-	 */
-	private function getDesktopOs() {
-		if ( ! isset( $_SERVER['HTTP_USER_AGENT'] ) ) {
-			return 'unknown';
-		}
-
-		$user_agent = $_SERVER['HTTP_USER_AGENT'];
-
-		$os_platform = 'unknown';
-
-		$os_array = [
-			'/windows nt 10./i'     => 'Windows 10',
-			'/windows nt 6.3/i'     => 'Windows 8.1',
-			'/windows nt 6.2/i'     => 'Windows 8',
-			'/windows nt 6.1/i'     => 'Windows 7',
-			'/windows nt 6.0/i'     => 'Windows Vista',
-			'/windows nt 5.2/i'     => 'Windows Server 2003/XP x64',
-			'/windows nt 5.1/i'     => 'Windows XP',
-			'/windows xp/i'         => 'Windows XP',
-			'/windows nt 5.0/i'     => 'Windows 2000',
-			'/windows me/i'         => 'Windows ME',
-			'/win98/i'              => 'Windows 98',
-			'/win95/i'              => 'Windows 95',
-			'/win16/i'              => 'Windows 3.11',
-			'/macintosh|mac os x/i' => 'Mac OS X',
-			'/mac_powerpc/i'        => 'Mac OS 9',
-			'/linux/i'              => 'Linux',
-			'/ubuntu/i'             => 'Ubuntu',
-			'/iphone/i'             => 'iPhone',
-			'/ipod/i'               => 'iPod',
-			'/ipad/i'               => 'iPad',
-			'/android/i'            => 'Android',
-			'/blackberry/i'         => 'BlackBerry',
-			'/webos/i'              => 'Mobile'
-		];
-
-		foreach ( $os_array as $regex => $value ) {
-			if ( preg_match( $regex, $user_agent ) ) {
-				$os_platform = $value;
-			}
-		}
-
-		if ( $os_platform == "unknown" && isset( $this->getBrowser()['platform'] ) ) {
-			$os_platform = $this->getBrowser()['platform'];
-		}
-
-		return $os_platform;
 	}
 
 	/**
@@ -1124,7 +782,7 @@ class SmartLink {
 	}
 
 	/**
-	 * @return mixed
+	 * @return Environment
 	 */
 	public function getEnvironment() {
 		return $this->environment;
@@ -1133,18 +791,22 @@ class SmartLink {
 	/**
 	 * @param mixed $environment
 	 */
-	private function setEnvironment( $environment ) {
+	/*private function setEnvironment( $environment ) {
 		$allowed = [ 'website', 'facebook', 'direct' ];
 
 		if ( in_array( $environment, $allowed ) ) {
 			$this->environment = $environment;
 		}
-	}
+	}*/
 
 	/**
 	 * @return string
 	 */
 	public function getBaseUrl() {
+		if ( ! $this->base_url ) {
+			$this->initBaseUrl();
+		}
+
 		return $this->base_url;
 	}
 
@@ -1240,8 +902,6 @@ class SmartLink {
 	public function getCache() {
 		return $this->cache;
 	}
-
-
 
 
 }
