@@ -10,6 +10,8 @@ use Detection\MobileDetect;
  */
 class Device extends AbstractEnvironment {
 
+	/** @var  string */
+	private $type;
 
 	/** @var  MobileDetect */
 	private $mobileDetect;
@@ -23,27 +25,39 @@ class Device extends AbstractEnvironment {
 
 		parent::__construct($entity);
 
-		$device = [];
-
 		if ( ! $this->mobileDetect ) {
 			$this->mobileDetect = new MobileDetect();
 		}
 
 		// Get device type
-		$device['type'] = 'desktop';
+		$this->type = 'desktop';
 		if ( $this->mobileDetect->isMobile() ) {
-			$device['type'] = 'mobile';
+			$this->type = 'mobile';
 		}
 		if ( $this->mobileDetect->isTablet() ) {
-			$device['type'] = 'tablet';
+			$this->type = 'tablet';
 		}
 
 		// If device-type is submitted via GET-Parameter
 		if ( isset( $_GET['device'] ) && in_array( $_GET['device'], [ 'mobile', 'tablet', 'desktop' ] ) ) {
-			$device['type'] = $_GET['device'];
+			$this->type = $_GET['device'];
 		}
 
-		$this->device = $device;
-
 	}
+
+	/**
+	 * @return string
+	 */
+	public function getType() {
+		return $this->type;
+	}
+
+
+	public function toArray() {
+		return [
+			'type' => $this->getType(),
+		];
+	}
+
+
 }

@@ -212,31 +212,9 @@ class SmartLink {
 	private function extract_domain( $domain ) {
 		if ( preg_match( "/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i", $domain, $matches ) ) {
 			return $matches['domain'];
-		} else {
-			return $domain;
-		}
-	}
-
-
-	/**
-	 * Initializes all available information about the users Browser
-	 */
-	private function initBrowser() {
-		if ( ! $this->browscap ) {
-			$this->browscap = new Browscap( realpath( dirname( __FILE__ ) ) . "/../../../asset" );
-			// Use Normal instead of Full browscap.ini to save memory-usage
-			$this->browscap->remoteIniUrl = 'http://browscap.org/stream?q=PHP_BrowsCapINI';
 		}
 
-		// Get information about the current browser's user agent
-		$browser = $this->browscap->getBrowser( null, true );
-
-		$this->browser = [
-			'ua'      => $browser['browser_name'],
-			'name'    => $browser['Browser'],
-			'version' => $browser['MajorVer']
-		];
-
+		return $domain;
 	}
 
 	/**
@@ -363,10 +341,10 @@ class SmartLink {
 		}
 
 		$data = [
-			'browser'        => $this->getEnvironment()->getBrowser(),
+			'browser'        => $this->getEnvironment()->getBrowser()->toArray(),
 			'cookies'        => $this->prepareMustacheArray( $_COOKIE ),
 			'debug'          => $debug,
-			'device'         => $this->getEnvironment()->getDevice(),
+			'device'         => $this->getEnvironment()->getDevice()->toArray(),
 			'entityId'       => $this->getEntity()->getId(),
 			'info'           => $this->getEntity()->getInfos(),
 			'lang'           => $this->getEntity()->getLang(),
@@ -597,14 +575,14 @@ class SmartLink {
 	 */
 	public function toArray() {
 		return [
-			'browser'       => $this->getEnvironment()->getBrowser(),
-			'device'        => $this->getEnvironment()->getDevice(),
-			'facebook'      => $this->getEnvironment()->getFacebook(),
+			'browser'       => $this->getEnvironment()->getBrowser()->toArray(),
+			'device'        => $this->getEnvironment()->getDevice()->toArray(),
+			'facebook'      => $this->getEnvironment()->getFacebook()->toArray(),
 			'entityId'      => $this->getEntity()->getId(),
 			'params'        => $this->getParams(),
 			'paramsExpired' => $this->paramsExpired,
 			'lang'          => $this->getEntity()->getLang(),
-			'website'       => $this->getEnvironment()->getWebsite()->getUrl(),
+			'website'       => $this->getEnvironment()->getWebsite()->toArray(),
 		];
 	}
 

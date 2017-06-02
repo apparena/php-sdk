@@ -19,8 +19,6 @@ use AppArena\Models\Environment\Website;
  */
 class Environment {
 
-	/** @var  OperatingSystem */
-	protected $operatingSystem;
 	/** @var  Browser */
 	protected $browser;
 	/** @var  Device */
@@ -56,16 +54,18 @@ class Environment {
 	 * @return AbstractEnvironment
 	 */
 	public function getPrimaryEnvironment() {
-		return $this->primaryEnvironment;
+
+		if ($this->website->getUrl()) {
+			return $this->website;
+		}
+
+		if ($this->facebook->getPageId()) {
+			return $this->facebook;
+		}
+
+		return $this->domain;
 	}
 
-
-	/**
-	 * @return OperatingSystem
-	 */
-	public function getOperatingSystem() {
-		return $this->operatingSystem;
-	}
 
 	/**
 	 * @return Browser
