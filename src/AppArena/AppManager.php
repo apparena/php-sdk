@@ -2,6 +2,8 @@
 
 namespace AppArena;
 
+use AppArena\Models\Css;
+use AppArena\Models\CssCompiler;
 use AppArena\Models\Entities\AbstractEntity;
 use AppArena\Models\Api;
 use AppArena\Models\Entities\App;
@@ -17,7 +19,8 @@ class AppManager {
 
 	protected $root_path = false; // Absolute root path of the project on the server
 	private   $cookie; // The App-Manager Cookie for the current user
-	private   $css_helper; // Css Helper object
+	/** @var  CssCompiler */
+	private   $cssCompiler; // Css Helper object
 	private   $lang      = 'de_DE'; // Language: e.g. de_DE, en_US, en_UK, ...
 
 
@@ -410,7 +413,7 @@ class AppManager {
 	 * Returns the operating system of the current device
 	 */
 	public function getOperatingSystem() {
-		return $this->getEnvironment();
+		return $this->getEnvironment()->getOperationSystem();
 	}
 
 	/**
@@ -475,15 +478,21 @@ class AppManager {
 
 	/**
 	 * Returns the CSS Helper object, which can be used to generate CSS files from Less or config value sources
-	 * @return Css Css helper
+	 * @return CssCompiler Css helper
 	 */
-	public function getCssHelper() {
-		throw new \Exception('Not implemented yet');
-		if ( ! $this->css_helper ) {
-			$this->getApp();
+	public function getCssCompiler() {
+
+		if ( ! $this->cssCompiler ) {
+			$this->cssCompiler = new CSSCompiler(
+				$this->getCache(),
+				$this->getPrimaryEntity(),
+				$this->getLang(),
+				"style",
+				$this->root_path
+			);
 		}
 
-		return $this->css_helper;
+		return $this->cssCompiler;
 	}
 
 	/**
@@ -492,7 +501,7 @@ class AppManager {
 	 * @return String returns the CSS filename of the
 	 */
 	public function getCssFileName( $file_id ) {
-		return $this->getCssHelper()->getCacheKey( $file_id );
+		return $this->getCssCompiler()->getCacheKey( $file_id );
 	}
 
 	/**
@@ -506,33 +515,7 @@ class AppManager {
 	 * @return array Assocative array including all compiled CSS files
 	 */
 	public function getCSSFiles( $css_config ) {
-		$css_helper     = $this->getCssHelper();
-		$compiled_files = [];
-		foreach ( $css_config as $file_id => $css_file ) {
-			$css_helper->setFileId( $file_id );
-			// Reset settings
-			$css_helper->setConfigValues( [] );
-			$css_helper->setFiles( [] );
-			$css_helper->setVariables( [] );
-			$css_helper->setReplacements( [] );
-
-			if ( isset( $css_file['config_values'] ) ) {
-				$css_helper->setConfigValues( $css_file['config_values'] );
-			}
-			if ( isset( $css_file['files'] ) ) {
-				$css_helper->setFiles( $css_file['files'] );
-			}
-			if ( isset( $css_file['variables'] ) ) {
-				$css_helper->setVariables( $css_file['variables'] );
-			}
-			if ( isset( $css_file['replacements'] ) ) {
-				$css_helper->setReplacements( $css_file['replacements'] );
-			}
-
-			$compiled_files[] = $css_helper->getCompiledCss();
-		}
-
-		return $compiled_files;
+		return $this->getCssCompiler()->getCSSFiles($css_config);
 	}
 
 	/**
@@ -573,6 +556,33 @@ class AppManager {
 	public function cacheInvalidate( $action = 'all' ) {
 		$this->cache->cacheInvalidate($action);
 	}
+
+	/**
+	 * Returns if the current request contains admin authentication information (GET-params)
+	 * @param String $projectSecret The project secret to validate the Hash
+	 * @return bool Returns if the current request contains admin authentication information
+	 */
+	public function isAdmin( $projectSecret ) {
+		// Try to get Hash and Timestamp from the request parameters
+		if (isset($_GET['hash'], $_GET['timestamp'])) {
+			$hash      = $_GET['hash'];
+			$timestamp = $_GET['timestamp'];
+			if ($hash === sha1($this->getId() . '_' . $projectSecret . '_' . $timestamp) && $timestamp >= strtotime('-1 hours')) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @return Cache
+	 */
+	private function getCache() {
+		return $this->cache;
+	}
+
+
 
 
 }

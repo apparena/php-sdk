@@ -446,19 +446,23 @@ abstract class AbstractEntity implements EntityInterface {
 			// Try to recover language from Request
 			$lang = false;
 			if ( isset( $_GET['lang'] ) ) {
-				$lang = $_GET['lang'];
-			} else {
-				if ( isset( $_GET['locale'] ) ) {
-					$lang = $_GET['locale'];
-				} else {
-					if ( isset( $_COOKIE[ 'aa_' . $this->id . '_lang' ] ) ) {
-						$lang = $_COOKIE[ 'aa_' . $this->id . '_lang' ];
-					}
-				}
+				$this->lang = $_GET['lang'];
+				return $this->lang;
 			}
 
-			if ( $lang ) {
-				$this->setLang( $lang );
+			// Try to get lang from Cookie
+			if ( isset( $_COOKIE[ 'aa_' . $this->id . '_lang' ] ) ) {
+				$this->lang = $_COOKIE[ 'aa_' . $this->id . '_lang' ];
+				return $this->lang;
+			}
+
+			// Get the default language from of the entity
+			$languages = $this->getLanguages();
+			foreach ( $languages['activated'] as $language ) {
+				if ($language['default']) {
+					$this->lang = $language['lang'];
+					return $this->lang;
+				}
 			}
 		}
 

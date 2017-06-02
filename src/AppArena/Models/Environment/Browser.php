@@ -27,9 +27,9 @@ class Browser extends AbstractEnvironment {
 		$provider = new WhichBrowser();
 
 		/* @var $result \UserAgentParser\Model\UserAgent */
-		//$result = $provider->parse($userAgent);
+		$this->ua = $provider->parse($userAgent);
 		// optional add all headers, to improve the result further
-		$this->ua = $provider->parse($userAgent, getallheaders());
+		//$this->ua = $provider->parse($userAgent, getallheaders());
 	}
 
 	/**
@@ -53,5 +53,26 @@ class Browser extends AbstractEnvironment {
 		]);
 
 		return $result;
+	}
+
+	/**
+	 * @return \UserAgentParser\Model\Device
+	 */
+	public function getDevice() {
+		return $this->ua->getDevice();
+	}
+
+	/**
+	 * @return \UserAgentParser\Model\OperatingSystem
+	 */
+	public function getOperatingSystem() {
+		return $this->ua->getOperatingSystem();
+	}
+
+	/**
+	 * @return \UserAgentParser\Model\Browser
+	 */
+	public function getBrowser() {
+		return $this->ua->getBrowser();
 	}
 }

@@ -233,13 +233,13 @@ class SmartLink {
 		}*/
 
 		// 1. If a website is defined, use the website as default environment
-		if ( $this->website ) {
+		if ( $this->website->getUrl() ) {
 			$this->reasons[] = 'ENV: Website is defined';
 
 			// Validate the Website url
 			$website_valid = true;
-			if ( strpos( $this->website, 'www.facebook.com/' ) !== false || strpos( $this->website,
-					'static.sk.facebook.com' ) !== false || strpos( $this->website,
+			if ( strpos( $this->website->getUrl(), 'www.facebook.com/' ) !== false || strpos( $this->website->getUrl(),
+					'static.sk.facebook.com' ) !== false || strpos( $this->website->getUrl(),
 					'.js' ) !== false
 			) {
 				$this->reasons[] = 'ENV: Website target is not valid, so it cannot be used as target.';
@@ -249,13 +249,13 @@ class SmartLink {
 			// Check if another target is defined, then add the website as GET param, but do not use it for redirection
 			if ( $this->getUrlTarget() && $this->getTarget() !== 'website' ) {
 				$this->reasons[] = 'ENV: Website valid, but another target is defined';
-				$this->addParams( [ 'website' => $this->website ] );
+				$this->addParams( [ 'website' => $this->website->getUrl() ] );
 				$website_valid = false;
 			}
 
 			// If Website is valid, then use it
 			if ( $website_valid ) {
-				$this->setUrl( $this->website );
+				$this->setUrl( $this->website->getUrl() );
 
 				return;
 			}
@@ -264,8 +264,8 @@ class SmartLink {
 		}
 
 		// If there is no website defined, check if the device is tablet or mobile. If so, use direct access
-		if ( in_array( $this->getDeviceType(), [ 'mobile', 'tablet' ] ) ) {
-			$this->reasons[] = 'DEVICE: User is using a ' . $this->getDeviceType() . ' device. Direct Access.';
+		if ( in_array( $this->getEnvironment()->getDevice()->getDeviceType(), [ 'mobile', 'tablet' ] ) ) {
+			$this->reasons[] = 'DEVICE: User is using a ' . $this->getEnvironment()->getDevice()->getDeviceType() . ' device. Direct Access.';
 			if ( $this->getBaseUrl() ) {
 				$this->setUrl( $this->getBaseUrl() );
 			} else {
@@ -278,7 +278,7 @@ class SmartLink {
 		// So here should be only Desktop devices... So check if facebook page tab information are available...
 		$this->reasons[] = 'DEVICE: User is using a desktop device.';
 		$facebook        = $this->getFacebook();
-		if ( isset( $facebook['page_id'] ) && $facebook['page_id'] && isset( $facebook['app_id'] ) && $facebook['app_id'] ) {
+		if ( $facebook->getPageId() && $facebook->getAppId() ) {
 			$this->reasons[] = 'ENV: Facebook environment data available.';
 
 			// Check if another target is defined, then add the website as GET param, but do not use it for redirection
@@ -289,12 +289,11 @@ class SmartLink {
 			}
 
 			// If Facebook Environment is valid and the facebook should be used as target
-			if ( $facebook_valid && isset( $facebook['use_as_target'] ) && $facebook['use_as_target'] ) {
-				$this->setUrl( $facebook['page_tab'] );
+			if ( $facebook_valid ) {
+				$this->setUrl( $facebook->getPageTab() );
 
 				return;
 			}
-
 		}
 
 		// If no optimal url is defined yet, then use direct source
@@ -703,15 +702,12 @@ class SmartLink {
 
 		// Add App-Arena Parameters
 		$params['entityId'] = $this->entity->getId();
-		$params['lang']     = $this->getLang();
+		$params['lang']     = $this->entity->getLang();
 
 		// When the current environment is Facebook, then add the page ID of the current page to the SmartLink
 		$facebook = $this->getFacebook();
-		if ( isset( $facebook['signed_request'] ) && $facebook['signed_request'] && isset( $facebook['page_id'] ) ) {
-			$params['fb_page_id'] = $facebook['page_id'];
-		}
-		if ( isset( $facebook['use_as_target'] ) && $facebook['use_as_target'] ) {
-			$params['ref_app_env'] = "fb";
+		if ( $facebook->getSignedRequest() && $facebook->getPageId() ) {
+			$params['fb_page_id'] = $facebook->getPageId();
 		}
 
 		// Add additional parameters if available in $this->params
@@ -738,10 +734,9 @@ class SmartLink {
 			}
 		}
 
-		if ( $this->getEnvironment() === 'facebook' && ! in_array( $this->getDeviceType(), [
-				"mobile",
-				"tablet"
-			] )
+		if ( $this->getEnvironment()->getPrimaryEnvironment()->getType() === 'facebook' &&
+		     !in_array( $this->getDevice()->getDeviceType(), ["mobile","tablet"]
+		     )
 		) {
 			$target_url = $target_original . '?app_data=' . urlencode( json_encode( $params ) );
 		}
@@ -880,6 +875,21 @@ class SmartLink {
 	public function getCache() {
 		return $this->cache;
 	}
+
+	/**
+	 * @return Environment\Device
+	 */
+	public function getDevice() {
+		return $this->device;
+	}
+
+	/**
+	 * @return Environment\Browser
+	 */
+	public function getBrowser() {
+		return $this->browser;
+	}
+
 
 
 }

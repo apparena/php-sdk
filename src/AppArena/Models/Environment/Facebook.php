@@ -124,5 +124,14 @@ class Facebook extends AbstractEnvironment {
 		return $this->pageTab;
 	}
 
+	/**
+	 * @return string
+	 */
+	public function getSignedRequest() {
+		return $this->signedRequest;
+	}
+
+
+
 
 }
