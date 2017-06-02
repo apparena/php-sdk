@@ -43,6 +43,11 @@ class Website extends AbstractEnvironment {
 	 * @return bool|mixed
 	 */
 	public function getUrl() {
+
+		if (filter_var( $this->url, FILTER_VALIDATE_URL) === FALSE) {
+			return false;
+		}
+
 		return $this->url;
 	}
 

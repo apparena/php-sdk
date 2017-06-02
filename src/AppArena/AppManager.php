@@ -61,9 +61,18 @@ class AppManager {
 	 */
 	public function __construct( array $options = [] ) {
 		try {
-
 			// Get primary Entity to get information for (version, template or app)
 			$this->primaryEntity = $this->getPrimaryEntity();
+
+			// Initialize some basic settings
+			if ($options['root_path'] ?? false) {
+				$this->root_path = $options['root_path'];
+			}
+
+			// Initialize some basic settings
+			if ($options['cache']['dir'] ?? false) {
+				$this->cache_dir = $options['cache']['dir'];
+			}
 
 			// Initialize the cache using the primary entity as cache key
 			$cacheOptions = isset( $options['cache'] ) ? $options['cache'] : [];
@@ -488,7 +497,8 @@ class AppManager {
 				$this->getPrimaryEntity(),
 				$this->getLang(),
 				"style",
-				$this->root_path
+				$this->root_path,
+				$this->cache_dir
 			);
 		}
 

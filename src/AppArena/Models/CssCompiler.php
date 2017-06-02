@@ -23,6 +23,7 @@ use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 class CssCompiler {
 	private $lang;
 	private $cache_key;
+	private $cache_dir;
 	/** @var  Cache */
 	private $cache;
 	private $root_path;
@@ -42,12 +43,13 @@ class CssCompiler {
 	 * @param string         $file_id                File identifier, in case you want to compile more than one file
 	 * @param string         $root_path              Absolute path to the project root
 	 */
-	function __construct( Cache $cache, AbstractEntity $entity, $lang = "de_DE", $file_id = "style", $root_path = "" ) {
+	function __construct( Cache $cache, AbstractEntity $entity, $lang = "de_DE", $file_id = "style", $root_path = "", $cache_dir = "/var/cache" ) {
 		$this->cache     = $cache;
 		$this->entity    = $entity;
 		$this->lang      = $lang;
 		$this->file_id   = $file_id;
 		$this->root_path = $root_path;
+		$this->cache_dir = $cache_dir;
 	}
 
 	/**
@@ -107,12 +109,15 @@ class CssCompiler {
 	public function getCompiledCss() {
 
 		try {
+
+			// Get the filename
+			$absolutePath = $this->cache_dir . '/' . $this->cache_key;
+			$relativePath = substr( $this->cache_dir, strlen( $this->root_path ) ) . '/' . $this->cache_key;
+
 			/** @var TagAwareAdapter $cache */
-			$cache = $this->getCache()->getAdapter();
+			$cache     = $this->getCache()->getAdapter();
 			$cacheItem = $cache->getItem( $this->cache_key );
-			if ( $cacheItem->isHit() ) {
-				$response = $cacheItem->get();
-			} else {
+			if ( !$cacheItem->isHit() ) {
 				$response = "";
 				try {
 					// Add all files
@@ -164,6 +169,9 @@ class CssCompiler {
 				$cacheItem->set( $response );
 				$cache->save( $cacheItem );
 
+				// Write CSS to a file
+				file_put_contents($absolutePath, $response);
+
 				// Set tags (important to do this after saving, to avoid a loop)
 				//$value->tag( $this->getTags( $route ) );
 				//$cache->save( $value );
@@ -171,16 +179,21 @@ class CssCompiler {
 				if ( $response['status'] == 401 ) {
 					throw new \Exception( 'Unauthorized request. Please use a valid API Key to send API requests.' );
 				}
+			} else {
+				// If the redis cache has the item, but the file does not exist, then write the file again
+				if (!file_exists($absolutePath)) {
+					$response = $cacheItem->get();
+					file_put_contents($absolutePath, $response);
+				}
 			}
+
 		} catch ( \Exception $e ) {
 			throw $e;
 		}
 
 
-		$base_path = substr( $this->cache_dir, strlen( $this->root_path ) );
-		$url       = $base_path . "/" . $this->cache_key;
 
-		return $url;
+		return $relativePath;
 	}
 
 
@@ -310,7 +323,7 @@ class CssCompiler {
 	 */
 	public function setFileId( $file_id ) {
 		$this->file_id   = $file_id;
-		$this->cache_key = "apps_" . $this->entity->getId() . "_" . $this->lang . "_" . $this->file_id . ".css";
+		$this->cache_key = $this->entity->getEntityType() . "s_" . $this->entity->getId() . "_" . $this->lang . "_" . $this->file_id . ".css";
 	}
 
 	/**
@@ -335,7 +348,7 @@ class CssCompiler {
 			$file_id = $this->file_id;
 		}
 
-		return "apps_" . $this->entity->getId() . "_" . $this->lang . "_" . $file_id . ".css";
+		return $this->entity->getEntityType() . "s_" . $this->entity->getId() . "_" . $this->lang . "_" . $file_id . ".css";
 	}
 
 	/**

@@ -317,7 +317,7 @@ class SmartLink {
 	public function renderSharePage( $debug = false ) {
 		if ( ! $this->mustache ) {
 			if ( ! defined( 'SMART_LIB_PATH' ) ) {
-				define( 'SMART_LIB_PATH', realpath( dirname( __FILE__ ) ) );
+				define( 'SMART_LIB_PATH', realpath( dirname( __FILE__ ) ) . '/..' );
 			}
 			// Initialize mustache
 			$loader         = new \Mustache_Loader_FilesystemLoader( SMART_LIB_PATH . '/views' );

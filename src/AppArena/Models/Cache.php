@@ -35,16 +35,16 @@ class Cache {
 		$this->entityType = $options['entityType'];
 
 		$defaultLifetime = 0;
-		$directory       = null; // the main cache directory (the application needs read-write permissions on it). if none is specified, a directory is created inside the system temporary directory
-		if ( isset( $options['directory'] ) ) {
-			if ( ! @mkdir( $options['directory'], 0755, true ) && ! is_dir( $options['directory'] ) ) {
+		$dir       = null; // the main cache directory (the application needs read-write permissions on it). if none is specified, a directory is created inside the system temporary directory
+		if ( isset( $options['dir'] ) ) {
+			if ( ! @mkdir( $options['dir'], 0755, true ) && ! is_dir( $options['dir'] ) ) {
 				throw new \Exception( 'Cannot create cache folder' );
 			}
 
-			if ( ! is_writable( $options['directory'] ) ) {
-				throw new \Exception( $options['directory'] . ' is not writeable for the webserver.' );
+			if ( ! is_writable( $options['dir'] ) ) {
+				throw new \Exception( $options['dir'] . ' is not writeable for the webserver.' );
 			}
-			$directory = $options['directory'];
+			$dir = $options['dir'];
 		}
 
 		if ( isset( $options['adapter'] ) && $options['adapter'] instanceof AbstractAdapter ) {
@@ -52,7 +52,7 @@ class Cache {
 		} else {
 
 			// Initialize the file cache as fallback or primary option @see http://symfony.com/doc/current/components/cache/cache_pools.html
-			$adapter = new FilesystemAdapter( $this->namespace, $defaultLifetime, $directory );
+			$adapter = new FilesystemAdapter( $this->namespace, $defaultLifetime, $dir );
 
 			// Check if redis configuration is available
 			if ( isset( $options['redis'], $options['redis']['host'] ) ) {
