@@ -3,7 +3,7 @@
 namespace AppArena\Models\Environment;
 use AppArena\Models\Entities\AbstractEntity;
 use UserAgentParser\Model\UserAgent;
-use UserAgentParser\Provider\PiwikDeviceDetector;
+use UserAgentParser\Provider\WhichBrowser;
 
 /**
  * All functionality related to the users browser
@@ -24,7 +24,7 @@ class Browser extends AbstractEnvironment {
 		parent::__construct( $entity );
 
 		$userAgent = $_SERVER['HTTP_USER_AGENT'];
-		$provider = new PiwikDeviceDetector();
+		$provider = new WhichBrowser();
 
 		/* @var $result \UserAgentParser\Model\UserAgent */
 		//$result = $provider->parse($userAgent);

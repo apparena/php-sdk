@@ -32,7 +32,7 @@
     "php": ">=5.6",
     "symfony/cache": "^3.2",
     "thadafinser/user-agent-parser":"^v2.0.0",
-    "piwik/device-detector": "^3.7"
+    "whichbrowser/parser": "^2.0"
   },
   "require-dev": {
     "codeception/codeception": "^2.2"
