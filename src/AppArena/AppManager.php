@@ -2,6 +2,7 @@
 
 namespace AppArena;
 
+use AppArena\Exceptions\EntityUnknownException;
 use AppArena\Models\Css;
 use AppArena\Models\CssCompiler;
 use AppArena\Models\Entities\AbstractEntity;
@@ -88,6 +89,10 @@ class AppManager {
 				'apikey' => $apiKey
 			] );
 			$this->getPrimaryEntity()->setApi( $this->api );
+            // Check if Entity exists in App-Manager
+            if ($this->getInfos() === false) {
+                throw new EntityUnknownException($this->getPrimaryEntity()->getEntityType() . ' with ID "' . $this->getPrimaryEntity()->getId() . '" does not exist.');
+            }
 
 			// Initialize the Environment
 			$this->environment = new Models\Environment($this->primaryEntity);

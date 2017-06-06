@@ -9,6 +9,7 @@
 namespace AppArena\Models\Entities;
 
 
+use AppArena\Exceptions\EntityUnknownException;
 use AppArena\Models\Api;
 use AppArena\Models\Entities\EntityInterface;
 
@@ -457,13 +458,14 @@ abstract class AbstractEntity implements EntityInterface {
 			}
 
 			// Get the default language from of the entity
-			$languages = $this->getLanguages();
-			foreach ( $languages['activated'] as $language ) {
-				if ($language['default']) {
-					$this->lang = $language['lang'];
-					return $this->lang;
-				}
-			}
+			if ($languages = $this->getLanguages()) {
+                foreach ( $languages['activated'] as $language ) {
+                    if ($language['default']) {
+                        $this->lang = $language['lang'];
+                        return $this->lang;
+                    }
+                }
+            }
 		}
 
 		return $this->lang;
