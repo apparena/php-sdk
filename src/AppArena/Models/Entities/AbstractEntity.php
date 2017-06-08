@@ -27,7 +27,7 @@ abstract class AbstractEntity implements EntityInterface {
 	protected $translations;
 	protected $type;
 
-	const VALID_LANGUAGES = [
+	protected $validLanguages = [
 		//"aa_DJ" => ["language" => "Afar", "country" => "Djibouti"],
 		//"aa_ER" => ["language" => "Afar", "country" => "Eritrea"],
 		//"aa_ET" => ["language" => "Afar", "country" => "Ethiopia"],
@@ -476,7 +476,7 @@ abstract class AbstractEntity implements EntityInterface {
 	 */
 	public function setLang( $lang ) {
 		// Validate language code
-		$languages = self::VALID_LANGUAGES;
+		$languages = $this->validLanguages;
 		if ( ! isset( $languages[ $lang ] ) ) {
 			throw new \InvalidArgumentException( $lang . ' is not a valid language code' );
 		}
