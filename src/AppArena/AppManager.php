@@ -21,8 +21,8 @@ class AppManager {
 	protected $root_path = false; // Absolute root path of the project on the server
 	private   $cookie; // The App-Manager Cookie for the current user
 	/** @var  CssCompiler */
-	private   $cssCompiler; // Css Helper object
-	private   $lang      = 'de_DE'; // Language: e.g. de_DE, en_US, en_UK, ...
+	private $cssCompiler; // Css Helper object
+	private $lang = 'de_DE'; // Language: e.g. de_DE, en_US, en_UK, ...
 
 
 	/** @var Api */
@@ -58,6 +58,7 @@ class AppManager {
 	 *                       ['path']
 	 *                       ['projectId'] Project ID
 	 *                       ['root_path'] Sets the Root path to the app, all path references will be relative to this
+	 *
 	 * @throws \Exception Any error occuring.
 	 */
 	public function __construct( array $options = [] ) {
@@ -66,12 +67,12 @@ class AppManager {
 			$this->primaryEntity = $this->getPrimaryEntity();
 
 			// Initialize some basic settings
-			if ($options['root_path'] ?? false) {
+			if ( isset( $options['root_path'] ) ) {
 				$this->root_path = $options['root_path'];
 			}
 
 			// Initialize some basic settings
-			if ($options['cache']['dir'] ?? false) {
+			if ( isset( $options['cache']['dir'] ) ) {
 				$this->cache_dir = $options['cache']['dir'];
 			}
 
@@ -89,13 +90,13 @@ class AppManager {
 				'apikey' => $apiKey
 			] );
 			$this->getPrimaryEntity()->setApi( $this->api );
-            // Check if Entity exists in App-Manager
-            if ($this->getInfos() === false) {
-                throw new EntityUnknownException($this->getPrimaryEntity()->getEntityType() . ' with ID "' . $this->getPrimaryEntity()->getId() . '" does not exist.');
-            }
+			// Check if Entity exists in App-Manager
+			if ( $this->getInfos() === false ) {
+				throw new EntityUnknownException( $this->getPrimaryEntity()->getEntityType() . ' with ID "' . $this->getPrimaryEntity()->getId() . '" does not exist.' );
+			}
 
 			// Initialize the Environment
-			$this->environment = new Models\Environment($this->primaryEntity);
+			$this->environment = new Models\Environment( $this->primaryEntity );
 
 		} catch ( \Exception $e ) {
 			throw $e;
@@ -530,7 +531,7 @@ class AppManager {
 	 * @return array Assocative array including all compiled CSS files
 	 */
 	public function getCSSFiles( $css_config ) {
-		return $this->getCssCompiler()->getCSSFiles($css_config);
+		return $this->getCssCompiler()->getCSSFiles( $css_config );
 	}
 
 	/**
@@ -558,7 +559,7 @@ class AppManager {
 	public function getSmartLink() {
 
 		if ( ! $this->smartLink ) {
-			$this->smartLink = new SmartLink($this->getPrimaryEntity(), $this->getEnvironment() , $this->getApi()->getCache());
+			$this->smartLink = new SmartLink( $this->getPrimaryEntity(), $this->getEnvironment(), $this->getApi()->getCache() );
 		}
 
 		return $this->smartLink;
@@ -566,23 +567,26 @@ class AppManager {
 
 	/**
 	 * Invalidate the cache of a submitted entity. See parameter settings in cache section of the documentation
+	 *
 	 * @param string $action Can be 'all', 'configs', 'infos', 'languages', 'translations', 'apps' or 'templates'
 	 */
 	public function cacheInvalidate( $action = 'all' ) {
-		$this->cache->cacheInvalidate($action);
+		$this->cache->cacheInvalidate( $action );
 	}
 
 	/**
 	 * Returns if the current request contains admin authentication information (GET-params)
+	 *
 	 * @param String $projectSecret The project secret to validate the Hash
+	 *
 	 * @return bool Returns if the current request contains admin authentication information
 	 */
 	public function isAdmin( $projectSecret ) {
 		// Try to get Hash and Timestamp from the request parameters
-		if (isset($_GET['hash'], $_GET['timestamp'])) {
+		if ( isset( $_GET['hash'], $_GET['timestamp'] ) ) {
 			$hash      = $_GET['hash'];
 			$timestamp = $_GET['timestamp'];
-			if ($hash === sha1($this->getId() . '_' . $projectSecret . '_' . $timestamp) && $timestamp >= strtotime('-1 hours')) {
+			if ( $hash === sha1( $this->getId() . '_' . $projectSecret . '_' . $timestamp ) && $timestamp >= strtotime( '-1 hours' ) ) {
 				return true;
 			}
 		}
@@ -596,8 +600,6 @@ class AppManager {
 	private function getCache() {
 		return $this->cache;
 	}
-
-
 
 
 }

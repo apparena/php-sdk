@@ -64,7 +64,7 @@ class Facebook extends AbstractEnvironment {
 				$this->pageTab = $this->pageUrl . '/app/' . $this->appId;
 			} else {
 				$facebook = $this->getCookieValue( "facebook" );
-				if ( $facebook['page_id'] ?? false ) {
+				if ( isset( $facebook['page_id'] ) ) {
 					// ... from COOKIE-Parameter
 					$this->appId   = $fb_app_id;
 					$this->pageId  = $facebook['page_id'];
@@ -73,13 +73,15 @@ class Facebook extends AbstractEnvironment {
 				} else {
 					// ... from the App Channels
 					$channels = $this->entity->getChannels();
-					foreach ( $channels as $channel ) {
-						if ( $channel['type'] === 'facebook' && isset( $channel['meta'] ) ) {
-							$this->appId   = $fb_app_id;
-							$this->pageId  = $channel['value'];
-							$this->pageUrl = 'https://www.facebook.com/' . $this->pageId;
-							$this->pageTab = $this->pageUrl . '/app/' . $this->appId;
-							break;
+					if (is_array($channels)) {
+						foreach ( $channels as $channel ) {
+							if ( $channel['type'] === 'facebook' && isset( $channel['meta'] ) ) {
+								$this->appId   = $fb_app_id;
+								$this->pageId  = $channel['value'];
+								$this->pageUrl = 'https://www.facebook.com/' . $this->pageId;
+								$this->pageTab = $this->pageUrl . '/app/' . $this->appId;
+								break;
+							}
 						}
 					}
 				}
@@ -130,8 +132,6 @@ class Facebook extends AbstractEnvironment {
 	public function getSignedRequest() {
 		return $this->signedRequest;
 	}
-
-
 
 
 }
