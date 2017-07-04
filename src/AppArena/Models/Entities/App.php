@@ -12,10 +12,14 @@ class App extends AbstractEntity {
 	protected $versionId;
 
 	/**
-	 * @inheritdoc
+	 * Initialize app related information and try to get the App ID from different environments
+	 *
+	 * @param int $id ID of the entity
+	 * @param int $versionId Version ID, which has been submitted during App-Manager initialization
 	 */
-	public function __construct( $id = null ) {
+	public function __construct( $id = null, $versionId ) {
 		$this->type = 'app';
+		$this->versionId = $versionId;
 
 		// If no App ID available, then try to recover it
 		if ( ! $id ) {
@@ -147,13 +151,18 @@ class App extends AbstractEntity {
 				$fb_page_id = $signed_request['page']['id'];
 			}
 
-			if ( $fb_page_id && $this->projectId ) {
+			if ( $fb_page_id && $this->versionId ) {
 				$request_url = "https://manager.app-arena.com/api/v1/env/fb/pages/" . $fb_page_id .
-				               "/instances.json?projectId=" . $this->projectId . "&active=true";
+				               "/instances.json?projectId=" . $this->versionId . "&active=true";
+				// If the facebook App ID is submitted, then it will be added to the request
+				if (isset($_GET['fb_app_id']) && strlen($_GET['fb_app_id']) > 10) {
+					$request_url .= '&fb_app_id=' . $_GET['fb_app_id'];
+				}
+
 				$instances   = json_decode( file_get_contents( $request_url ), true );
 				foreach ( $instances['data'] as $instance ) {
 					if ( $instance['activate'] == 1 ) {
-						$appId = $instance['appId'];
+						$appId = $instance['i_id'];
 					}
 				}
 			}

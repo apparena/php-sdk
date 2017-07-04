@@ -3,7 +3,6 @@
 namespace AppArena;
 
 use AppArena\Exceptions\EntityUnknownException;
-use AppArena\Models\Css;
 use AppArena\Models\CssCompiler;
 use AppArena\Models\Entities\AbstractEntity;
 use AppArena\Models\Api;
@@ -49,6 +48,9 @@ class AppManager {
 	/** @var Version */
 	private $version;
 
+	/** @var int ID of the App-Arena project version Id, which is requesting information */
+	private $versionId;
+
 	/**
 	 * Initialize the App-Manager object
 	 *
@@ -56,13 +58,20 @@ class AppManager {
 	 *                       ['appId'] App Id
 	 *                       ['cache'] Cache options
 	 *                       ['path']
-	 *                       ['projectId'] Project ID
+	 *                       ['versionId'] Version ID
 	 *                       ['root_path'] Sets the Root path to the app, all path references will be relative to this
 	 *
 	 * @throws \Exception Any error occuring.
 	 */
 	public function __construct( array $options = [] ) {
 		try {
+
+			// Check if the versionId as required parameter has been set
+			if (!isset($options['versionId']) || (int)$options['versionId'] < 1) {
+				throw new \InvalidArgumentException('No versionId has been set during the initialization.');
+			}
+			$this->versionId = (int)$options['versionId'];
+
 			// Get primary Entity to get information for (version, template or app)
 			$this->primaryEntity = $this->getPrimaryEntity();
 
@@ -165,7 +174,7 @@ class AppManager {
 	 * request.
 	 *
 	 * @return AbstractEntity Entity object to get information for
-	 * @throws \InvalidArgumentException Throws an exception, when now Entity ID is available
+	 * @throws EntityUnknownException Throws an exception, when now Entity ID is available
 	 */
 	private function getPrimaryEntity() {
 
@@ -193,12 +202,12 @@ class AppManager {
 
 		// Else the app is the primary object
 		if ( ! $this->app ) {
-			$this->app = new App();
+			$this->app = new App(null, $this->versionId);
 		}
 
 		// If not even an app ID could be instantiated, then throw an exception
 		if ( ! $this->app->getId() ) {
-			throw new \InvalidArgumentException( 'No versionId, templateId or appId available. Please submit any of those IDs to establish the App-Manager connection' );
+			throw new EntityUnknownException( 'No versionId, templateId or appId available. Please submit any of those IDs to establish the App-Manager connection' );
 		}
 
 		return $this->app;
@@ -440,7 +449,7 @@ class AppManager {
 
 	/**
 	 * Returns user browser information
-	 * @return Environment\Browser
+	 * @return \UserAgentParser\Model\Browser
 	 */
 	public function getBrowser() {
 		return $this->getEnvironment()->getBrowser();
@@ -534,22 +543,22 @@ class AppManager {
 		return $this->getCssCompiler()->getCSSFiles( $css_config );
 	}
 
-	/**
+	/*/**
 	 * @return string
 	 */
-	public function getFilename() {
+	/*public function getFilename() {
 		return $this->filename;
-	}
+	}*/
 
 	/**
 	 * Sets the filename for the SmartLink (default: smartlink.php)
 	 *
 	 * @param string $filename
 	 */
-	public function setFilename( $filename ) {
+	/*public function setFilename( $filename ) {
 		$this->filename = $filename;
 		$this->getSmartLink()->setFilename( $filename );
-	}
+	}*/
 
 	/**
 	 * @return SmartLink Smartlink object
