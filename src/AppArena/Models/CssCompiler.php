@@ -151,8 +151,8 @@ class CssCompiler {
 				file_put_contents($absolutePath, $response);
 
 				// Set tags (important to do this after saving, to avoid a loop)
-				//$value->tag( $this->getTags( $route ) );
-				//$cache->save( $value );
+				$cacheItem->tag( [$this->entity->getEntityType() . '.' . $this->entity->getId()] );
+				$cache->save( $cacheItem );
 
 			} else {
 				// If the redis cache has the item, but the file does not exist, then write the file again

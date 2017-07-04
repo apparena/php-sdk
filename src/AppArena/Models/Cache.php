@@ -150,7 +150,6 @@ class Cache {
 	 * Removes all css files matching a certain cache key pattern
 	 */
 	private function invalidateCssFileCache(  ) {
-
 		$key = $this->entityType . 's_' . $this->entityId;
 		$files = $this->getAllDirFiles($this->dir);
 		foreach ($files as $file)
