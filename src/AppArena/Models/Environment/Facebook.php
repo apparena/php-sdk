@@ -31,7 +31,9 @@ class Facebook extends AbstractEnvironment {
 		// Get Facebook page tab parameters and write them to GET parameters
 		if ( isset( $_REQUEST['signed_request'] ) ) {
 			$this->signedRequest = $_REQUEST['signed_request'];
-			$fb_signed_request   = $this->parse_signed_request( $_REQUEST['signed_request'] );
+			list( $encoded_sig, $payload ) = explode( '.', $this->signedRequest, 2 );
+			$fb_signed_request = json_decode( base64_decode( strtr( $payload, '-_', '+/' ) ), true );
+
 			// So use the current Facebook page for sharing, if no fb_page_id is defined via GET
 			if ( isset( $fb_signed_request['page']['id'] ) && ! isset( $_GET['fb_page_id'] ) ) {
 				$_GET['fb_page_id'] = $fb_signed_request['page']['id'];

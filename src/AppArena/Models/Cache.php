@@ -13,6 +13,8 @@ class Cache {
 	private $entityId;
 	private $entityType;
 
+	private $dir;
+
 
 	/** @var TagAwareAdapter */
 	private $adapter;
@@ -46,7 +48,9 @@ class Cache {
 			}
 			$dir = $options['dir'];
 		}
+		$this->dir = $dir;
 
+		// Initialize the cache adapter
 		if ( isset( $options['adapter'] ) && $options['adapter'] instanceof AbstractAdapter ) {
 			$adapter = $options['adapter'];
 		} else {
@@ -137,6 +141,53 @@ class Cache {
 			$this->entityType . '.' . $this->entityId
 		];
 		$cache->invalidateTags( $tags );
+
+		// Delete CSS file cache
+		$this->invalidateCssFileCache();
+	}
+
+	/**
+	 * Removes all css files matching a certain cache key pattern
+	 */
+	private function invalidateCssFileCache(  ) {
+
+		$key = $this->entityType . 's_' . $this->entityId;
+		$files = $this->getAllDirFiles($this->dir);
+		foreach ($files as $file)
+		{
+			if (strpos($file, str_replace("\\", "/", $this->dir) . '/' . $key) === 0)
+			{
+				unlink($file);
+			}
+		}
+	}
+
+	/**
+	 * Returns a list of all files
+	 * @param $dir
+	 * @return array
+	 * @throws \Exception
+	 */
+	private function getAllDirFiles($dir)
+	{
+		$files = array();
+		if (is_dir($dir) == false)
+		{
+			throw new \Exception("$dir is not a directory");
+		}
+		$dir = new \DirectoryIterator($dir);
+		foreach ($dir as $fileinfo)
+		{
+			if (!$fileinfo->isDot() && !$fileinfo->isFile())
+			{
+				continue;
+			}
+			if (!$fileinfo->isDot() && $fileinfo->isFile())
+			{
+				$files[] = str_replace("\\", "/", $fileinfo->getPathname());
+			}
+		}
+		return $files;
 	}
 
 	/**
