@@ -76,18 +76,18 @@ class Environment {
 			return $this->browser->getBrowser();
 		}
 
-		return $this->browser;
+		return null;
 	}
 
 	/**
-	 * @return Browser|\UserAgentParser\Model\OperatingSystem
+	 * @return \UserAgentParser\Model\OperatingSystem
 	 */
 	public function getOperationSystem() {
 		if ($this->browser) {
 			return $this->browser->getOperatingSystem();
 		}
 
-		return $this->browser;
+		return null;
 	}
 
 	/**

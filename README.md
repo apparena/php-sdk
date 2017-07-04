@@ -26,7 +26,7 @@ require __DIR__ . '/vendor/autoload.php';
 // Add App-Arena App-Manager
 $am = new \AppArena\AppManager(
     array(
-        'versionId' => 123, // Add the version ID of your project here
+        'versionId' => 123, // Add the required version ID of your project version here
         'root_path' => __DIR__,
         'cache' => [
             'directory' => __DIR__ . '/var/cache', // Writable folder for file cache. Check the cache section for more options

@@ -118,37 +118,15 @@ class CssCompiler {
 			$cache     = $this->getCache()->getAdapter();
 			$cacheItem = $cache->getItem( $this->cache_key );
 			if ( !$cacheItem->isHit() ) {
-				$response = "";
-				try {
-					// Add all files
-					foreach ( $this->files as $file ) {
 
-						// Get the file extension to decide which compiler to use
-						$path_parts = pathinfo( $file );
-						$extension  = $path_parts['extension'];
-
-						switch ( $extension ) {
-							case "less":
-								$response .= $this->compileLessFile( $file );
-								break;
-							case "scss":
-								$response .= $this->compileScssFile( $file );
-								break;
-							case "css":
-								$response .= $this->compressCssFile( $file );
-								break;
-						}
-					}
-
-				} catch ( \Exception $e ) {
-					$error_message = $e->getMessage();
-				}
+				// Compile all submitted files
+				$response = $this->compileFiles($this->files);
 
 				// Attach all CSS/LESS/SCSS from config values
 				foreach ( $this->config_values as $config_id ) {
 					$value = $this->entity->getConfig( $config_id, [ "value", "type", "compiler" ] );
 
-					if ( $value['type'] == "css" ) {
+					if ( $value['type'] === 'css' ) {
 						switch ( $value['compiler'] ) {
 							case "scss":
 								$response .= $this->compileScss( $value['value'] );
@@ -176,9 +154,6 @@ class CssCompiler {
 				//$value->tag( $this->getTags( $route ) );
 				//$cache->save( $value );
 
-				if ( $response['status'] == 401 ) {
-					throw new \Exception( 'Unauthorized request. Please use a valid API Key to send API requests.' );
-				}
 			} else {
 				// If the redis cache has the item, but the file does not exist, then write the file again
 				if (!file_exists($absolutePath)) {
@@ -196,6 +171,41 @@ class CssCompiler {
 		return $relativePath;
 	}
 
+	/**
+	 * @param array $files A list of files to compile
+	 * @return String Compiled CSS
+	 * @throws \Exception When the compilation fails
+	 */
+	private function compileFiles( $files ) {
+
+		$response = '';
+		try {
+			// Add all files
+			foreach ( $files as $file ) {
+
+				// Get the file extension to decide which compiler to use
+				$path_parts = pathinfo( $file );
+				$extension  = $path_parts['extension'];
+
+				switch ( $extension ) {
+					case "less":
+						$response .= $this->compileLessFile( $file );
+						break;
+					case "scss":
+						$response .= $this->compileScssFile( $file );
+						break;
+					case "css":
+						$response .= $this->compressCssFile( $file );
+						break;
+				}
+			}
+
+		} catch ( \Exception $e ) {
+			throw $e;
+		}
+
+		return $response;
+	}
 
 	/**
 	 * Compiles a file using http://leafo.net/scssphp/
