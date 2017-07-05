@@ -2,6 +2,7 @@
 
 namespace AppArena\Models\Environment;
 use AppArena\Models\Entities\AbstractEntity;
+use UserAgentParser\Model\OperatingSystem;
 use UserAgentParser\Model\UserAgent;
 use UserAgentParser\Provider\WhichBrowser;
 
@@ -22,12 +23,15 @@ class Browser extends AbstractEnvironment {
 	 */
 	public function __construct( AbstractEntity $entity ) {
 		parent::__construct( $entity );
+		$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? false;
+		try {
+			$provider = new WhichBrowser();
+			/* @var $result \UserAgentParser\Model\UserAgent */
+			$this->ua = $provider->parse($userAgent);
+		} catch (\Exception $e) {
+			$this->ua = $userAgent;
+		}
 
-		$userAgent = $_SERVER['HTTP_USER_AGENT'];
-		$provider = new WhichBrowser();
-
-		/* @var $result \UserAgentParser\Model\UserAgent */
-		$this->ua = $provider->parse($userAgent);
 		// optional add all headers, to improve the result further
 		//$this->ua = $provider->parse($userAgent, getallheaders());
 	}
@@ -59,20 +63,40 @@ class Browser extends AbstractEnvironment {
 	 * @return \UserAgentParser\Model\Device
 	 */
 	public function getDevice() {
-		return $this->ua->getDevice();
+		if (!$this->getUa()) {
+			return new \UserAgentParser\Model\Device();
+		}
+
+		return $this->getUa()->getDevice();
 	}
 
 	/**
 	 * @return \UserAgentParser\Model\OperatingSystem
 	 */
 	public function getOperatingSystem() {
-		return $this->ua->getOperatingSystem();
+		if (!$this->getUa()) {
+			return new OperatingSystem();
+		}
+
+		return $this->getUa()->getOperatingSystem();
 	}
 
 	/**
 	 * @return \UserAgentParser\Model\Browser
 	 */
 	public function getBrowser() {
-		return $this->ua->getBrowser();
+		if (!$this->getUa()) {
+			return new \UserAgentParser\Model\Browser();
+		}
+
+		return $this->getUa()->getBrowser();
 	}
+
+	/**
+	 * @return UserAgent|false
+	 */
+	public function getUa() {
+		return $this->ua;
+	}
+
 }

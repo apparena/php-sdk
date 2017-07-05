@@ -458,7 +458,7 @@ class SmartLink {
 		$value = $cache->getItem( $cache_key );
 		if ( $value->isHit() ) {
 			$response = $value->get();
-			if ( $response['status'] === 200 ) {
+			if ( isset($response['status']) && $response['status'] === 200 ) {
 				$response = json_decode( $response['body'], true );
 				if ( $response !== false ) {
 					return $response;
