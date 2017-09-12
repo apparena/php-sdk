@@ -41,9 +41,6 @@ class Cache {
 		if ( isset( $options['dir'] ) ) {
 			$dir = $options['dir'];
 		}
-		if ( isset( $options['directory'] ) ) {
-			$dir = $options['directory'];
-		}
 		if ( $dir ) {
 			if ( ! @mkdir( $dir, 0755, true ) && ! is_dir( $dir ) ) {
 				throw new \Exception( 'Cannot create cache folder' );

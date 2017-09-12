@@ -29,8 +29,9 @@ $am = new \AppArena\AppManager(
         'versionId' => 123, // Add the required version ID of your project version here
         'root_path' => __DIR__,
         'cache' => [
-            'directory' => __DIR__ . '/var/cache', // Writable folder for file cache. Check the cache section for more options
-        ],'apikey' => 'ABCDEFGHIJKLMNOPQRSTUVW' // Add you API key here
+            'dir' => __DIR__ . '/var/cache', // Writable folder for file cache. Check the cache section for more options
+        ],
+        'apikey' => 'ABCDEFGHIJKLMNOPQRSTUVW' // Add you API key here
     )
 );
 // Get config values, languages, translations and infos from the current app, template or version
