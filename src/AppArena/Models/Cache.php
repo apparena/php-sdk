@@ -39,14 +39,20 @@ class Cache {
 		$defaultLifetime = 0;
 		$dir       = null; // the main cache directory (the application needs read-write permissions on it). if none is specified, a directory is created inside the system temporary directory
 		if ( isset( $options['dir'] ) ) {
-			if ( ! @mkdir( $options['dir'], 0755, true ) && ! is_dir( $options['dir'] ) ) {
+			$dir = $options['dir'];
+		}
+		if ( isset( $options['directory'] ) ) {
+			$dir = $options['directory'];
+		}
+		if ( $dir ) {
+			if ( ! @mkdir( $dir, 0755, true ) && ! is_dir( $dir ) ) {
 				throw new \Exception( 'Cannot create cache folder' );
 			}
 
-			if ( ! is_writable( $options['dir'] ) ) {
-				throw new \Exception( $options['dir'] . ' is not writeable for the webserver.' );
+			if ( ! is_writable( $dir ) ) {
+				throw new \Exception( $dir . ' is not writeable for the webserver.' );
 			}
-			$dir = $options['dir'];
+
 		}
 		$this->dir = $dir;
 

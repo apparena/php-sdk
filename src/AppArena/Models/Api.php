@@ -64,7 +64,11 @@ class Api {
 				$cache->save( $value );
 
 				// Set tags (important to do this after saving, to avoid a loop)
-				$value->tag( $this->getTags( $route ) );
+				$responseData = [];
+				if (isset($response['body'])) {
+					$responseData = json_decode($response['body'], true);
+				}
+				$value->tag( $this->getTags( $route, $responseData ) );
 				$cache->save( $value );
 			}
 
@@ -250,10 +254,11 @@ class Api {
 	 * Returns tags for the current route
 	 *
 	 * @param String $route The requested route
+	 * @param array $response API response of the last request. May contain relevant tag information
 	 *
 	 * @return array List of tags for the current API request
 	 */
-	private function getTags( $route ) {
+	private function getTags( $route, $response ) {
 		$tags       = [];
 		$routeParts = explode( '/', $route );
 
@@ -261,14 +266,14 @@ class Api {
 			switch ( $routeParts[0] ) {
 				case 'apps':
 					// If the request is an app request, then add templateId tag
-					$tags = $this->getTagsForApp( $routeParts );
+					$tags = $this->getTagsForApp( $routeParts, $response );
 					break;
 				case 'templates':
 					// if the request is a template request, then add versionId and parent templateId tags
-					$tags = $this->getTagsForTemplate( $routeParts );
+					$tags = $this->getTagsForTemplate( $routeParts, $response );
 					break;
 				case 'versions':
-					$tags = $this->getTagsForVersion( $routeParts );
+					$tags = $this->getTagsForVersion( $routeParts, $response );
 					break;
 			}
 		}
@@ -280,14 +285,18 @@ class Api {
 	 * Add a tags for the currently requested app
 	 *
 	 * @param array $routeParts
+	 * @param array $response API response of the last request. May contain relevant tag information
 	 *
 	 * @return array List all of tags for the app
 	 */
-	private function getTagsForApp( $routeParts ) {
+	private function getTagsForApp( $routeParts, $response ) {
 		$tags = [ 'app.' . $routeParts[1] ];
 
 		// Get App Infos
-		$infos = $this->get( 'apps/' . $routeParts[1] );
+		$infos = $response;
+		if (!isset($infos['_embedded']['data']['templateId'])) {
+			$infos = $this->get( 'apps/' . $routeParts[1] );
+		}
 		if ( isset( $infos['_embedded']['data']['templateId'] ) ) {
 			$tags[] = 'appTemplate.' . $infos['_embedded']['data']['templateId'];
 		}
@@ -308,14 +317,18 @@ class Api {
 	 * Add a tags for the currently requested template
 	 *
 	 * @param array $routeParts
+	 * @param array $response API response of the last request. May contain relevant tag information
 	 *
 	 * @return array List all of tags for the template
 	 */
-	private function getTagsForTemplate( $routeParts ) {
+	private function getTagsForTemplate( $routeParts, $response ) {
 		$tags = [ 'template.' . $routeParts[1] ];
 
-		// Get App Infos
-		$infos = $this->get( 'templates/' . $routeParts[1] );
+		// Get Template Infos
+		$infos = $response;
+		if (!isset($infos['_embedded']['data']['templateId'])) {
+			$infos = $this->get( 'templates/' . $routeParts[1] );
+		}
 		if ( isset( $infos['_embedded']['data']['templateId'] ) && $infos['_embedded']['data']['templateId'] != $routeParts[1] ) {
 			$tags[] = 'templateTemplate.' . $infos['_embedded']['data']['templateId'];
 		}
@@ -336,10 +349,11 @@ class Api {
 	 * Add a tags for the currently requested version
 	 *
 	 * @param array $routeParts
+	 * @param array $response API response of the last request. May contain relevant tag information
 	 *
 	 * @return array List all of tags for the version
 	 */
-	private function getTagsForVersion( $routeParts ) {
+	private function getTagsForVersion( $routeParts, $response ) {
 		$tags = [ 'version.' . $routeParts[1] ];
 
 		// Add second level tags if available
