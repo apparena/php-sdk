@@ -23,7 +23,10 @@ class Browser extends AbstractEnvironment {
 	 */
 	public function __construct( AbstractEntity $entity ) {
 		parent::__construct( $entity );
-		$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? false;
+		$userAgent = false;
+		if (isset($_SERVER['HTTP_USER_AGENT'])) {
+			$userAgent = $_SERVER['HTTP_USER_AGENT'];
+		}
 		try {
 			$provider = new WhichBrowser();
 			/* @var $result \UserAgentParser\Model\UserAgent */
