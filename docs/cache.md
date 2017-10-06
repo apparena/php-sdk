@@ -19,9 +19,10 @@ compliant adapter.
 // Initialize the App-Manager using custom cache settings
 $am = new \AppArena\AppManager([
     'versionId' => 123, // Add the version ID of your project here
+    'root_path' => __DIR__ . '/public', // Root path accessible from the web
     'cache' => [
         //'adapter' => new Symfony\Component\Cache\Adapter\PdoAdapter('yourdsn'),
-        'dir' => __DIR__ . '/var/cache', // Default file cache directory
+        'dir' => __DIR__ . '/public/var/cache', // Default file cache directory. Must be readable by the web (CSS cache files will be in there)
         'redis' => [
             'host' => 'localhost',
             'port' => 6379

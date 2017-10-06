@@ -27,9 +27,9 @@ require __DIR__ . '/vendor/autoload.php';
 $am = new \AppArena\AppManager(
     array(
         'versionId' => 123, // Add the required version ID of your project version here
-        'root_path' => __DIR__,
+        'root_path' => __DIR__ . '/public', // Root path accessible from the web
         'cache' => [
-            'dir' => __DIR__ . '/var/cache', // Writable folder for file cache. Check the cache section for more options
+            'dir' => __DIR__ . '/public/var/cache', // Writable folder for file cache. Check the cache section for more options
         ],
         'apikey' => 'ABCDEFGHIJKLMNOPQRSTUVW' // Add you API key here
     )
