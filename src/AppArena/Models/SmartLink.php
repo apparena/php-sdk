@@ -337,8 +337,11 @@ class SmartLink
             'browser' => $this->getEnvironment()->getBrowser()->toArray(),
             'cookies' => $this->prepareMustacheArray($_COOKIE),
             'debug' => $debug,
-            'device' => $this->getEnvironment()->getDevice()->toArray(),
-            'entityId' => $this->getEntity()->getId(),
+            'device' => [
+	            'type' => $this->getDevice()->getDeviceType(),
+	            'os' => $this->getEnvironment()->getOperationSystem()->getName()
+            ],
+            'appId' => $this->getEntity()->getId(),
             'info' => $this->getEntity()->getInfos(),
             'lang' => $this->getEntity()->getLang(),
             'meta' => $this->getMeta(),
