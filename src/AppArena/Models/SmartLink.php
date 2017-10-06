@@ -335,6 +335,7 @@ class SmartLink
 
         $data = [
             'browser' => $this->getEnvironment()->getBrowser()->toArray(),
+            'channels' => $this->getEntity()->getChannels(),
             'cookies' => $this->prepareMustacheArray($_COOKIE),
             'debug' => $debug,
             'device' => [

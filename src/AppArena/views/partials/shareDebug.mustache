@@ -75,6 +75,37 @@
 
             <div class="row">
                 <div class="col-md-12">
+                    <h2>Channels the app is installed on</h2>
+
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Name</th>
+                            <th>Url</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {{#channels}}
+                            <tr>
+                                <td>
+                                    {{type}}
+                                </td>
+                                <td>
+                                    {{name}}
+                                </td>
+                                <td>
+                                    {{value}}
+                                </td>
+                            </tr>
+                        {{/channels}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
                     <h2>Cookies</h2>
 
                     <table class="table table-striped">

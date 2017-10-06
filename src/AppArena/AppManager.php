@@ -420,6 +420,14 @@ class AppManager {
 	}
 
 	/**
+	 * Returns a list of all channels the app has been published on
+	 * @return array List of all channels the entity is installed on
+	 */
+	public function getChannels( ) {
+		return $this->getPrimaryEntity()->getChannels();
+	}
+
+	/**
 	 * Returns user device information
 	 */
 	public function getDevice() {
