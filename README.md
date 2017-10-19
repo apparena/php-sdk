@@ -58,10 +58,23 @@ sending with your request:
 
 ## Core concepts
 
-- [SmartLink](docs/smartlink.md): Intelligent user redirection based on
-  the users device and settings
 - [Cache](docs/cache.md): Activate on of the build in backend caches to
   speed up load time for your users
+- [CSS / LESS / SCSS](docs/css.md): See how the PHP SDK makes it easy
+  for you to compile files individual for each app
+- [SmartLink](docs/smartlink.md): Intelligent user redirection based on
+  the users device and settings
+
+## Special GET parameters
+
+Attach one of these parameters to the url to modify the PHP SDK behaviour
+
+| Parameter       | Description                                                                                                                                                                                      | Values                        |
+|:----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------|
+| cacheInvalidate | Clean certain caches within the app, before the page is loaded. See [Cache section](docs/cache.md) for more details.                                                                             |                               |
+| device          | Use this parameter to simulate a certain device type. When you attach `?device=tablet` to your url, the getDeviceType() function of the PHP SDK will return tablet, to emulate this device type. | 'desktop', 'tablet', 'mobile' |
+| preview         | Attaches a cache busting parameter (?v=TIMESTAMP) to all CSS files Urls (response of method `getCssFiles($css_config)`. This prevents the user to see a cached version of CSS files              | 'true', 'false'               |
+
 
 ## Methods
 
