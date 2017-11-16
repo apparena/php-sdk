@@ -396,10 +396,10 @@
                             <tr>
                                 <td>Version</td>
                                 <td>
-                                    {{visitor.browser.version}}
-                                    {{^ visitor.browser.version }}
+                                    {{visitor.browser.version.major}}
+                                    {{^ visitor.browser.version.major }}
                                         <span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
-                                    {{/ visitor.browser.version }}
+                                    {{/ visitor.browser.version.major }}
                                 </td>
                             </tr>
                         </table>
