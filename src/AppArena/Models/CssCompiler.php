@@ -168,7 +168,7 @@ class CssCompiler {
 
 		// Attach a cache busting parameter to the app, when the GET parameter preview is set to true
 		if (isset($_GET['preview']) && $_GET['preview']) {
-			$relativePath .= '?' . time();
+			$relativePath .= '?v=' . time();
 		}
 
 
