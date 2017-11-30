@@ -121,7 +121,19 @@ class Facebook extends AbstractEnvironment {
 		return $this->pageUrl;
 	}
 
-	/**
+    /**
+     * Returns all relevant Environment information as array
+     */
+    public function toArray()
+    {
+        return [
+            'priority' => $this->getPriority(),
+            'type' => $this->getType(),
+            'pageId' => $this->getPageId()
+        ];
+    }
+
+    /**
 	 * @return string
 	 */
 	public function getPageTab() {
