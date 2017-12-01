@@ -7,7 +7,6 @@ use AppArena\Models\Entities\AbstractEntity;
 use AppArena\Models\Environment\AbstractEnvironment;
 use AppArena\Models\Environment\Facebook;
 use AppArena\Models\Environment\Website;
-use Detection\MobileDetect;
 use phpbrowscap\Browscap;
 
 /**
@@ -339,8 +338,8 @@ class SmartLink
             'cookies' => $this->prepareMustacheArray($_COOKIE),
             'debug' => $debug,
             'device' => [
-	            'type' => $this->getDevice()->getDeviceType(),
-	            'os' => $this->getEnvironment()->getOperationSystem()->getName()
+                'type' => $this->getDevice()->getDeviceType(),
+                'os' => $this->getEnvironment()->getOperationSystem()->getName()
             ],
             'appId' => $this->getEntity()->getId(),
             'info' => $this->getEntity()->getInfos(),
@@ -458,6 +457,14 @@ class SmartLink
         }
 
         return $response;
+    }
+
+    /**
+     * @return Environment\Device
+     */
+    public function getDevice()
+    {
+        return $this->device;
     }
 
     /**
@@ -632,26 +639,28 @@ class SmartLink
         $params = array_merge($this->paramsAdditional, $params);
 
         // Generate sharing and target Url
-        foreach ($params as $key => $value) {
-            if ($value !== '') {
-                if (is_array($value)) {
-                    $value = json_encode($value);
-                }
+        if ($this->getEnvironment()->getPrimaryEnvironment()->getType() !== 'website') {
+            foreach ($params as $key => $value) {
+                if ($value !== '') {
+                    if (is_array($value)) {
+                        $value = json_encode($value);
+                    }
 
-                if (is_string($value)) {
-                    $value = ltrim($value, '/');
-                }
+                    if (is_string($value)) {
+                        $value = ltrim($value, '/');
+                    }
 
-                // If it is the first parameter, then use '?', else use  '&'
-                if (strpos($target_url, '?') === false) {
-                    $target_url .= '?' . $key . '=' . urlencode($value);
-                } else {
-                    $target_url .= '&' . $key . '=' . urlencode($value);
-                }
-                if (strpos($share_url, '?') === false) {
-                    $share_url .= '?' . $key . '=' . urlencode($value);
-                } else {
-                    $share_url .= '&' . $key . '=' . urlencode($value);
+                    // If it is the first parameter, then use '?', else use  '&'
+                    if (strpos($target_url, '?') === false) {
+                        $target_url .= '?' . $key . '=' . urlencode($value);
+                    } else {
+                        $target_url .= '&' . $key . '=' . urlencode($value);
+                    }
+                    if (strpos($share_url, '?') === false) {
+                        $share_url .= '?' . $key . '=' . urlencode($value);
+                    } else {
+                        $share_url .= '&' . $key . '=' . urlencode($value);
+                    }
                 }
             }
         }
@@ -700,14 +709,6 @@ class SmartLink
     }
 
     /**
-     * @return string
-     */
-    public function getFilename()
-    {
-        return $this->filename;
-    }
-
-    /**
      * @param mixed $environment
      */
     /*private function setEnvironment( $environment ) {
@@ -717,6 +718,14 @@ class SmartLink
             $this->environment = $environment;
         }
     }*/
+
+    /**
+     * @return string
+     */
+    public function getFilename()
+    {
+        return $this->filename;
+    }
 
     /**
      * @param string $filename
@@ -732,14 +741,6 @@ class SmartLink
     public function getFacebook()
     {
         return $this->facebook;
-    }
-
-    /**
-     * @return Environment\Device
-     */
-    public function getDevice()
-    {
-        return $this->device;
     }
 
     /**
