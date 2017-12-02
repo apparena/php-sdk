@@ -7,7 +7,6 @@ use AppArena\Models\Entities\AbstractEntity;
 use AppArena\Models\Environment\AbstractEnvironment;
 use AppArena\Models\Environment\Facebook;
 use AppArena\Models\Environment\Website;
-use phpbrowscap\Browscap;
 
 /**
  * SmartLink class which handles user redirects for the app
@@ -903,6 +902,10 @@ class SmartLink
      */
     private function getCurrentUrl($removeParams = false)
     {
+	    if ( ! isset( $_SERVER['SERVER_NAME']) || ! isset( $_SERVER['REQUEST_URI'] ) ) {
+		    return false;
+	    }
+
         $pageURL = 'http';
         if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
             $pageURL .= 's';
