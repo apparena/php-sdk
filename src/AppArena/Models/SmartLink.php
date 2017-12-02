@@ -101,30 +101,38 @@ class SmartLink
      */
     private function initBaseUrl()
     {
-        // Initialize the base_url
-        $base_url = 'http';
-        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
-            $base_url .= 's';
-        }
-        $base_url .= '://';
-        $base_url .= $_SERVER['SERVER_NAME'];
-        if (substr($base_url, -1) !== '/') {
-            $base_url .= '/';
-        }
-        $this->base_url = $base_url;
+	    // Initialize the base_url
+	    if ( isset( $_SERVER['SERVER_NAME'] ) ) {
+		    $base_url = 'http';
+		    if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ) {
+			    $base_url .= 's';
+		    }
+		    $base_url .= '://';
+		    $base_url .= $_SERVER['SERVER_NAME'];
+		    if ( substr( $base_url, - 1 ) !== '/' ) {
+			    $base_url .= '/';
+		    }
+		    $this->base_url = $base_url;
+	    } else if ($this->entity) {
+		    $this->base_url = $this->entity->getInfo( 'base_url' );
+	    }
 
-        $url             = parse_url($_SERVER['REQUEST_URI']);
-        $path_parts      = pathinfo($url['path']);
-        $base_path       = $path_parts['dirname'];
-        $this->base_path = $base_path;
+	    if ( isset( $_SERVER['REQUEST_URI'] ) ) {
+		    $url             = parse_url( $_SERVER['REQUEST_URI'] );
+		    $path_parts      = pathinfo( $url['path'] );
+		    $base_path       = $path_parts['dirname'];
+		    $this->base_path = $base_path;
+	    }
 
-        // Initialize the domain and cookie domain
-        $host                = $_SERVER['HTTP_HOST'];
-        $domain              = $this->extract_domain($host);
-        $this->cookie_domain = "." . $domain;
-        if ($domain === 'localhost') {
-            $this->cookie_domain = null;
-        }
+	    // Initialize the domain and cookie domain
+	    if ( isset( $_SERVER['HTTP_HOST'] ) ) {
+		    $host                = $_SERVER['HTTP_HOST'];
+		    $domain              = $this->extract_domain( $host );
+		    $this->cookie_domain = "." . $domain;
+		    if ( $domain === 'localhost' ) {
+			    $this->cookie_domain = null;
+		    }
+	    }
 
     }
 
