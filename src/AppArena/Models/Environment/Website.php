@@ -9,74 +9,64 @@ use AppArena\Models\Entities\AbstractEntity;
  * Class Facebook
  * @package AppArena\Models
  */
-class Website extends AbstractEnvironment
-{
+class Website extends AbstractEnvironment {
 
 
-    private $url;
+	private $url;
 
-    /**
-     * Facebook constructor.
-     *
-     * @param AbstractEntity $entity
-     */
-    public function __construct(AbstractEntity $entity)
-    {
+	/**
+	 * Facebook constructor.
+	 *
+	 * @param AbstractEntity $entity
+	 */
+	public function __construct( AbstractEntity $entity ) {
 
-        parent::__construct($entity);
-        $this->type     = 'website';
-        $this->priority = 20;
-        $website        = false;
+		parent::__construct( $entity );
+		$this->type     = 'website';
+		$this->priority = 20;
+		$website        = false;
 
-        // Try to get the website Url from the URL
-        if (isset($_GET['website'])) {
-            $website = $_GET['website'];
-        } else {
-            $website = $this->getCookieValue('website');
-            if (isset($website['website'])) {
-                // ... from COOKIE-Parameter
-                $website = $website['website'];
-            } else {
-                // ... from the App Channels
-                $channels = $this->entity->getChannels();
-                if (is_array($channels)) {
-                    foreach ($channels as $channel) {
-                        if ($channel['type'] === 'website') {
-                            $website = $channel['value'];
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+		// Try to get the website Url from the URL
+		if ( isset( $_GET['website'] ) ) {
+			$website = $_GET['website'];
+		} else {
+			// ... from the App Channels
+			$channels = $this->entity->getChannels();
+			if ( is_array( $channels ) ) {
+				foreach ( $channels as $channel ) {
+					if ( $channel['type'] === 'website' ) {
+						$website = $channel['value'];
+						break;
+					}
+				}
+			}
+		}
 
-        $this->url = $website;
-    }
+		$this->url = $website;
+	}
 
-    /**
-     * Returns all relevant Environment information as array
-     */
-    public function toArray()
-    {
-        return [
-            'priority' => $this->getPriority(),
-            'type' => $this->getType(),
-            'website' => $this->getUrl(),
-        ];
-    }
+	/**
+	 * Returns all relevant Environment information as array
+	 */
+	public function toArray() {
+		return [
+			'priority' => $this->getPriority(),
+			'type'     => $this->getType(),
+			'website'  => $this->getUrl(),
+		];
+	}
 
-    /**
-     * @return bool|mixed
-     */
-    public function getUrl()
-    {
+	/**
+	 * @return bool|mixed
+	 */
+	public function getUrl() {
 
-        if (filter_var($this->url, FILTER_VALIDATE_URL) === FALSE) {
-            return false;
-        }
+		if ( filter_var( $this->url, FILTER_VALIDATE_URL ) === false ) {
+			return false;
+		}
 
-        return $this->url;
-    }
+		return $this->url;
+	}
 
 
 }
