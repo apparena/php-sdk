@@ -646,31 +646,31 @@ class SmartLink
         $params = array_merge($this->paramsAdditional, $params);
 
         // Generate sharing and target Url
-        if ($this->getEnvironment()->getPrimaryEnvironment()->getType() !== 'website') {
-            foreach ($params as $key => $value) {
-                if ($value !== '') {
-                    if (is_array($value)) {
-                        $value = json_encode($value);
-                    }
+        //if ($this->getEnvironment()->getPrimaryEnvironment()->getType() !== 'website') {
+        foreach ( $params as $key => $value ) {
+            if ( $value !== '' ) {
+	            if ( is_array( $value ) ) {
+		            $value = json_encode( $value );
+	            }
 
-                    if (is_string($value)) {
-                        $value = ltrim($value, '/');
-                    }
+	            if ( is_string( $value ) ) {
+		            $value = ltrim( $value, '/' );
+	            }
 
-                    // If it is the first parameter, then use '?', else use  '&'
-                    if (strpos($target_url, '?') === false) {
-                        $target_url .= '?' . $key . '=' . urlencode($value);
-                    } else {
-                        $target_url .= '&' . $key . '=' . urlencode($value);
-                    }
-                    if (strpos($share_url, '?') === false) {
-                        $share_url .= '?' . $key . '=' . urlencode($value);
-                    } else {
-                        $share_url .= '&' . $key . '=' . urlencode($value);
-                    }
-                }
+	            // If it is the first parameter, then use '?', else use  '&'
+	            if ( strpos( $target_url, '?' ) === false ) {
+		            $target_url .= '?' . $key . '=' . urlencode( $value );
+	            } else {
+		            $target_url .= '&' . $key . '=' . urlencode( $value );
+	            }
+	            if ( strpos( $share_url, '?' ) === false ) {
+		            $share_url .= '?' . $key . '=' . urlencode( $value );
+	            } else {
+		            $share_url .= '&' . $key . '=' . urlencode( $value );
+	            }
             }
         }
+        //}
 
         if ($this->getEnvironment()->getPrimaryEnvironment()->getType() === 'facebook' &&
             !in_array($this->getDevice()->getDeviceType(), ["mobile", "tablet"]

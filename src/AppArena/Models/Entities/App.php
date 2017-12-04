@@ -83,8 +83,8 @@ class App extends AbstractEntity {
 
 				if ( ! $id ) {
 					// Try to get the ID from a cookie
-					if ( isset( $_COOKIE['aa_appId'] ) ) {
-						$id = $_COOKIE['aa_appId'];
+					if ( isset( $_COOKIE['aa_entityId'] ) ) {
+						$id = $_COOKIE['aa_entityId'];
 					} else {
 						// Try to get the ID from the user session
 						if ( ! empty( $_SESSION['current_appId'] ) ) {
