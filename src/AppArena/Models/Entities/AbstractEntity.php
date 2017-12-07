@@ -446,10 +446,10 @@ abstract class AbstractEntity implements EntityInterface {
 		if ( ! $this->lang ) {
 			// Try to recover language from Request
 			$lang = false;
-			if ( isset( $_GET['lang'] ) ) {
-				$this->lang = $_GET['lang'];
-				return $this->lang;
-			}
+            if ( isset( $_GET['lang'] ) ) {
+                $this->setLang($_GET['lang']);
+                return $this->lang;
+            }
 
 			// Try to get lang from Cookie
 			if ( isset( $_COOKIE[ 'aa_' . $this->id . '_lang' ] ) ) {
@@ -471,18 +471,19 @@ abstract class AbstractEntity implements EntityInterface {
 		return $this->lang;
 	}
 
-	/**
-	 * @param string $lang
-	 */
-	public function setLang( $lang ) {
-		// Validate language code
-		$languages = $this->validLanguages;
-		if ( ! isset( $languages[ $lang ] ) ) {
-			throw new \InvalidArgumentException( $lang . ' is not a valid language code' );
-		}
+    /**
+     * @param string $lang
+     */
+    public function setLang( $lang ) {
+        // Validate language code
+        $languages = $this->validLanguages;
+        if ( ! isset( $languages[ $lang ] ) ) {
+            throw new \InvalidArgumentException( $lang . ' is not a valid language code' );
+        }
+        setcookie('aa_' . $this->id . '_lang', $lang, time() + 172600, '/');
 
-		$this->lang = $lang;
-	}
+        $this->lang = $lang;
+    }
 
 	/**
 	 * @return mixed
