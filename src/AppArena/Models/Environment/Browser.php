@@ -66,7 +66,7 @@ class Browser extends AbstractEnvironment {
 	 * @return \UserAgentParser\Model\Device
 	 */
 	public function getDevice() {
-		if (!$this->getUa()) {
+		if (!$this->getUa() instanceof UserAgent) {
 			return new \UserAgentParser\Model\Device();
 		}
 
@@ -77,7 +77,7 @@ class Browser extends AbstractEnvironment {
 	 * @return \UserAgentParser\Model\OperatingSystem
 	 */
 	public function getOperatingSystem() {
-		if (!$this->getUa()) {
+		if (!$this->getUa() instanceof UserAgent) {
 			return new OperatingSystem();
 		}
 
@@ -88,7 +88,7 @@ class Browser extends AbstractEnvironment {
 	 * @return \UserAgentParser\Model\Browser
 	 */
 	public function getBrowser() {
-		if (!$this->getUa()) {
+		if (!$this->getUa() instanceof UserAgent) {
 			return new \UserAgentParser\Model\Browser();
 		}
 

@@ -272,7 +272,9 @@ abstract class AbstractEntity implements EntityInterface {
 
 		if ( isset( $meta['_embedded']['data'] ) && is_array( $meta['_embedded']['data'] ) ) {
 			$values = array_map( function ( $item ) {
-				return $item['value'];
+				if (isset($item['value'])) {
+					return $item['value'];
+				}
 			}, $meta['_embedded']['data'] );
 
 			$this->infos = array_merge( $values, $this->infos );
