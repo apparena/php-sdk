@@ -346,7 +346,7 @@ class SmartLink {
 			'params'         => $this->prepareMustacheArray( $this->getParams() ),
 			'params_expired' => $this->prepareMustacheArray( $this->paramsExpired ),
 			'reasons'        => $this->reasons,
-			//'target'         => $this->getEnvironment()->getPrimaryEnvironment()->getType(),
+			'target'         => $this->getEnvironment()->getPrimaryEnvironment()->getType(),
 			'url'            => $this->getUrl(),
 			'url_target'     => $this->getUrlTarget()
 		];

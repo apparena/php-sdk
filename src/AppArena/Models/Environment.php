@@ -29,6 +29,8 @@ class Environment {
 	protected $website;
 	/** @var Domain */
 	protected $domain;
+	/** @var AbstractEntity */
+	protected $entity;
 
 	/**
 	 * Environment constructor.
@@ -37,6 +39,7 @@ class Environment {
 	public function __construct( AbstractEntity $entity ) {
 
 		// Initialize the environment information
+		$this->entity   = $entity;
 		$this->facebook = new Facebook( $entity );
 		$this->website  = new Website( $entity );
 		$this->domain   = new Domain( $entity );
@@ -53,18 +56,30 @@ class Environment {
 	 *
 	 * @return AbstractEnvironment
 	 */
-	/*public function getPrimaryEnvironment() {
+	public function getPrimaryEnvironment() {
 
-		if ($this->website->getUrl()) {
-			return $this->website;
+		$channels   = $this->getEntity()->getChannels();
+		$deviceType = $this->getDevice()->getDeviceType();
+
+		// Check if the channel is compatible with the current device
+		foreach ( $channels as $channel ) {
+			// Facebook page tab cannot be accessed by mobile and desktop devices
+			if ( $channel['type'] == 'facebook' && in_array( $deviceType, [ 'mobile', 'tablet' ] ) ) {
+				continue;
+			}
+
+			switch ( $channel['type'] ) {
+				case "website":
+					return $this->getWebsite();
+			        break;
+				case "facebook":
+					return $this->getFacebook();
+					break;
+			}
 		}
 
-		if ($this->facebook->getPageId()) {
-			return $this->facebook;
-		}
-
-		return $this->domain;
-	}*/
+		return $this->getDomain();
+	}
 
 
 	/**
@@ -72,7 +87,7 @@ class Environment {
 	 */
 	public function getBrowser() {
 
-		if ($this->browser) {
+		if ( $this->browser ) {
 			return $this->browser->getBrowser();
 		}
 
@@ -83,7 +98,7 @@ class Environment {
 	 * @return \UserAgentParser\Model\OperatingSystem
 	 */
 	public function getOperationSystem() {
-		if ($this->browser) {
+		if ( $this->browser ) {
 			return $this->browser->getOperatingSystem();
 		}
 
@@ -110,5 +125,21 @@ class Environment {
 	public function getWebsite() {
 		return $this->website;
 	}
+
+	/**
+	 * @return AbstractEntity
+	 */
+	public function getEntity(): AbstractEntity {
+		return $this->entity;
+	}
+
+	/**
+	 * @return Domain
+	 */
+	public function getDomain(): Domain {
+		return $this->domain;
+	}
+
+
 
 }

@@ -156,11 +156,11 @@ class App extends AbstractEntity {
 			$installedChannels = $installedChannels['_embedded']['data'];
 
 			// Prepare data
-			$installedChannels = array_map(function($channel){
-				if ($channel['type'] === 'facebook') {
+			$installedChannels = array_map( function ( $channel ) {
+				if ( $channel['type'] === 'facebook' ) {
 					// If a target GET parameter is defined and set to 'facebook', then Facebook channels will get higher prio
 					$priority = $channel['priority'] ?? 0;
-					if (isset($_GET['target']) && $_GET['target'] === 'facebook'){
+					if ( isset( $_GET['target'] ) && $_GET['target'] === 'facebook' ) {
 						$priority = 8888; // Not as high as directly called channels
 					}
 
@@ -168,14 +168,15 @@ class App extends AbstractEntity {
 						'channelId' => $channel['channelId'],
 						'priority'  => $priority,
 						'type'      => 'facebook',
+						'pageId'    => $channel['value'],
 						'name'      => $channel['name'] ?? 'Channel ID ' . $channel['channelId'],
 						'url'       => 'https://www.facebook.com/' . $channel['value'] . '/app/' . $this->getInfo( 'fb_app_id' ),
 					];
 				}
-				if ($channel['type'] === 'website') {
+				if ( $channel['type'] === 'website' ) {
 					// If a target GET parameter is defined and set to 'facebook', then Facebook channels will get higher prio
 					$priority = $channel['priority'] ?? 0;
-					if (isset($_GET['target']) && $_GET['target'] === 'website'){
+					if ( isset( $_GET['target'] ) && $_GET['target'] === 'website' ) {
 						$priority = 8888; // Not as high as directly called channels
 					}
 
@@ -187,10 +188,10 @@ class App extends AbstractEntity {
 						'url'       => $channel['value'],
 					];
 				}
-				if ($channel['type'] === 'domain') {
+				if ( $channel['type'] === 'domain' ) {
 					// If a target GET parameter is defined and set to 'facebook', then Facebook channels will get higher prio
 					$priority = $channel['priority'] ?? 0;
-					if (isset($_GET['target']) && $_GET['target'] === 'domain'){
+					if ( isset( $_GET['target'] ) && $_GET['target'] === 'domain' ) {
 						$priority = 8888; // Not as high as directly called channels
 					}
 
@@ -204,17 +205,10 @@ class App extends AbstractEntity {
 				}
 
 
-			}, $installedChannels);
+			}, $installedChannels );
 
 			// Merge default channels and channels the customer has installed the app on
-			$channels       = array_merge_recursive( $channels, $installedChannels );
-			$this->channels = $channels;
-		} else {
-			$this->channels = $defaultChannels;
-		}
-
-		if ( ! $this->channels ) {
-			return false;
+			$channels = array_merge_recursive( $channels, $installedChannels );
 		}
 
 		// Order all channel by priority
@@ -223,8 +217,8 @@ class App extends AbstractEntity {
 			// If the current channel is exoplicitly prioritized via GET param, then give it a high priority
 			$channelId = $row['channelId'] ?? 0;
 			if ( isset( $_GET['channelId'] ) && $_GET['channelId'] == $channelId ) {
-				$row['priority'] = 9999;
-				$channels[$key]['priority'] = 9999;
+				$row['priority']              = 9999;
+				$channels[ $key ]['priority'] = 9999;
 			}
 
 			if ( ! isset( $row['priority'] ) ) {

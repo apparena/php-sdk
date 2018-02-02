@@ -35,7 +35,7 @@ class Website extends AbstractEnvironment {
 			if ( is_array( $channels ) ) {
 				foreach ( $channels as $channel ) {
 					if ( $channel['type'] === 'website' ) {
-						$website = $channel['value'];
+						$website = $channel['url'];
 						break;
 					}
 				}

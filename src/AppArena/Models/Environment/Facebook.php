@@ -54,7 +54,6 @@ class Facebook extends AbstractEnvironment
 		}
 
 		// Initialize Facebook Information ... (and check if the SmartLink should redirect to Facebook)
-		$fb_page_id = false;
 		$fb_app_id  = $this->entity->getInfo('fb_app_id');
 		if (isset($_GET['fb_app_id']) && $_GET['fb_app_id']) {
 			$fb_app_id = $_GET['fb_app_id'];
@@ -79,9 +78,9 @@ class Facebook extends AbstractEnvironment
 					$channels = $this->entity->getChannels();
 					if (is_array($channels)) {
 						foreach ($channels as $channel) {
-							if ($channel['type'] === 'facebook' && isset($channel['meta'])) {
+							if ($channel['type'] === 'facebook') {
 								$this->appId   = $fb_app_id;
-								$this->pageId  = $channel['value'];
+								$this->pageId  = $channel['pageId'];
 								$this->pageUrl = 'https://www.facebook.com/' . $this->pageId;
 								$this->pageTab = $this->pageUrl . '/app/' . $this->appId;
 								break;
@@ -91,15 +90,6 @@ class Facebook extends AbstractEnvironment
 				}
 			}
 		}
-
-		// Initializes Facebook canvas information
-		/*if ( $fb_app_id && $this->entity->getInfo( 'fb_app_namespace' ) ) {
-			$this->facebook['app_namespace'] = $this->entity->getInfo( 'fb_app_namespace' );
-			$this->appId                     = $fb_app_id;
-			$canvas_url                      = 'https://apps.facebook.com/' . $this->facebook['app_namespace'] . '/?entityId=' . $this->entityId;
-			$this->facebook['canvas_url']    = $canvas_url;
-		}*/
-
 	}
 
 	/**
