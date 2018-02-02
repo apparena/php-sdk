@@ -1,4 +1,5 @@
 <?php
+
 namespace AppArena\Models\Entities;
 
 /**
@@ -14,11 +15,11 @@ class App extends AbstractEntity {
 	/**
 	 * Initialize app related information and try to get the App ID from different environments
 	 *
-	 * @param int $id ID of the entity
+	 * @param int $id        ID of the entity
 	 * @param int $versionId Version ID, which has been submitted during App-Manager initialization
 	 */
 	public function __construct( $id = null, $versionId ) {
-		$this->type = 'app';
+		$this->type      = 'app';
 		$this->versionId = $versionId;
 
 		// If no App ID available, then try to recover it
@@ -33,7 +34,7 @@ class App extends AbstractEntity {
 	 * @return integer
 	 */
 	public function getTemplateId() {
-		return $this->getInfo('templateId');
+		return $this->getInfo( 'templateId' );
 	}
 
 	/**
@@ -97,8 +98,8 @@ class App extends AbstractEntity {
 
 		// Set ID to the object and the users session and cookie
 		if ( $id ) {
-			$_SESSION['current_appId'] = (int)$id;
-			$this->id                  = (int)$id;
+			$_SESSION['current_appId'] = (int) $id;
+			$this->id                  = (int) $id;
 		}
 
 		return $this->id;
@@ -106,7 +107,7 @@ class App extends AbstractEntity {
 
 
 	/**
-	 * Returns a list of all channels the app is published on
+	 * Returns a list of all channels the app is published on in prioritized order (highest channel first)
 	 * @return array|bool
 	 */
 	public function getChannels() {
@@ -115,18 +116,125 @@ class App extends AbstractEntity {
 			return $this->channels;
 		}
 
-		// App infos is a merged array of basic app information and additional app meta data
-		$channels = $this->api->get( 'apps/' . $this->id . '/channels' );
+		// 1. Initialize the default channel (Base Url with direct access)
+		$channels = [
+			[
+				'channelId' => 0,
+				'priority'  => 100,
+				'type'      => 'domain',
+				'name'      => 'Default domain',
+				'url'       => $this->getBaseUrl()
+			]
+		];
 
-		if ( isset( $channels['_embedded']['data'] ) && is_array( $channels['_embedded']['data'] ) ) {
-			$this->channels = $channels['_embedded']['data'];
+		// 2. Add a channel which might be added (e.g. added via GET param)
+		if ( isset( $_GET['fb_page_id'] ) && $this->getInfo( 'fb_app_id' ) ) {
+			// Add channel with high priority as it is explicitly defined in GET parameter
+			$channels[] = [
+				'channelId' => 0,
+				'priority'  => 9999,
+				'type'      => 'facebook',
+				'name'      => 'Facebook Page added via GET parameter fb_page_id',
+				'url'       => 'https://www.facebook.com/' . $_GET['fb_page_id'] . '/app/' . $this->getInfo( 'fb_app_id' ),
+			];
+		}
+
+		if ( isset( $_GET['website'] ) ) {
+			// Add channel with high priority as it is explicitly defined in GET parameter
+			$channels[] = [
+				'channelId' => 0,
+				'priority'  => 9999,
+				'type'      => 'website',
+				'name'      => 'Website added via GET parameter website',
+				'url'       => $_GET['website'],
+			];
+		}
+		// App infos is a merged array of basic app information and additional app meta data
+		$installedChannels = $this->api->get( 'apps/' . $this->id . '/channels' );
+
+		if ( isset( $installedChannels['_embedded']['data'] ) && is_array( $installedChannels['_embedded']['data'] ) ) {
+			$installedChannels = $installedChannels['_embedded']['data'];
+
+			// Prepare data
+			$installedChannels = array_map(function($channel){
+				if ($channel['type'] === 'facebook') {
+					// If a target GET parameter is defined and set to 'facebook', then Facebook channels will get higher prio
+					$priority = $channel['priority'] ?? 0;
+					if (isset($_GET['target']) && $_GET['target'] === 'facebook'){
+						$priority = 8888; // Not as high as directly called channels
+					}
+
+					return [
+						'channelId' => $channel['channelId'],
+						'priority'  => $priority,
+						'type'      => 'facebook',
+						'name'      => $channel['name'] ?? 'Channel ID ' . $channel['channelId'],
+						'url'       => 'https://www.facebook.com/' . $channel['value'] . '/app/' . $this->getInfo( 'fb_app_id' ),
+					];
+				}
+				if ($channel['type'] === 'website') {
+					// If a target GET parameter is defined and set to 'facebook', then Facebook channels will get higher prio
+					$priority = $channel['priority'] ?? 0;
+					if (isset($_GET['target']) && $_GET['target'] === 'website'){
+						$priority = 8888; // Not as high as directly called channels
+					}
+
+					return [
+						'channelId' => $channel['channelId'],
+						'priority'  => $priority,
+						'type'      => 'website',
+						'name'      => $channel['name'] ?? 'Channel ID ' . $channel['channelId'],
+						'url'       => $channel['value'],
+					];
+				}
+				if ($channel['type'] === 'domain') {
+					// If a target GET parameter is defined and set to 'facebook', then Facebook channels will get higher prio
+					$priority = $channel['priority'] ?? 0;
+					if (isset($_GET['target']) && $_GET['target'] === 'domain'){
+						$priority = 8888; // Not as high as directly called channels
+					}
+
+					return [
+						'channelId' => $channel['channelId'],
+						'priority'  => $priority,
+						'type'      => 'domain',
+						'name'      => $channel['name'] ?? 'Channel ID ' . $channel['channelId'],
+						'url'       => $channel['value'],
+					];
+				}
+
+
+			}, $installedChannels);
+
+			// Merge default channels and channels the customer has installed the app on
+			$channels       = array_merge_recursive( $channels, $installedChannels );
+			$this->channels = $channels;
 		} else {
-			return false;
+			$this->channels = $defaultChannels;
 		}
 
 		if ( ! $this->channels ) {
 			return false;
 		}
+
+		// Order all channel by priority
+		$priority = [];
+		foreach ( $channels as $key => $row ) {
+			// If the current channel is exoplicitly prioritized via GET param, then give it a high priority
+			$channelId = $row['channelId'] ?? 0;
+			if ( isset( $_GET['channelId'] ) && $_GET['channelId'] == $channelId ) {
+				$row['priority'] = 9999;
+				$channels[$key]['priority'] = 9999;
+			}
+
+			if ( ! isset( $row['priority'] ) ) {
+				$row['priority'] = 0;
+			}
+
+			$priority[ $key ] = $row['priority'];
+		}
+		array_multisort( $priority, SORT_DESC, $channels );
+		$this->channels = $channels;
 
 		return $this->channels;
 	}
@@ -155,11 +263,11 @@ class App extends AbstractEntity {
 				$request_url = "https://manager.app-arena.com/api/v1/env/fb/pages/" . $fb_page_id .
 				               "/instances.json?projectId=" . $this->versionId . "&active=true";
 				// If the facebook App ID is submitted, then it will be added to the request
-				if (isset($_GET['fb_app_id']) && strlen($_GET['fb_app_id']) > 10) {
+				if ( isset( $_GET['fb_app_id'] ) && strlen( $_GET['fb_app_id'] ) > 10 ) {
 					$request_url .= '&fb_app_id=' . $_GET['fb_app_id'];
 				}
 
-				$instances   = json_decode( file_get_contents( $request_url ), true );
+				$instances = json_decode( file_get_contents( $request_url ), true );
 				foreach ( $instances['data'] as $instance ) {
 					if ( $instance['activate'] == 1 ) {
 						$appId = $instance['i_id'];

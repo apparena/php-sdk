@@ -91,6 +91,9 @@ class SmartLink {
 
 		// Initializes the SmartCookie
 		$this->initCookies();
+
+		// Initialize the SmartLink Url
+		$this->initUrl();
 	}
 
 	/**
@@ -343,7 +346,7 @@ class SmartLink {
 			'params'         => $this->prepareMustacheArray( $this->getParams() ),
 			'params_expired' => $this->prepareMustacheArray( $this->paramsExpired ),
 			'reasons'        => $this->reasons,
-			'target'         => $this->getEnvironment()->getPrimaryEnvironment()->getType(),
+			//'target'         => $this->getEnvironment()->getPrimaryEnvironment()->getType(),
 			'url'            => $this->getUrl(),
 			'url_target'     => $this->getUrlTarget()
 		];
@@ -458,11 +461,14 @@ class SmartLink {
 	}
 
 	/**
+	 * Returns the SmartLink Url for the current environment
+	 *
 	 * @params bool $shortenLink Make a Short Link?
 	 *
 	 * @return mixed
 	 */
 	public function getUrl( $shortenLink = false ) {
+
 		$this->initUrl();
 
 		if ( $shortenLink ) {
@@ -473,94 +479,36 @@ class SmartLink {
 	}
 
 	/**
-	 * Analyzes all available data and sets the best suited target environment for the user
+	 * Initialize the Url compatible to the current device
 	 *
 	 * @return array All available information about the environments
 	 */
 	private function initUrl() {
-		$url = false;
 
-		// Due to Safari Cookie Blocking policies, redirect Safari Users to the direct page
-		/*$browser = $this->getBrowser();
-		if ($browser['name'] == 'Safari') {
-			$this->reasons[] = 'BROWSER: Safari is used. Change target to direct';
-			$this->setTarget('direct');
-		}*/
+		$channels   = $this->getEntity()->getChannels();
+		$deviceType = $this->getEnvironment()->getDevice()->getDeviceType();
 
-		// 1. If a website is defined, use the website as default environment
-		if ( $this->website->getUrl() ) {
-			$this->reasons[] = 'ENV: Website is defined';
-
-			// Validate the Website url
-			$website_valid = true;
-			if ( strpos( $this->website->getUrl(), 'www.facebook.com/' ) !== false || strpos( $this->website->getUrl(),
-					'static.sk.facebook.com' ) !== false || strpos( $this->website->getUrl(),
-					'.js' ) !== false
-			) {
-				$this->reasons[] = 'ENV: Website target is not valid, so it cannot be used as target.';
-				$website_valid   = false;
+		// Check if the channel is compatible with the current device
+		foreach ( $channels as $channel ) {
+			// Facebook page tab cannot be accessed by mobile and desktop devices
+			if ( $channel['type'] == 'facebook' && in_array( $deviceType, [ 'mobile', 'tablet' ] ) ) {
+				continue;
 			}
-
-			// Check if another target is defined, then add the website as GET param, but do not use it for redirection
-			if ( $this->getUrlTarget() && $this->getTarget() !== 'website' ) {
-				$this->reasons[] = 'ENV: Website valid, but another target is defined';
-				$this->addParams( [ 'website' => $this->website->getUrl() ] );
-				$website_valid = false;
-			}
-
-			// If Website is valid, then use it
-			if ( $website_valid ) {
-				$this->setUrl( $this->website->getUrl() );
-
-				return;
-			}
-		} else {
-			$this->reasons[] = 'ENV: No website parameter defined';
-		}
-
-		// If there is no website defined, check if the device is tablet or mobile. If so, use direct access
-		if ( in_array( $this->getEnvironment()->getDevice()->getDeviceType(), [ 'mobile', 'tablet' ] ) ) {
-			$this->reasons[] = 'DEVICE: User is using a ' . $this->getEnvironment()->getDevice()->getDeviceType() . ' device. Direct Access.';
-			if ( $this->getBaseUrl() ) {
-				$this->setUrl( $this->getBaseUrl() );
-			} else {
-				$this->setUrl( $this->entity->getInfo( 'base_url' ) );
-			}
+			$this->setUrl( $channel );
 
 			return;
 		}
 
-		// So here should be only Desktop devices... So check if facebook page tab information are available...
-		$this->reasons[] = 'DEVICE: User is using a desktop device.';
-		$facebook        = $this->getFacebook();
-		if ( $facebook->getPageId() && $facebook->getAppId() ) {
-			$this->reasons[] = 'ENV: Facebook environment data available.';
+	}
 
-			// Check if another target is defined, then add the website as GET param, but do not use it for redirection
-			$facebook_valid = true;
-			if ( $this->getUrlTarget() && $this->getTarget() !== 'facebook' ) {
-				$this->reasons[] = 'ENV: Facebook environment valid, but another target is defined';
-				$facebook_valid  = false;
-			}
 
-			// If Facebook Environment is valid and the facebook should be used as target
-			if ( $facebook_valid ) {
-				$this->setUrl( $facebook->getPageTab() );
-
-				return;
-			}
-		}
-
-		// If no optimal url is defined yet, then use direct source
-		$this->reasons[] = 'DEVICE: No website or facebook defined. Choose environment direct';
-		if ( $this->getBaseUrl() ) {
-			$this->setUrl( $this->getBaseUrl() );
-		} else {
-			$this->setUrl( $this->entity->getInfo( 'base_url' ) );
-		}
-
-		return;
-
+	/**
+	 * Returns an array of all publication channels in their priority Order
+	 *
+	 * @return Returns an array of channels prioritized by priority
+	 */
+	private function getChannels() {
+		return $this->getEntity()->getChannels();
 	}
 
 	/**
@@ -599,13 +547,14 @@ class SmartLink {
 	/**
 	 * Generates the SmartLink from the submitted url
 	 *
-	 * @param String $target_url  Url to generate the smartlink from
-	 * @param bool   $shortenLink Shorten the SmartLink using bit.ly
+	 * @param array $targetChannel Optimal target channel for the current environment
+	 * @param bool  $shortenLink   Shorten the SmartLink using bit.ly
 	 */
-	private function setUrl( $target_url, $shortenLink = false ) {
+	private function setUrl( $targetChannel, $shortenLink = false ) {
 		$share_url          = $this->getBaseUrl() . $this->getFilename();
+		$target_url         = $targetChannel['url'];
 		$target_original    = $target_url;
-		$target_environment = $this->getEnvironment()->getPrimaryEnvironment()->getType();
+		$target_environment = $targetChannel['type'];
 
 		$params = [];
 

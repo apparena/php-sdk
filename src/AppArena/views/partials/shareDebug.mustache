@@ -25,14 +25,14 @@
                                 <a href="{{ url_target }}" target="_blank">{{ url_target }}</a>
                             </td>
                         </tr>
-                        <tr>
+                        <!--<tr>
                             <td>
                                 Target Environment
                             </td>
                             <td>
                                 {{ target }}
                             </td>
-                        </tr>
+                        </tr>-->
                         <tr>
                             <td>
                                 Language
@@ -64,30 +64,27 @@
 
             <div class="row">
                 <div class="col-md-12">
-                    <h2>Channels the app is installed on</h2>
-
+                    <h2>Channels</h2>
                     <table class="table table-striped">
                         <thead>
                         <tr>
-                            <th>Type</th>
-                            <th>Name</th>
-                            <th>Url</th>
+                            <th>channelId</th>
+                            <th>priority</th>
+                            <th>type</th>
+                            <th>name</th>
+                            <th>url</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {{#channels}}
+                        {{# channels }}
                             <tr>
-                                <td>
-                                    {{type}}
-                                </td>
-                                <td>
-                                    {{name}}
-                                </td>
-                                <td>
-                                    {{value}}
-                                </td>
+                                <td>{{ channelId }}</td>
+                                <td>{{ priority }}</td>
+                                <td>{{ type }}</td>
+                                <td>{{ name }}</td>
+                                <td>{{ url }}</td>
                             </tr>
-                        {{/channels}}
+                        {{/ channels }}
                         </tbody>
                     </table>
                 </div>

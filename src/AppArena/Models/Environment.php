@@ -53,7 +53,7 @@ class Environment {
 	 *
 	 * @return AbstractEnvironment
 	 */
-	public function getPrimaryEnvironment() {
+	/*public function getPrimaryEnvironment() {
 
 		if ($this->website->getUrl()) {
 			return $this->website;
@@ -64,7 +64,7 @@ class Environment {
 		}
 
 		return $this->domain;
-	}
+	}*/
 
 
 	/**

@@ -272,7 +272,7 @@ abstract class AbstractEntity implements EntityInterface {
 
 		if ( isset( $meta['_embedded']['data'] ) && is_array( $meta['_embedded']['data'] ) ) {
 			$values = array_map( function ( $item ) {
-				if (isset($item['value'])) {
+				if ( isset( $item['value'] ) ) {
 					return $item['value'];
 				}
 			}, $meta['_embedded']['data'] );
@@ -448,44 +448,47 @@ abstract class AbstractEntity implements EntityInterface {
 		if ( ! $this->lang ) {
 			// Try to recover language from Request
 			$lang = false;
-            if ( isset( $_GET['lang'] ) ) {
-                $this->setLang($_GET['lang']);
-                return $this->lang;
-            }
+			if ( isset( $_GET['lang'] ) ) {
+				$this->setLang( $_GET['lang'] );
+
+				return $this->lang;
+			}
 
 			// Try to get lang from Cookie
 			if ( isset( $_COOKIE[ 'aa_' . $this->id . '_lang' ] ) ) {
 				$this->lang = $_COOKIE[ 'aa_' . $this->id . '_lang' ];
+
 				return $this->lang;
 			}
 
 			// Get the default language from of the entity
-			if ($languages = $this->getLanguages()) {
-                foreach ( $languages['activated'] as $language ) {
-                    if ($language['default']) {
-                        $this->lang = $language['lang'];
-                        return $this->lang;
-                    }
-                }
-            }
+			if ( $languages = $this->getLanguages() ) {
+				foreach ( $languages['activated'] as $language ) {
+					if ( $language['default'] ) {
+						$this->lang = $language['lang'];
+
+						return $this->lang;
+					}
+				}
+			}
 		}
 
 		return $this->lang;
 	}
 
-    /**
-     * @param string $lang
-     */
-    public function setLang( $lang ) {
-        // Validate language code
-        $languages = $this->validLanguages;
-        if ( ! isset( $languages[ $lang ] ) ) {
-            throw new \InvalidArgumentException( $lang . ' is not a valid language code' );
-        }
-        setcookie('aa_' . $this->id . '_lang', $lang, time() + 172600, '/');
+	/**
+	 * @param string $lang
+	 */
+	public function setLang( $lang ) {
+		// Validate language code
+		$languages = $this->validLanguages;
+		if ( ! isset( $languages[ $lang ] ) ) {
+			throw new \InvalidArgumentException( $lang . ' is not a valid language code' );
+		}
+		setcookie( 'aa_' . $this->id . '_lang', $lang, time() + 172600, '/' );
 
-        $this->lang = $lang;
-    }
+		$this->lang = $lang;
+	}
 
 	/**
 	 * @return mixed
@@ -502,4 +505,23 @@ abstract class AbstractEntity implements EntityInterface {
 	}
 
 
+	/**
+	 * Returns the base url of the entity
+	 */
+	protected function getBaseUrl() {
+		// Initialize the base_url
+		$base_url = $this->getInfo( 'base_url' );
+		if ( isset( $_SERVER['SERVER_NAME'] ) ) {
+			$base_url = 'http';
+			if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ) {
+				$base_url .= 's';
+			}
+			$base_url .= '://';
+			$base_url .= $_SERVER['SERVER_NAME'];
+			if ( substr( $base_url, - 1 ) !== '/' ) {
+				$base_url .= '/';
+			}
+		}
+		return $base_url;
+	}
 }
