@@ -359,7 +359,7 @@ class AppManager {
 		if ( in_array( $lang, $allowed ) ) {
 			$this->lang = $lang;
 			$this->app->setLang( $this->lang );
-			$this->getSmartLink()->setLang( $this->lang );
+			//$this->getSmartLink()->setLang( $this->lang );
 		}
 
 	}
