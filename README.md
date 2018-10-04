@@ -1,11 +1,9 @@
 # App-Arena.com php-sdk
 
-[![Build Status](https://travis-ci.org/apparena/php-sdk.svg?branch=master)](https://travis-ci.org/apparena/php-sdk)
-
 ## Getting started
 
 Use this SDK to setup the connection to your
-[App-Manager Project](https://my.app-arena.com/projects).
+[App-Arena™ Plattform Project](https://my.app-arena.com/projects).
 
 
 ## Installation
