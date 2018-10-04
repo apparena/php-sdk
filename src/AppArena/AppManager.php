@@ -30,6 +30,9 @@ class AppManager {
 	/** @var  App */
 	private $app;
 
+	/** @var int ID of the App-Arena app Id */
+	private $appId;
+
 	/** @var  Cache */
 	private $cache;
 
@@ -67,10 +70,11 @@ class AppManager {
 		try {
 
 			// Check if the versionId as required parameter has been set
-			if (!isset($options['versionId']) || (int)$options['versionId'] < 1) {
-				throw new \InvalidArgumentException('No versionId has been set during the initialization.');
+			if ( ! isset( $options['versionId'] ) || (int) $options['versionId'] < 1 ) {
+				throw new \InvalidArgumentException( 'No versionId has been set during the initialization.' );
 			}
-			$this->versionId = (int)$options['versionId'];
+			$this->versionId = (int) $options['versionId'];
+			$this->appId     = isset( $options['appId'] ) ? (int) $options['appId'] : null;
 
 			// Get primary Entity to get information for (version, template or app)
 			$this->primaryEntity = $this->getPrimaryEntity();
@@ -114,62 +118,6 @@ class AppManager {
 	}
 
 	/**
-	 * @inheritdoc
-	 */
-	public function getConfig( $configKey, $attr = 'value' ) {
-		return $this->primaryEntity->getConfig( $configKey, $attr );
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function getConfigs() {
-		return $this->primaryEntity->getConfigs();
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function getId() {
-		return $this->primaryEntity->getId();
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function getInfo( $infoKey ) {
-		return $this->primaryEntity->getInfo( $infoKey );
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function getInfos() {
-		return $this->primaryEntity->getInfos();
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function getLanguages() {
-		return $this->primaryEntity->getLanguages();
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function getTranslation( $translationKey, array $args = [] ) {
-		return $this->primaryEntity->getTranslation( $translationKey, $args );
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function getTranslations() {
-		return $this->primaryEntity->getTranslations();
-	}
-
-	/**
 	 * Returns an implementation of the AbstractEntity object, depending on the Query params available for the current
 	 * request.
 	 *
@@ -202,7 +150,7 @@ class AppManager {
 
 		// Else the app is the primary object
 		if ( ! $this->app ) {
-			$this->app = new App(null, $this->versionId);
+			$this->app = new App( $this->appId, $this->versionId );
 		}
 
 		// If not even an app ID could be instantiated, then throw an exception
@@ -211,6 +159,55 @@ class AppManager {
 		}
 
 		return $this->app;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getInfos() {
+		return $this->primaryEntity->getInfos();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getConfig( $configKey, $attr = 'value' ) {
+		return $this->primaryEntity->getConfig( $configKey, $attr );
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getConfigs() {
+		return $this->primaryEntity->getConfigs();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getInfo( $infoKey ) {
+		return $this->primaryEntity->getInfo( $infoKey );
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getLanguages() {
+		return $this->primaryEntity->getLanguages();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getTranslation( $translationKey, array $args = [] ) {
+		return $this->primaryEntity->getTranslation( $translationKey, $args );
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getTranslations() {
+		return $this->primaryEntity->getTranslations();
 	}
 
 	/**
@@ -225,11 +222,205 @@ class AppManager {
 	}
 
 	/**
+	 * @return SmartLink Smartlink object
+	 *
+	 * @throws \Exception
+	 */
+	public function getSmartLink() {
+
+		if ( ! $this->smartLink ) {
+			$this->smartLink = new SmartLink( $this->getPrimaryEntity(), $this->getEnvironment(), $this->getApi()->getCache() );
+		}
+
+		return $this->smartLink;
+	}
+
+	/**
+	 * @return Environment
+	 */
+	public function getEnvironment() {
+		return $this->environment;
+	}
+
+	/**
+	 * @return Api
+	 */
+	private function getApi() {
+		return $this->api;
+	}
+
+	/**
 	 * Returns the Long version of the smartLink
 	 * @return mixed
 	 */
 	public function getUrlLong() {
 		return $this->getSmartLink()->getUrlLong();
+	}
+
+	/**
+	 * Renders the complete smartlink.php page
+	 *
+	 * @param bool $debug Show debug information on the page?
+	 */
+	public function renderSharePage( $debug = false ) {
+		return $this->getSmartLink()->renderSharePage( $debug );
+	}
+
+	/**
+	 * Sets the meta data for SmartLink Sharing
+	 *
+	 * meta array
+	 *      ['title']           String Config text identifier for the sharing title
+	 *      ['desc']            String Config text identifier for the sharing description
+	 *      ['image']           String Config image identifier for the sharing image
+	 *      ['og_type']         String Open graph type --> see http://ogp.me/#types
+	 *      ['schema_type']     String Schema.org type --> see http://schema.org/docs/full.html
+	 *
+	 * @param array $meta (see above)
+	 *
+	 * @return array Returns meta data for the page
+	 */
+	public function setMeta( $meta ) {
+		return $this->getSmartLink()->setMeta( $meta );
+	}
+
+	/**
+	 * This will add parameters to the smartLink Url. These parameters will be available as GET-Parameters, when a user
+	 * clicks on the smartLink. The parameters will be available as GET parameters as well in the facebook page tab
+	 * or within an iframe
+	 *
+	 * @param array $params Array of parameters which should be passed through
+	 */
+	public function addParams( $params ) {
+		$this->getSmartLink()->addParams( $params );
+	}
+
+	/**
+	 * Resets all params for the SmartLink Url
+	 *
+	 * @param array $params Array of parameters which should be passed through
+	 */
+	public function setParams( $params ) {
+		$this->getSmartLink()->setParams( $params );
+	}
+
+	/**
+	 * Returns all parameters of the SmartLink as array
+	 * @return array SmartLink Parameters
+	 */
+	public function getParams() {
+		return $this->getSmartLink()->getParams( true );
+	}
+
+	/**
+	 * Returns a list of all channels the app has been published on
+	 * @return array List of all channels the entity is installed on
+	 */
+	public function getChannels() {
+		return $this->getPrimaryEntity()->getChannels();
+	}
+
+	/**
+	 * Returns the device type of the current device 'mobile', 'tablet', 'desktop'
+	 */
+	public function getDeviceType() {
+		return $this->getDevice()->getDeviceType();
+	}
+
+	/**
+	 * Returns user device information
+	 */
+	public function getDevice() {
+		return $this->getEnvironment()->getDevice();
+	}
+
+	/**
+	 * Returns the operating system of the current device
+	 */
+	public function getOperatingSystem() {
+		return $this->getEnvironment()->getOperationSystem();
+	}
+
+	/**
+	 * Returns all available Facebook information, like currently used fanpage and canvas information
+	 */
+	public function getFacebook() {
+		return $this->getEnvironment()->getFacebook();
+	}
+
+	/**
+	 * Returns user browser information
+	 * @return \UserAgentParser\Model\Browser
+	 */
+	public function getBrowser() {
+		return $this->getEnvironment()->getBrowser();
+	}
+
+	/**
+	 * Returns the BaseUrl your Sharing Url is generated with. By default it will use the currently used domain
+	 * @return string Base Url
+	 */
+	public function getBaseUrl() {
+		return $this->getSmartLink()->getBaseUrl();
+	}
+
+	/**
+	 * Sets a new base url for your sharing links (-->getUrl()).
+	 *
+	 * @param string $base_url New base url
+	 */
+	public function setBaseUrl( $base_url ) {
+		$this->getSmartLink()->setBaseUrl( $base_url );
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getCookie() {
+		return $this->cookie;
+	}
+
+	/**
+	 * @param mixed $cookie
+	 */
+	public function setCookieValue( $cookie ) {
+		$this->cookie = $cookie;
+	}
+
+	/**
+	 * @param String $file_id Identifier for the file (in most cases defined css-config file)
+	 *
+	 * @return String returns the CSS filename of the
+	 */
+	public function getCssFileName( $file_id ) {
+		return $this->getCssCompiler()->getCacheKey( $file_id );
+	}
+
+	/**
+	 * Returns the CSS Helper object, which can be used to generate CSS files from Less or config value sources
+	 * @return CssCompiler Css helper
+	 */
+	public function getCssCompiler() {
+
+		if ( ! $this->cssCompiler ) {
+			$this->cssCompiler = new CSSCompiler(
+				$this->getCache(),
+				$this->getPrimaryEntity(),
+				$this->getLang(),
+				"style",
+				$this->root_path,
+				$this->cache_dir
+			);
+		}
+
+		return $this->cssCompiler;
+	}
+
+	/**
+	 * @return Cache
+	 */
+	private function getCache() {
+		return $this->cache;
 	}
 
 	/**
@@ -364,193 +555,6 @@ class AppManager {
 
 	}
 
-	/**
-	 * Renders the complete smartlink.php page
-	 *
-	 * @param bool $debug Show debug information on the page?
-	 */
-	public function renderSharePage( $debug = false ) {
-		return $this->getSmartLink()->renderSharePage( $debug );
-	}
-
-	/**
-	 * Sets the meta data for SmartLink Sharing
-	 *
-	 * meta array
-	 *      ['title']           String Config text identifier for the sharing title
-	 *      ['desc']            String Config text identifier for the sharing description
-	 *      ['image']           String Config image identifier for the sharing image
-	 *      ['og_type']         String Open graph type --> see http://ogp.me/#types
-	 *      ['schema_type']     String Schema.org type --> see http://schema.org/docs/full.html
-	 *
-	 * @param array $meta (see above)
-	 *
-	 * @return array Returns meta data for the page
-	 */
-	public function setMeta( $meta ) {
-		return $this->getSmartLink()->setMeta( $meta );
-	}
-
-	/**
-	 * This will add parameters to the smartLink Url. These parameters will be available as GET-Parameters, when a user
-	 * clicks on the smartLink. The parameters will be available as GET parameters as well in the facebook page tab
-	 * or within an iframe
-	 *
-	 * @param array $params Array of parameters which should be passed through
-	 */
-	public function addParams( $params ) {
-		$this->getSmartLink()->addParams( $params );
-	}
-
-	/**
-	 * Resets all params for the SmartLink Url
-	 *
-	 * @param array $params Array of parameters which should be passed through
-	 */
-	public function setParams( $params ) {
-		$this->getSmartLink()->setParams( $params );
-	}
-
-	/**
-	 * Returns all parameters of the SmartLink as array
-	 * @return array SmartLink Parameters
-	 */
-	public function getParams() {
-		return $this->getSmartLink()->getParams( true );
-	}
-
-	/**
-	 * Returns a list of all channels the app has been published on
-	 * @return array List of all channels the entity is installed on
-	 */
-	public function getChannels( ) {
-		return $this->getPrimaryEntity()->getChannels();
-	}
-
-	/**
-	 * Returns user device information
-	 */
-	public function getDevice() {
-		return $this->getEnvironment()->getDevice();
-	}
-
-	/**
-	 * Returns the device type of the current device 'mobile', 'tablet', 'desktop'
-	 */
-	public function getDeviceType() {
-		return $this->getDevice()->getDeviceType();
-	}
-
-	/**
-	 * Returns the operating system of the current device
-	 */
-	public function getOperatingSystem() {
-		return $this->getEnvironment()->getOperationSystem();
-	}
-
-	/**
-	 * Returns all available Facebook information, like currently used fanpage and canvas information
-	 */
-	public function getFacebook() {
-		return $this->getEnvironment()->getFacebook();
-	}
-
-	/**
-	 * Returns user browser information
-	 * @return \UserAgentParser\Model\Browser
-	 */
-	public function getBrowser() {
-		return $this->getEnvironment()->getBrowser();
-	}
-
-	/**
-	 * @return Environment
-	 */
-	public function getEnvironment() {
-		return $this->environment;
-	}
-
-	/**
-	 * Returns the BaseUrl your Sharing Url is generated with. By default it will use the currently used domain
-	 * @return string Base Url
-	 */
-	public function getBaseUrl() {
-		return $this->getSmartLink()->getBaseUrl();
-	}
-
-	/**
-	 * Sets a new base url for your sharing links (-->getUrl()).
-	 *
-	 * @param string $base_url New base url
-	 */
-	public function setBaseUrl( $base_url ) {
-		$this->getSmartLink()->setBaseUrl( $base_url );
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getCookie() {
-		return $this->cookie;
-	}
-
-	/**
-	 * @param mixed $cookie
-	 */
-	public function setCookieValue( $cookie ) {
-		$this->cookie = $cookie;
-	}
-
-	/**
-	 * @return Api
-	 */
-	private function getApi() {
-		return $this->api;
-	}
-
-	/**
-	 * Returns the CSS Helper object, which can be used to generate CSS files from Less or config value sources
-	 * @return CssCompiler Css helper
-	 */
-	public function getCssCompiler() {
-
-		if ( ! $this->cssCompiler ) {
-			$this->cssCompiler = new CSSCompiler(
-				$this->getCache(),
-				$this->getPrimaryEntity(),
-				$this->getLang(),
-				"style",
-				$this->root_path,
-				$this->cache_dir
-			);
-		}
-
-		return $this->cssCompiler;
-	}
-
-	/**
-	 * @param String $file_id Identifier for the file (in most cases defined css-config file)
-	 *
-	 * @return String returns the CSS filename of the
-	 */
-	public function getCssFileName( $file_id ) {
-		return $this->getCssCompiler()->getCacheKey( $file_id );
-	}
-
-	/**
-	 * Returns an array of compiled css files. You can submit a CSS config array regarding to the
-	 * documentation, including CSS, Less, SCSS files. Furthermore you can define tring replacements
-	 * and use config variables of the current app.
-	 * @see http://app-arena.readthedocs.org/en/latest/sdk/php/030-css.html
-	 *
-	 * @param $css_config array CSS Configuration array
-	 *
-	 * @return array Assocative array including all compiled CSS files
-	 */
-	public function getCSSFiles( $css_config ) {
-		return $this->getCssCompiler()->getCSSFiles( $css_config );
-	}
-
 	/*/**
 	 * @return string
 	 */
@@ -569,17 +573,17 @@ class AppManager {
 	}*/
 
 	/**
-	 * @return SmartLink Smartlink object
+	 * Returns an array of compiled css files. You can submit a CSS config array regarding to the
+	 * documentation, including CSS, Less, SCSS files. Furthermore you can define tring replacements
+	 * and use config variables of the current app.
+	 * @see http://app-arena.readthedocs.org/en/latest/sdk/php/030-css.html
 	 *
-	 * @throws \Exception
+	 * @param $css_config array CSS Configuration array
+	 *
+	 * @return array Assocative array including all compiled CSS files
 	 */
-	public function getSmartLink() {
-
-		if ( ! $this->smartLink ) {
-			$this->smartLink = new SmartLink( $this->getPrimaryEntity(), $this->getEnvironment(), $this->getApi()->getCache() );
-		}
-
-		return $this->smartLink;
+	public function getCSSFiles( $css_config ) {
+		return $this->getCssCompiler()->getCSSFiles( $css_config );
 	}
 
 	/**
@@ -612,10 +616,10 @@ class AppManager {
 	}
 
 	/**
-	 * @return Cache
+	 * @inheritdoc
 	 */
-	private function getCache() {
-		return $this->cache;
+	public function getId() {
+		return $this->primaryEntity->getId();
 	}
 
 

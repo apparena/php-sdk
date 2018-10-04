@@ -22,16 +22,15 @@ Initialize the SDK within our index.php or similar
 require __DIR__ . '/vendor/autoload.php';
 
 // Add App-Arena App-Manager
-$am = new \AppArena\AppManager(
-    array(
-        'versionId' => 123, // Add the required version ID of your project version here
-        'root_path' => __DIR__ . '/public', // Root path accessible from the web
-        'cache' => [
-            'dir' => __DIR__ . '/public/var/cache', // Writable folder for file cache. Check the cache section for more options
-        ],
-        'apikey' => 'ABCDEFGHIJKLMNOPQRSTUVW' // Add you API key here
-    )
-);
+$am = new \AppArena\AppManager([
+    'appId' => 1234, // (optional) If you know the appId, then submit it here. Else the SDK will try to get it form GET, POST, REQUEST parameters or facebook settings
+    'versionId' => 123, // Add the required version ID of your project version here
+    'root_path' => __DIR__ . '/public', // Root path accessible from the web
+    'cache' => [
+        'dir' => __DIR__ . '/public/var/cache', // Writable folder for file cache. Check the cache section for more options
+    ],
+    'apikey' => 'ABCDEFGHIJKLMNOPQRSTUVW' // Add you API key here
+]);
 // Get config values, languages, translations and infos from the current app, template or version
 $configs      = $am->getConfigs();
 $infos        = $am->getInfos();
