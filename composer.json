@@ -23,7 +23,6 @@
   ],
   "minimum-stability": "dev",
   "require": {
-    "apparena/analytics-php": "^1.6.1",
     "ext-curl": "*",
     "ext-gd": "*",
     "leafo/scssphp": "^v0.7.5",
