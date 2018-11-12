@@ -124,17 +124,15 @@ class AppManager {
 	 * @return AbstractEntity Entity object to get information for
 	 * @throws EntityUnknownException Throws an exception, when now Entity ID is available
 	 */
-	private function getPrimaryEntity() {
+	private function getPrimaryEntity(): AbstractEntity {
 
-		// If a versionId GET or POST param is set, then the primary Entity is the Version object
-		if ( isset( $_GET['versionId'] ) || isset( $_POST['versionId'] ) ) {
-			if ( ! $this->version ) {
-				$versionId     = isset( $_GET['versionId'] ) ? $_GET['versionId'] : false;
-				$versionId     = $versionId ? $versionId : $_POST['versionId'];
-				$this->version = new Version( $versionId );
+		// If an appId is already available, then return the app as primary entity.
+		if ( $this->appId ) {
+			if (!$this->app) {
+				$this->app = new App( $this->appId, $this->versionId );
 			}
 
-			return $this->version;
+			return $this->app;
 		}
 
 		// If a templateId GET or POST param is set, then the primary Entity is the Template object
@@ -146,6 +144,17 @@ class AppManager {
 			}
 
 			return $this->template;
+		}
+
+		// If a versionId GET or POST param is set, then the primary Entity is the Version object
+		if ( isset( $_GET['versionId'] ) || isset( $_POST['versionId'] ) ) {
+			if ( ! $this->version ) {
+				$versionId     = isset( $_GET['versionId'] ) ? $_GET['versionId'] : false;
+				$versionId     = $versionId ? $versionId : $_POST['versionId'];
+				$this->version = new Version( $versionId );
+			}
+
+			return $this->version;
 		}
 
 		// Else the app is the primary object
