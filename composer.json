@@ -25,7 +25,7 @@
   "require": {
     "ext-curl": "*",
     "ext-gd": "*",
-    "leafo/scssphp": "^v0.7.5",
+    "leafo/scssphp": "^v0.7.7",
     "mobiledetect/mobiledetectlib": "^2.8.12",
     "mustache/mustache": "v2.8.0",
     "oyejorge/less.php": "^1.7",
