@@ -461,6 +461,16 @@ abstract class AbstractEntity implements EntityInterface {
                 return $this->lang;
             }
 
+            if ( isset( $_REQUEST['lang'] ) ) {
+                $this->lang = $_REQUEST['lang'];
+                return $this->lang;
+            }
+
+            if ( isset( $_SERVER['lang'] ) ) {
+                $this->lang = $_SERVER['lang'];
+                return $this->lang;
+            }
+
             // Get the default language from of the entity
             if ( $languages = $this->getLanguages() ) {
                 foreach ( $languages['activated'] as $language ) {
