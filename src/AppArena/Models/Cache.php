@@ -42,9 +42,9 @@ class Cache {
 			$dir = $options['dir'];
 		}
 		if ( $dir ) {
-			if ( ! @mkdir( $dir, 0755, true ) && ! is_dir( $dir ) ) {
-				throw new \Exception( 'Cannot create cache folder' );
-			}
+            if (!file_exists($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+                throw new \Exception( 'Cannot create cache folder' );
+            }
 
 			if ( ! is_writable( $dir ) ) {
 				throw new \Exception( $dir . ' is not writeable for the webserver.' );
