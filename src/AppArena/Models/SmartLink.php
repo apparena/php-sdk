@@ -7,6 +7,9 @@ use AppArena\Models\Entities\AbstractEntity;
 use AppArena\Models\Environment\AbstractEnvironment;
 use AppArena\Models\Environment\Facebook;
 use AppArena\Models\Environment\Website;
+use Exception;
+use Mustache_Engine;
+use Mustache_Loader_FilesystemLoader;
 
 /**
  * SmartLink class which handles user redirects for the app
@@ -57,7 +60,7 @@ class SmartLink {
 	 * @param AbstractEnvironment $environment Environment the app is currently running in
 	 * @param Cache               $cache       Cache adapter for managing the link shortener
 	 *
-	 * @throws \Exception When no app ID is passed
+	 * @throws Exception When no app ID is passed
 	 */
 	public function __construct( AbstractEntity $entity, Environment $environment, Cache $cache ) {
 		// Initialize the base url
@@ -67,7 +70,7 @@ class SmartLink {
 		$this->environment = $environment;
 		$this->entity      = $entity;
 		if ( ! $this->entity ) {
-			throw( new \Exception( 'No app id available' ) );
+			throw( new Exception( 'No app id available' ) );
 		}
 		$this->cookie_key = AppManager::COOKIE_KEY . $this->getEntity()->getId();
 
@@ -268,14 +271,12 @@ class SmartLink {
 		return $params;
 	}
 
-	/**
-	 * Sets values to the SmartCookie
-	 *
-	 * @param array $values     Array of key value pairs which should be added to the Smart-Cookie cookie
-	 * @param int   $expiration Number of seconds until the cookie will expire
-	 *
-	 * @return array Returns the whole updated cookie as array
-	 */
+  /**
+   * Sets values to the SmartCookie
+   *
+   * @param array $values Array of key value pairs which should be added to the Smart-Cookie cookie
+   * @param int $expiration Number of seconds until the cookie will expire
+   */
 	private function setCookieValues( $values, $expiration = 7200 ) {
 		$cookie = [];
 		if ( isset( $_COOKIE[ $this->cookie_key ] ) ) {
@@ -294,9 +295,6 @@ class SmartLink {
 		$cookie_encoded = json_encode( $cookie );
 
 		setcookie( $this->cookie_key, $cookie_encoded, time() + $expiration, '/', $this->cookie_domain );
-
-		return false;
-
 	}
 
 	/**
@@ -307,12 +305,12 @@ class SmartLink {
 	public function renderSharePage( $debug = false ) {
 		if ( ! $this->mustache ) {
 			if ( ! defined( 'SMART_LIB_PATH' ) ) {
-				define( 'SMART_LIB_PATH', realpath( dirname( __FILE__ ) ) . '/..' );
+				define( 'SMART_LIB_PATH', realpath(__DIR__) . '/..' );
 			}
 			// Initialize mustache
-			$loader         = new \Mustache_Loader_FilesystemLoader( SMART_LIB_PATH . '/views' );
-			$partials       = new \Mustache_Loader_FilesystemLoader( SMART_LIB_PATH . '/views/partials' );
-			$this->mustache = new \Mustache_Engine( [
+			$loader         = new Mustache_Loader_FilesystemLoader( SMART_LIB_PATH . '/views' );
+			$partials       = new Mustache_Loader_FilesystemLoader( SMART_LIB_PATH . '/views/partials' );
+			$this->mustache = new Mustache_Engine( [
 				'loader'          => $loader,
 				'partials_loader' => $partials,
 			] );
@@ -323,7 +321,7 @@ class SmartLink {
 		$meta = $this->getMeta();
 		if ( isset( $meta['image'] ) ) {
 			if ( extension_loaded( 'gd' ) && function_exists( 'gd_info' ) && $meta['image'] ) {
-				list( $width, $height ) = getimagesize( $meta['image'] );
+				[ $width, $height ] = getimagesize( $meta['image'] );
 				$this->meta['image_height'] = $height;
 				$this->meta['image_width']  = $width;
 			}
@@ -738,13 +736,12 @@ class SmartLink {
 
 		// Do something with the result. Here, we echo the long URL
 		$data = json_decode( $data );
-
-		$this->url_short_array[ $url ] = $data->shorturl;
+		$this->url_short_array[ $url ] = isset($data->shorturl)? $data->shorturl : $url;
 
 		$value->set( $this->url_short_array );
 		$cache->save( $value );
 
-		return $data->shorturl;
+		return isset($data->shorturl)? $data->shorturl : $url;
 	}
 
 	/**
@@ -838,7 +835,7 @@ class SmartLink {
 		}
 
 		//$signed_request = $_REQUEST['signed_request'];
-		list( $encoded_sig, $payload ) = explode( '.', $signed_request, 2 );
+		[ $encoded_sig, $payload ] = explode( '.', $signed_request, 2 );
 		$data = json_decode( base64_decode( strtr( $payload, '-_', '+/' ) ), true );
 
 		return $data;
